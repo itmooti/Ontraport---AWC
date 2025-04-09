@@ -1,3 +1,57 @@
+// get created at date to  get notifications only after user has enrolled
+let createdAt;
+var dateElements = document.querySelectorAll("[data-date-enrolled]");
+var dates = [];
+dateElements.forEach(function (el) {
+  var timestamp = parseInt(el.getAttribute("data-date-enrolled"), 10);
+  if (!isNaN(timestamp)) {
+    dates.push(timestamp);
+  }
+});
+if (dates.length > 0) {
+  createdAt = Math.min.apply(null, dates);
+  window.earliestEnrollmentDate = createdAt;
+}
+
+
+//Set user preferences
+const POSTS_TYPE =
+  user_Preference_Posts === "Yes" || user_Preference_Post_Mentions === "Yes"
+    ? "Posts"
+    : "";
+const POST_COMMENTS_TYPE =
+  user_Preference_Comments_On_My_Posts === "Yes" ||
+  user_Preference_Post_Comments === "Yes" ||
+  user_Preference_Post_Comment_Mentions === "Yes"
+    ? "Post Comments"
+    : "";
+const ANNOUNCEMENTS_TYPE =
+  user_Preference_Announcements === "Yes" ||
+  user_Preference_Announcement_Mentions === "Yes"
+    ? "Announcements"
+    : "";
+const ANNOUNCEMENT_COMMENTS_TYPE =
+  user_Preference_Comments_On_My_Announcements === "Yes" ||
+  user_Preference_Announcement_Comments === "Yes" ||
+  user_Preference_Announcement_Comment_Mentions === "Yes"
+    ? "Announcement Comments"
+    : "";
+const SUBMISSIONS_TYPE =
+  user_Preference_Submissions === "Yes" ||
+  user_Preference_Submission_Mentions === "Yes"
+    ? "Submissions"
+    : "";
+const SUBMISSION_COMMENTS_TYPE =
+  user_Preference_Comments_On_My_Submissions === "Yes" ||
+  user_Preference_Submission_Comments === "Yes" ||
+  user_Preference_Submission_Comment_Mentions === "Yes"
+    ? "Submission Comments"
+    : "";
+const fetchUserDate =
+  user_Preference_Turn_Off_All_Notifications === "Yes"
+    ? ` { andWhere: { created_at: "${Turn_Off_All_Notifications_Time_Unix}" } }`
+    : "";
+    
 let SUBSCRIPTION_QUERY = `
 subscription subscribeToCalcAnnouncements(
   $class_id: AwcClassID
@@ -200,61 +254,6 @@ Read_Contact_ID: read_contact_id
 }
 }
 `;
-
-// get created at date to  get notifications only after user has enrolled
-let createdAt;
-var dateElements = document.querySelectorAll("[data-date-enrolled]");
-var dates = [];
-dateElements.forEach(function (el) {
-  var timestamp = parseInt(el.getAttribute("data-date-enrolled"), 10);
-  if (!isNaN(timestamp)) {
-    dates.push(timestamp);
-  }
-});
-if (dates.length > 0) {
-  createdAt = Math.min.apply(null, dates);
-  window.earliestEnrollmentDate = createdAt;
-}
-
-
-//Set user preferences
-const POSTS_TYPE =
-  user_Preference_Posts === "Yes" || user_Preference_Post_Mentions === "Yes"
-    ? "Posts"
-    : "";
-const POST_COMMENTS_TYPE =
-  user_Preference_Comments_On_My_Posts === "Yes" ||
-  user_Preference_Post_Comments === "Yes" ||
-  user_Preference_Post_Comment_Mentions === "Yes"
-    ? "Post Comments"
-    : "";
-const ANNOUNCEMENTS_TYPE =
-  user_Preference_Announcements === "Yes" ||
-  user_Preference_Announcement_Mentions === "Yes"
-    ? "Announcements"
-    : "";
-const ANNOUNCEMENT_COMMENTS_TYPE =
-  user_Preference_Comments_On_My_Announcements === "Yes" ||
-  user_Preference_Announcement_Comments === "Yes" ||
-  user_Preference_Announcement_Comment_Mentions === "Yes"
-    ? "Announcement Comments"
-    : "";
-const SUBMISSIONS_TYPE =
-  user_Preference_Submissions === "Yes" ||
-  user_Preference_Submission_Mentions === "Yes"
-    ? "Submissions"
-    : "";
-const SUBMISSION_COMMENTS_TYPE =
-  user_Preference_Comments_On_My_Submissions === "Yes" ||
-  user_Preference_Submission_Comments === "Yes" ||
-  user_Preference_Submission_Comment_Mentions === "Yes"
-    ? "Submission Comments"
-    : "";
-const fetchUserDate =
-  user_Preference_Turn_Off_All_Notifications === "Yes"
-    ? ` { andWhere: { created_at: "${Turn_Off_All_Notifications_Time_Unix}" } }`
-    : "";
-
 
 const container = document.getElementById("parentNotificationTemplatesInBody");
 const displayedNotifications = new Set();
