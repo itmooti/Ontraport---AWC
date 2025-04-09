@@ -1,472 +1,554 @@
-async function fetchGraphQL(query) {
-    try {
-        const response = await fetch(
-            "https://awc.vitalstats.app/api/v1/graphql",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Api-Key": "mMzQezxyIwbtSc85rFPs3",
-                },
-                body: JSON.stringify({ query }),
-            }
-        );
-        const result = await response.json();
-        return result?.data || {};
-    } catch (error) {
-        return {};
-    }
-}
-
-// Format a unix timestamp to a human-readable date
-function formatDate(unixTimestamp) {
-    if (!unixTimestamp) return "Invalid Date";
-    const date = new Date(unixTimestamp * 1000);
-    return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-    });
-}
-
-// Get the upcoming Sunday given a start date and a weeks offset
-function getUpcomingSunday(startDateUnix, weeksOffset = 0) {
-    const startDate = new Date(startDateUnix * 1000);
-    let nextSunday = new Date(startDate);
-    nextSunday.setDate(
-        nextSunday.getDate() + (7 - nextSunday.getDay()) + weeksOffset * 7
-    );
-    return Math.floor(nextSunday.getTime() / 1000);
-}
-
-// Synchronously determine the due date for assessment lessons using customisation data from the unified query
-function determineAssessmentDueDateUnified(
-    lesson,
-    moduleStartDateUnix,
-    customisation
-) {
-    const dueWeek = lesson.assessmentDueEndOfWeek;
-    let dueDateUnix, dueDateText;
-    if (customisation) {
-        if (customisation.specific_date) {
-            dueDateUnix =
-                customisation.specific_date > 9999999999
-                    ? Math.floor(customisation.specific_date / 1000)
-                    : customisation.specific_date;
-            dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-        } else if (
-            customisation.days_to_offset !== null &&
-            customisation.days_to_offset !== undefined
-        ) {
-            if (customisation.days_to_offset === 0) {
-                dueDateUnix = moduleStartDateUnix;
-            } else if (customisation.days_to_offset === -1) {
-                dueDateUnix =
-                    getUpcomingSunday(moduleStartDateUnix, 0) - 24 * 60 * 60;
-            } else if (customisation.days_to_offset === 1) {
-                dueDateUnix =
-                    getUpcomingSunday(moduleStartDateUnix, 1) + 24 * 60 * 60;
-            } else {
-                dueDateUnix = getUpcomingSunday(
-                    moduleStartDateUnix,
-                    customisation.days_to_offset
-                );
-            }
-            dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-        } else {
-            dueDateUnix = getUpcomingSunday(moduleStartDateUnix, dueWeek);
-            dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-        }
-    } else {
-        dueDateUnix =
-            dueWeek === 0
-                ? moduleStartDateUnix
-                : getUpcomingSunday(moduleStartDateUnix, dueWeek);
-        dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-    }
-    return { dueDateUnix, dueDateText };
-}
-// Determine lesson/module availability using the provided customisation data from the unified query
-function determineAvailability(startDateUnix, weeks, customisation) {
-    if (!startDateUnix) {
-        return { isAvailable: false, openDateText: "No Start Date" };
-    }
-    let openDateUnix, openDateText;
-    if (!customisation) {
-        openDateUnix = startDateUnix + weeks * 7 * 24 * 60 * 60;
-        openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
-    } else {
-        if (customisation.specific_date) {
-            openDateUnix =
-                customisation.specific_date > 9999999999
-                    ? Math.floor(customisation.specific_date / 1000)
-                    : customisation.specific_date;
-            openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
-        } else if (
-            customisation.days_to_offset !== null &&
-            customisation.days_to_offset !== undefined
-        ) {
-            openDateUnix =
-                startDateUnix + customisation.days_to_offset * 24 * 60 * 60;
-            openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
-        } else {
-            openDateUnix = startDateUnix + weeks * 7 * 24 * 60 * 60;
-            openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
-        }
-    }
-    const todayUnix = Math.floor(Date.now() / 1000);
-    // Original logic preserved: available if unlock date is greater than or equal to today
-    const isAvailable = openDateUnix >= todayUnix;
-    return { isAvailable, openDateText };
-}
-
-// Unified GraphQL query (includes all customisations)
-const lmsQuery = `
-        query LMSQuery {
-LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
-  Enrolments_As_Course{ 
-    resume_lesson_unique_id           
-    id
-    date_completion
-    certificate__link
-    completed__lessons
-    Class {
-      start_date
-      end_date
-    }
-  }
-  course_name
-  course_access_type
-  Modules {
-    id
-    unique_id
-    order
-    module_name
-    description
-    week_open_from_start_date
-    don_t_track_progress
-    zoom_session
-    module_default_is_open
-    module_length_in_hour
-    module_length_in_minute
-    number_of_lessons_in_module
-    lesson__count__visible
-    lesson__count__progress
-    don_t_track_progress
-    ClassCustomisations(
-      limit: 1
-      offset: 0
-      orderBy: [{ path: ["created_at"], type: desc }]
-    ) {
-      id
-      created_at
-      days_to_offset
-      specific_date
-    }
-    Lessons (
-    query: [
-      {
-        where: {
-          type: "Download Certificate"
-          _OPERATOR_: neq
-        }
-      }
-    ]
-  ) {
-      id
-      unique_id
-      order_in_module
-      order_in_course
-      type
-      lesson_name
-      lesson_introduction_text
-      lesson_learning_outcome
-      time_to_complete
-      lesson_length_in_hour
-      lesson_length_in_minute
-      awc_lesson_content_page_url
-      custom__button__text
-      lesson__progress__not__tracked
-      Assessments {
-        name
-      }
-      assessment_due_end_of_week
-      assessment__due__date
-      Lesson_Enrolment_in_Progresses{
-        id
-      Lesson_In_Progresses{
-          id
-        }
-      }
-      Enrolment_Lesson_Completions {
-        id
-              Lesson_Completions{
-          id
-        }
-      }
-      ClassCustomisations(
-        query: [
-          { where: { type: "Assessment" } }
+function buildSchedfuled(createdAnnouncementID) {
+    let statusFilter = `{
+        andWhereGroup: [
+          { where: { status: "Published" } }
+          { orWhere: { instructor_id: ${currentPageUserID} } }
         ]
-        limit: 1
-        offset: 0
+      }`;
+    if (createdAnnouncementID) {
+        statusFilter = `{ andWhere: { id: ${createdAnnouncementID} } }`;
+    }
+    else {
+        if (
+            document.getElementById("scheduledTabs") &&
+            document.getElementById("scheduledTabs").classList.contains("activeTab")
+        ) {
+            statusFilter = ` { andWhere: { status: "Draft" } }
+    { andWhere: { instructor_id: ${currentPageUserID} } }
+    `;
+        } else {
+            statusFilter = ` {
+        andWhereGroup: [
+          { where: { status: "Published" } }
+          { orWhere: { instructor_id: ${currentPageUserID} } }
+        ]
+      }`;
+        }
+    }
+    return `
+    query getAnnouncements {
+      getAnnouncements(
+        query: [
+          { where: { class_id: ${currentPageClassID} } } 
+          ${statusFilter}
+        ]
         orderBy: [{ path: ["created_at"], type: desc }]
       ) {
-        id
-        created_at
-        days_to_offset
-        specific_date
+        anouncementID: id
+        anouncementTitle: title
+        anouncementContent: content
+        anouncementDateAdded: created_at
+        anouncementInstructorID: instructor_id
+        anouncementDisableComments: disable_comments
+        anouncementStatus: status
+        anouncementFileAttachement:attachment
+        anouncementPostLaterDateTime: post_later_date_time
+        anouncementAttachment: attachment
+        Instructor {
+          instructorFirstName: first_name
+          instructorLastName: last_name
+          instructorDisplayName: display_name
+          instructorProfileImage: profile_image
+        }
+        mainAnnouncementVotedContactID: Contact_Who_Up_Voted_This_Announcements {
+          likesInAnnouncementContactId: id
+        }
+        commentOnAnnouncement: ForumComments {
+          commentPostedDate: created_at
+          commentsId: id
+          commentsComment: comment
+          commentsAuthorId: author_id
+          Author {
+            commentsAuthorDisplayName: display_name
+            commentsAuthorFirstName: first_name
+            commentsAuthorLastName: last_name
+            commentsAuthorProfileImage: profile_image
+          }
+          Member_Comment_Upvotes {
+            likesInCommentContactId: id
+          }
+          repliesOnComments: ForumComments {
+            repliesPostedDate: created_at
+            repliesComment: comment
+            repliesId: id
+            repliesAuthorID :author_id
+            Author {
+              repliesAuthorDisplayName: display_name
+              repliesAuthorFirstName: first_name
+              repliesAuthorLastName: last_name
+              repliesAuthorProfileImage: profile_image
+            }
+            Member_Comment_Upvotes {
+              likesInReplyContactId: id
+            }
+          }
+        }
       }
     }
-  }
+  `
 }
+// For Unix timestamps in seconds, multiply by 1000.
+// Helper function to return relative time or Australian date format (dd/mm/yyyy)
+function parseUnix(dateInput) {
+    return new Date(dateInput * 1000);
 }
-      `;
+function relativeTime(unixTimestamp) {
+    const now = new Date();
+    const past = parseUnix(unixTimestamp);
+    const diffMs = now - past;
+    const diffSec = diffMs / 1000;
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 1) return "just now";
+    if (diffMin < 60) return diffMin + " min ago";
+    const diffHrs = Math.floor(diffMin / 60);
+    if (diffHrs < 24) return diffHrs + " hrs ago";
+    const diffDays = Math.floor(diffHrs / 24);
+    if (diffDays < 5) return diffDays + " day ago";
+    // If 5 days or older, return date in dd/mm/yyyy format (Australian)
+    const day = past.getDate().toString().padStart(2, "0");
+    const month = (past.getMonth() + 1).toString().padStart(2, "0");
+    const year = past.getFullYear();
+    return `${day}/${month}/${year}`;
+}
+// Helper function to get a display name from an author object
+function getDisplayName(author, type) {
+    if (type === "comment") {
+        if (author.commentsAuthorDisplayName) return author.commentsAuthorDisplayName;
+        if (author.commentsAuthorFirstName || author.commentsAuthorLastName)
+            return (author.commentsAuthorFirstName || "") + " " + (author.commentsAuthorLastName || "");
+    } else if (type === "reply") {
+        if (author.repliesAuthorDisplayName) return author.repliesAuthorDisplayName;
+        if (author.repliesAuthorFirstName || author.repliesAuthorLastName)
+            return (author.repliesAuthorFirstName || "") + " " + (author.repliesAuthorLastName || "");
+    }
+    return "Anamolous";
+}
 
-// Fetch and map the unified data from the new query
-async function fetchLmsUnifiedData() {
-    try {
-        const response = await fetchGraphQL(lmsQuery);
+function getProfileImage(imageUrl) {
+    const unwantedUrl = "https://i.ontraport.com/abc.jpg";
+    const defaultUrl = "https://files.ontraport.com/media/b0456fe87439430680b173369cc54cea.php03bzcx?Expires=4895186056&Signature=fw-mkSjms67rj5eIsiDF9QfHb4EAe29jfz~yn3XT0--8jLdK4OGkxWBZR9YHSh26ZAp5EHj~6g5CUUncgjztHHKU9c9ymvZYfSbPO9JGht~ZJnr2Gwmp6vsvIpYvE1pEywTeoigeyClFm1dHrS7VakQk9uYac4Sw0suU4MpRGYQPFB6w3HUw-eO5TvaOLabtuSlgdyGRie6Ve0R7kzU76uXDvlhhWGMZ7alNCTdS7txSgUOT8oL9pJP832UsasK4~M~Na0ku1oY-8a7GcvvVv6j7yE0V0COB9OP0FbC8z7eSdZ8r7avFK~f9Wl0SEfS6MkPQR2YwWjr55bbJJhZnZA__&Key-Pair-Id=APKAJVAAMVW6XQYWSTNA";
+    if (!imageUrl || imageUrl.trim() === "" || imageUrl === unwantedUrl) {
+        return defaultUrl;
+    }
+    return imageUrl;
+}
 
-        if (!response || !response.LMSQuery || !response.LMSQuery.length) {
-            return null;
-        }
+// Helper function to count likes in an array
+function countLikes(likesArray) {
+    return likesArray && likesArray.length ? likesArray.length : 0;
+}
 
-        const course = response.LMSQuery[0];
-        const mappedData = {
-            courseName: course.course_name,
-            courseAccessType: course.course_access_type,
-            enrolments: (course.Enrolments_As_Course ?? []).map((enr) => ({
-                id: enr.id,
-                resumeLessonUniqueId: enr.resume_lesson_unique_id,
-                dateCompletion: enr.date_completion,
-                certificateLink: enr.certificate__link,
-                completedLessons: enr.completed__lessons,
-                classInfo: enr.Class
-                    ? {
-                        startDate: enr.Class.start_date,
-                        endDate: enr.Class.end_date,
-                    }
-                    : null,
-            })),
-            modules: (course.Modules ?? []).map((mod) => ({
-                id: mod.id,
-                uniqueId: mod.unique_id,
-                order: mod.order,
-                moduleName: mod.module_name,
-                description: mod.description,
-                weekOpenFromStartDate: mod.week_open_from_start_date,
-                dontTrackProgress: mod.don_t_track_progress,
-                zoomSession: mod.zoom_session,
-                moduleDefaultIsOpen: mod.module_default_is_open,
-                moduleLengthInHour: mod.module_length_in_hour,
-                moduleLengthInMinute: mod.module_length_in_minute,
-                numberOfLessons: mod.number_of_lessons_in_module,
-                lessonCountVisible: mod.lesson__count__visible,
-                lessonCountProgress: mod.lesson__count__progress,
-                customisations: mod.ClassCustomisations,
-                lessons: (mod.Lessons ?? []).map((les) => ({
-                    id: les.id,
-                    uniqueId: les.unique_id,
-                    orderInModule: les.order_in_module,
-                    orderInCourse: les.order_in_course,
-                    type: les.type,
-                    lessonName: les.lesson_name,
-                    lessonIntroductionText: les.lesson_introduction_text,
-                    lessonLearningOutcome: les.lesson_learning_outcome,
-                    timeToComplete: les.time_to_complete,
-                    lessonLengthInHour: les.lesson_length_in_hour,
-                    lessonLengthInMinute: les.lesson_length_in_minute,
-                    awcLessonContentPageUrl: les.awc_lesson_content_page_url,
-                    customButtonText: les.custom__button__text,
-                    lessonProgressNotTracked: les.lesson__progress__not__tracked,
-                    assessments: les.Assessments,
-                    assessmentDueEndOfWeek: les.assessment_due_end_of_week,
-                    assessmentDueDate: les.assessment__due__date,
-                    lessonEnrolmentInProgresses: les.Lesson_Enrolment_in_Progresses,
-                    enrolmentLessonCompletions: les.Enrolment_Lesson_Completions,
-                    lessonCustomisations: les.ClassCustomisations,
-                })),
-            })),
+function hasVoted(likesArray, type) {
+    let contactId = currentPageUserID;
+    if (!likesArray || !likesArray.length) return false;
+    if (type === "announcement") {
+        return likesArray.some(like => like.likesInAnnouncementContactId == contactId);
+    } else if (type === "comment") {
+        return likesArray.some(like => like.likesInCommentContactId == contactId);
+    } else if (type === "reply") {
+        return likesArray.some(like => like.likesInReplyContactId == contactId);
+    }
+    return false;
+}
+
+
+
+
+// Sanitize fetched data to avoid null values
+function sanitizeAnnouncements(announcements) {
+    return announcements.map(announcement => {
+        // Set default Instructor if missing
+        announcement.Instructor = announcement.Instructor || {
+            instructorDisplayName: "Unknown",
+            instructorProfileImage: ""
         };
-        return mappedData;
+        // Ensure likes array exists for the announcement
+        announcement.mainAnnouncementVotedContactID = announcement.mainAnnouncementVotedContactID || [];
+        // Sanitize comments array
+        if (announcement.commentOnAnnouncement && Array.isArray(announcement.commentOnAnnouncement)) {
+            announcement.commentOnAnnouncement = announcement.commentOnAnnouncement.map(comment => {
+                comment.Author = comment.Author || {
+                    commentsAuthorDisplayName: "Unknown",
+                    commentsAuthorProfileImage: ""
+                };
+                comment.Member_Comment_Upvotes = comment.Member_Comment_Upvotes || [];
+                if (comment.repliesOnComments && Array.isArray(comment.repliesOnComments)) {
+                    comment.repliesOnComments = comment.repliesOnComments.map(reply => {
+                        reply.Author = reply.Author || {
+                            repliesAuthorDisplayName: "Unknown",
+                            repliesAuthorProfileImage: ""
+                        };
+                        reply.Member_Comment_Upvotes = reply.Member_Comment_Upvotes || [];
+                        return reply;
+                    });
+                } else {
+                    comment.repliesOnComments = [];
+                }
+                return comment;
+            });
+        } else {
+            announcement.commentOnAnnouncement = [];
+        }
+        return announcement;
+    });
+}
+
+// Register helper functions with JsRender
+// $.views.helpers({ relativeTime, getDisplayName, getProfileImage, countLikes, hasVoted });
+// Register helper functions with JsRender
+$.views.helpers({
+    elapsedAnnouncementTime: relativeTime,
+    relativeTime,
+    getDisplayName,
+    elapseddisplayName: getDisplayName,
+    getProfileImage,
+    elapsedprofileImage: getProfileImage,
+    countLikes,
+    elapsedlikeCount: countLikes,
+    hasVoted,
+    elapsedvoted: hasVoted
+});
+async function fetchAnnouncements() {
+    $("#announcementsContainer").html(`
+        <div class="skeleton-container w-full">
+  <div class="skeleton-card skeleton-shimmer"></div>
+  <div class="skeleton-card skeleton-shimmer"></div>
+  <div class="skeleton-card skeleton-shimmer"></div>
+</div>`);
+    const query = buildSchedfuled();
+    try {
+        const response = await fetch(apiUrlForAnouncement, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Api-Key": apiKeyForAnouncement
+            },
+            body: JSON.stringify({ query })
+        });
+        const jsonData = await response.json();
+        let announcements = jsonData.data.getAnnouncements || [];
+        // Sanitize the data to avoid null errors
+        announcements = sanitizeAnnouncements(announcements);
+        renderAnnouncements(announcements);
     } catch (error) {
-        return null;
+        console.error("Error fetching announcements:", error);
     }
 }
 
-// Combine and map course, module, and lesson data with progress and due date calculations
-async function combineUnifiedData() {
-    const data = await fetchLmsUnifiedData();
-
-    if (!data) return null;
-    const enrolments = (data.enrolments || []).map((enr) => ({
-        id: enr.id,
-        resumeLessonUniqueId: enr.resumeLessonUniqueId,
-        dateCompletion: enr.dateCompletion,
-        certificateLink: enr.certificateLink,
-        completedLessons: enr.completedLessons,
-        classInfo: enr.classInfo
-            ? {
-                startDate: enr.classInfo.startDate,
-                endDate: enr.classInfo.endDate,
-            }
-            : null,
-    }));
-
-
-    // Use class start date from enrolments (fallback to current time)
-    const defaultClassStartDate = enrolments.length && enrolments[0].classInfo?.startDate
-        ? Number(enrolments[0].classInfo.startDate)
-        : Math.floor(Date.now() / 1000);
-    const modules = await Promise.all(
-        data.modules.map(async (module) => {
-            // Use customisations from the unified query for module-level due/open date
-            const moduleCustomisation =
-                module.customisations && module.customisations.length > 0
-                    ? module.customisations[0]
-                    : null;
-            const availability = determineAvailability(
-                defaultClassStartDate,
-                module.weekOpenFromStartDate,
-                moduleCustomisation
-            );
-
-            const lessons = await Promise.all(
-                module.lessons.map(async (lesson) => {
-                    let status = "NotStarted";
-                    if (
-                        lesson.enrolmentLessonCompletions &&
-                        lesson.enrolmentLessonCompletions.length > 0
-                    ) {
-                        status = "Completed";
-                    } else if (
-                        lesson.lessonEnrolmentInProgresses &&
-                        lesson.lessonEnrolmentInProgresses.length > 0
-                    ) {
-                        status = "InProgress";
-                    }
-                    let dueDateInfo = {
-                        dueDateUnix: null,
-                        dueDateText: "No Due Date",
-                    };
-                    if (lesson.type === "Assessment") {
-                        // Use lesson customisation data from the unified query
-                        const lessonCustomisation =
-                            lesson.lessonCustomisations &&
-                                lesson.lessonCustomisations.length > 0
-                                ? lesson.lessonCustomisations[0]
-                                : null;
-                        dueDateInfo = determineAssessmentDueDateUnified(
-                            lesson,
-                            defaultClassStartDate,
-                            lessonCustomisation
-                        );
-                    }
-                    return {
-                        ...lesson,
-                        status,
-                        eid: data.enrolments?.[0]?.id || null,
-                        dueDateUnix: dueDateInfo.dueDateUnix,
-                        dontTrackProgress: module.dontTrackProgress,
-                        dueDateText: dueDateInfo.dueDateText,
-                        availability: availability.isAvailable,
-                        openDateText: availability.openDateText,
-                        courseAccessType: data.courseAccessType,
-                        dateCompletion: data.enrolments?.[0]?.dateCompletion || null,
-
-
-                    };
-                })
-            );
-            const lessonCompletedIDsFlat = module.lessons.flatMap((lesson) =>
-                (lesson.enrolmentLessonCompletions || []).flatMap((elc) =>
-                    (elc.Lesson_Completions || []).map((comp) => comp.id)
-                )
-            );
-
-            // Optional deduplication:
-            const uniqueCompletedIDs = new Set(lessonCompletedIDsFlat);
-
-            const completedCount = module.lessons.filter((lesson) =>
-                uniqueCompletedIDs.has(lesson.id)
-            ).length;
-
-
-            return {
-                ...module,
-                lessons,
-                dontTrackProgress: module.dontTrackProgress,
-
-                lessonID: module.lessons.map((lesson) => lesson.id),
-                lessonCompletedID: Array.from(uniqueCompletedIDs),
-                completedCount,
-                courseName: data.courseName,
-                eid: data.enrolments?.[0]?.id || null,
-                courseAccessType: data.courseAccessType,
-                availability: availability.isAvailable,
-                dateCompletion: data.enrolments?.[0]?.dateCompletion || null,
-                openDateText: availability.openDateText,
-            };
-        })
-    );
-    return {
-        courseName: data.courseName,
-        courseAccessType: data.courseAccessType,
-        dateCompletion: data.enrolments?.[0]?.dateCompletion || null,
-        eid: data.enrolments?.[0]?.id || null,
-        modules,
-
-    };
+function renderAnnouncements(announcements) {
+    const template = $.templates("#announcementTemplate");
+    const htmlOutput = template.render({ announcements });
+    $("#announcementsContainer").html(htmlOutput);
 }
 
-// Render modules and progress sections using JS render templates
-async function renderUnifiedModules() {
-    const skeletonHTML = `
-          <div class="skeleton-container">
-            <div class="skeleton-card skeleton-shimmer"></div>
-            <div class="skeleton-card skeleton-shimmer"></div>
-            <div class="skeleton-card skeleton-shimmer"></div>
-            <div class="skeleton-card skeleton-shimmer"></div>
-            <div class="skeleton-card skeleton-shimmer"></div>
-          </div>
-        `;
-    $("#modulesContainer").html(skeletonHTML);
-    // $("#progressModulesContainer").html(skeletonHTML);
-    const unifiedData = await combineUnifiedData();
 
-    if (!unifiedData || !Array.isArray(unifiedData.modules)) {
+
+// Function to fetch a comment by its ID using the provided GraphQL query
+async function fetchCommentById(commentId) {
+    const getCommentQuery = `
+    query getForumComments($id: AwcForumCommentID) {
+      getForumComments(query: [{ where: { id: $id } }]) {
+        commentPostedDate: created_at
+        commentsId: id
+        commentsComment: comment
+        commentsAuthorId: author_id
+        Author {
+          commentsAuthorDisplayName: display_name
+          commentsAuthorFirstName: first_name
+          commentsAuthorLastName: last_name
+          commentsAuthorProfileImage: profile_image
+        }
+        Member_Comment_Upvotes {
+          likesInCommentContactId: id
+        }
+      }
+    }
+  `;
+    const response = await fetch(apiUrlForAnouncement, {
+        method: 'POST',
+        headers: {
+            "Content-Type": "application/json",
+            "Api-Key": apiKeyForAnouncement
+        },
+        body: JSON.stringify({ query: getCommentQuery, variables: { id: commentId } })
+    });
+    const jsonData = await response.json();
+    return jsonData.data.getForumComments[0];
+}
+
+async function createForumComment(parentAnnouncementId, parentCommentID, mentionIds, comments) {
+    const textAreas = document.querySelectorAll('.formTextArea');
+    textAreas.forEach(el => {
+
+        el.setAttribute('data-prev-contenteditable', el.getAttribute('contenteditable'));
+        el.removeAttribute('contenteditable');
+        el.style.opacity = '0.5';
+    });
+    const payload = {
+        parent_announcement_id: parentAnnouncementId,
+        reply_to_comment_id: parentCommentID,
+        comment: comments,
+        author_id: currentPageUserID,
+        Mentions: [{ id: null }],
+    };
+    const mutation = `
+    mutation createForumComment($payload: ForumCommentCreateInput) {
+      createForumComment(payload: $payload) {
+        author_id
+        comment
+        id
+        parent_announcement_id
+        reply_to_comment_id 
+        Mentions {
+          id
+        }
+      }
+    }
+  `;
+    const response = await fetch(apiUrlForAnouncement, {
+        method: 'POST',
+        headers: {
+            "Content-Type": "application/json",
+            "Api-Key": apiKeyForAnouncement
+        },
+        body: JSON.stringify({ query: mutation, variables: { payload } })
+    });
+    const result = await response.json();
+    const newCommentId = result.data.createForumComment.id;
+
+    const newComment = await fetchCommentById(newCommentId);
+    if (parentCommentID === null) {
+        // Top-level comment: Use commentTemplate and append to announcement's replies container.
+        const commentTemplate = $.templates("#commentAnnouncementTemplate");
+        const commentHtml = commentTemplate.render(newComment);
+        const announcementEl = document.querySelector(`[data-announcement-template-id="${parentAnnouncementId}"]`);
+        if (announcementEl) {
+            const repliesContainer = announcementEl.querySelector('.repliesContainer');
+            if (repliesContainer) {
+                $(repliesContainer).append(commentHtml);
+            }
+        }
+    } else {
+        const replyTemplate = $.templates("#replyAnnouncementTemplate");
+        const replyHtml = replyTemplate.render(newComment);
+        const parentCommentEl = document.querySelector(`[data-reply-id="${parentCommentID}"]`);
+        if (parentCommentEl) {
+            let repliesContainer = parentCommentEl.querySelector('.repliesOfReplyContainer');
+            if (!repliesContainer) {
+                repliesContainer = document.createElement('div');
+                repliesContainer.className = 'repliesOfReplyContainer w-full flex flex-col gap-2';
+                parentCommentEl.appendChild(repliesContainer);
+            }
+            $(repliesContainer).append(replyHtml);
+        }
+    }
+    textAreas.forEach(el => {
+
+        const prev = el.getAttribute('data-prev-contenteditable') || "true";
+        el.setAttribute('contenteditable', prev);
+        el.style.opacity = '1';
+        el.innerText = '';
+    });
+    return result;
+}
+
+// Delete Announcemnt
+async function deleteAnnouncement(id) {
+    const query = `
+    mutation deleteAnnouncement($id: AwcAnnouncementID) {
+      deleteAnnouncement(query: [{ where: { id: $id } }]) {
+        id
+      }
+    }
+  `
+    const announcementEl = document.querySelector(`[data-announcement-template-id="${id}"]`)
+    if (announcementEl) announcementEl.style.opacity = "0.6"
+    try {
+        const response = await fetch(apiUrlForAnouncement, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Api-Key": apiKeyForAnouncement },
+            body: JSON.stringify({ query, variables: { id } })
+        })
+        const result = await response.json()
+        if (result.data?.deleteAnnouncement) {
+            if (announcementEl) announcementEl.remove()
+        } else {
+            if (announcementEl) announcementEl.style.opacity = "1"
+        }
+    } catch (error) {
+        if (announcementEl) announcementEl.style.opacity = "1"
+        console.error("Error deleting announcement:", error)
+    }
+}
+
+// delete Comment and replies
+async function deleteComment(replyID) {
+    const query = `
+    mutation deleteForumComment($id: AwcForumCommentID) {
+      deleteForumComment(query: [{ where: { id: $id } }]) {
+        id
+      }
+    }
+  `
+    const replyEl = document.querySelector(`[data-reply-id="${replyID}"]`)
+    if (replyEl) replyEl.style.opacity = "0.6"
+
+    try {
+        const response = await fetch(apiUrlForAnouncement, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Api-Key": apiKeyForAnouncement },
+            body: JSON.stringify({ query, variables: { id: replyID } }),
+        })
+        const result = await response.json()
+        if (result.data?.deleteForumComment) {
+            replyEl.remove()
+        } else {
+            if (replyEl) replyEl.style.opacity = "1"
+        }
+    } catch (error) {
+        if (replyEl) replyEl.style.opacity = "1"
+        console.error("Error deleting reply:", error)
+    }
+}
+
+// create or delete vote from announcement
+async function createContactVotedAnnouncement(announcementId) {
+    const el = document.getElementById(`vote-${announcementId}`);
+    const counterEl = el ? el.querySelector('.voteCounter') : null;
+    const updateCounter = (delta) => {
+        if (counterEl) {
+            const currentCount = parseInt(counterEl.innerText, 10) || 0;
+            counterEl.innerText = currentCount + delta;
+        }
+    };
+    if (el && el.classList.contains('voted')) {
+        const deleteQuery = `
+      mutation deleteContactVotedAnnouncement {
+        deleteContactVotedAnnouncement(
+          query: [
+            {where: {contact_who_up_voted_this_announcement_id: ${currentPageUserID}}},{andWhere: {announcement_that_this_contact_has_up_voted_id: ${announcementId}}}]) {id}}
+    `;
+        try {
+            const response = await fetch(apiUrlForAnouncement, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Api-Key": apiKeyForAnouncement },
+                body: JSON.stringify({ query: deleteQuery })
+            });
+            const result = await response.json();
+            if (result.data && result.data.deleteContactVotedAnnouncement && el) {
+                el.classList.remove('voted');
+                updateCounter(-1);
+            }
+            return result;
+        } catch (error) {
+            console.error("Error deleting contact voted announcement:", error);
+        }
         return;
     }
-    const template = $.templates("#modulesTemplate");
-    const htmlOutput = template.render({
-        modules: unifiedData.modules,
-        courseName: unifiedData.courseName,
-    });
 
+    // If not already voted, proceed with the create mutation
+    const payload = {
+        announcement_that_this_contact_has_up_voted_id: announcementId,
+        contact_who_up_voted_this_announcement_id: currentPageUserID,
+    };
 
-    $("#modulesContainer").html(htmlOutput);
+    const createQuery = `
+    mutation createContactVotedAnnouncement($payload: ContactVotedAnnouncementCreateInput = null) {
+      createContactVotedAnnouncement(payload: $payload) {
+        announcement_that_this_contact_has_up_voted_id
+        contact_who_up_voted_this_announcement_id
+      }
+    }
+  `;
 
-}
-
-// Helper to add event listeners if element exists
-function addEventListenerIfExists(id, event, handler) {
-    const element = document.getElementById(id);
-    if (element) {
-        element.addEventListener(event, async () => {
-            await handler();
+    try {
+        const response = await fetch(apiUrlForAnouncement, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Api-Key": apiKeyForAnouncement },
+            body: JSON.stringify({ query: createQuery, variables: { payload } })
         });
+        const result = await response.json();
+        if (result.data && result.data.createContactVotedAnnouncement && el) {
+            el.classList.add('voted');
+            updateCounter(1);
+        }
+        return result;
+    } catch (error) {
+        console.error("Error creating contact voted announcement:", error);
     }
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-    renderUnifiedModules();
-});
+// create or delete upvote for a forum comment
+async function createMemberCommentUpvotesForumCommentUpvotes(commentId) {
+    const el = document.getElementById(`vote-${commentId}`);
+    const counterEl = el ? el.querySelector('.voteCounter') : null;
+    const updateCounter = (delta) => {
+        if (counterEl) {
+            const currentCount = parseInt(counterEl.innerText, 10) || 0;
+            counterEl.innerText = currentCount + delta;
+        }
+    };
 
+    // If already upvoted, call the delete mutation to remove the upvote
+    if (el && el.classList.contains('voted')) {
+        const deleteQuery = `
+      mutation deleteMemberCommentUpvotesForumCommentUpvotes {
+        deleteMemberCommentUpvotesForumCommentUpvotes(
+          query: [
+            { where: { forum_comment_upvote_id: ${commentId} } }
+            { andWhere: { member_comment_upvote_id: ${currentPageUserID} } }
+          ]
+        ) {
+          id
+        }
+      }
+    `;
+        try {
+            const response = await fetch(apiUrlForAnouncement, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Api-Key": apiKeyForAnouncement },
+                body: JSON.stringify({ query: deleteQuery })
+            });
+            const result = await response.json();
+            if (result.data && result.data.deleteMemberCommentUpvotesForumCommentUpvotes && el) {
+                el.classList.remove('voted');
+                updateCounter(-1);
+            }
+            return result;
+        } catch (error) {
+            console.error("Error deleting member comment upvote:", error);
+        }
+        return;
+    }
 
+    // If not already upvoted, proceed with the create mutation
+    const payload = {
+        forum_comment_upvote_id: commentId,
+        member_comment_upvote_id: currentPageUserID,
+    };
 
-$.views.helpers({
-    formatNewLines: function (text) {
-        return text ? text.replace(/\n/g, "<br>") : "";
-    },
-});
+    const createQuery = `
+    mutation createMemberCommentUpvotesForumCommentUpvotes($payload: MemberCommentUpvotesForumCommentUpvotesCreateInput = null) {
+      createMemberCommentUpvotesForumCommentUpvotes(payload: $payload) {
+        member_comment_upvote_id
+        forum_comment_upvote_id
+      }
+    }
+  `;
+
+    try {
+        const response = await fetch(apiUrlForAnouncement, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Api-Key": apiKeyForAnouncement },
+            body: JSON.stringify({ query: createQuery, variables: { payload } })
+        });
+        const result = await response.json();
+        if (result.data && result.data.createMemberCommentUpvotesForumCommentUpvotes && el) {
+            el.classList.add('voted');
+            updateCounter(1);
+        }
+        return result;
+    } catch (error) {
+        console.error("Error creating member comment upvote:", error);
+    }
+}
