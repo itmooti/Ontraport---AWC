@@ -46,17 +46,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// get created at date
-let createdAt;
-var dateElements = document.querySelectorAll("[data-date-enrolled]");
-var dates = [];
-dateElements.forEach(function (el) {
-  var timestamp = parseInt(el.getAttribute("data-date-enrolled"), 10);
-  if (!isNaN(timestamp)) {
-    dates.push(timestamp);
-  }
-});
-if (dates.length > 0) {
-  createdAt = Math.min.apply(null, dates);
-  window.earliestEnrollmentDate = createdAt;
-}
+
+
+  
