@@ -18,11 +18,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     `;
 
   try {
-    const response = await fetch("https://awc.vitalstats.app/api/v1/graphql", {
+    const response = await fetch(graphQlApiKeyAwc, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Api-Key": "mMzQezxyIwbtSc85rFPs3",
+        "Api-Key": graphQlApiEndpointUrlAwc,
       },
       body: JSON.stringify({ query: getEnrollmentFormat }),
     });
