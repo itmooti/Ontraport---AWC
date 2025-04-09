@@ -43,7 +43,7 @@ async function fetchClassIds() {
     query calcEnrolments {
       calcEnrolments(
         query: [
-          { where: { student_id: ${CONTACTss_ID} } }
+          { where: { student_id: ${loggedInContactIdIntAwc} } }
           {
             andWhereGroup: [
               { where: { format: "Online Live" } }
@@ -63,11 +63,11 @@ async function fetchClassIds() {
     }
   `;
   try {
-    const response = await fetch(HTTP_ENDPOINT, {
+    const response = await fetch(graphQlApiEndpointUrlAwc, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Api-Key": APIii_KEY,
+        "Api-Key": graphQlApiKeyAwc,
       },
       body: JSON.stringify({ query }),
     });
@@ -92,7 +92,7 @@ async function initializeSocket() {
   }
   classIds.forEach((classId) => {
     if (socketConnections.has(classId)) return;
-    const socket = new WebSocket(WS_ENDPOINT, "vitalstats");
+    const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
     let keepAliveInterval;
     socket.onopen = () => {
       keepAliveInterval = setInterval(() => {
@@ -108,8 +108,8 @@ async function initializeSocket() {
           payload: {
             query: SUBSCRIPTION_QUERY,
             variables: {
-              author_id: LOGGED_IN_CONTACT_ID,
-              id: LOGGED_IN_CONTACT_ID,
+              author_id: loggedInContactIdIntAwc,
+              id: loggedInContactIdIntAwc,
               class_id: classId,
               created_at: createdAt,
             },
@@ -128,13 +128,13 @@ async function initializeSocket() {
         if (
           notification.Read_Contacts_Data_Read_Announcement_ID &&
           Number(notification.Read_Contacts_Data_Read_Contact_ID) ===
-            Number(LOGGED_IN_CONTACT_ID)
+            Number(loggedInContactIdIntAwc)
         ) {
           readAnnouncements.add(Number(notification.ID));
         }
       });
       const filteredNotifications = notifications.filter((notification) => {
-        const userId = Number(CONTACTss_ID);
+        const userId = Number(loggedInContactIdIntAwc);
         switch (notification.Notification_Type) {
           case "Posts":
             if (
@@ -292,7 +292,7 @@ function createNotificationCard(notification, isRead) {
     "Someone";
   let message = "";
   let messageContent = "";
-  const usersId = String(CONTACTss_ID);
+  const usersId = String(loggedInContactIdIntAwc);
   if (notification_Type === "Posts") {
     if (postMentionID && postMentionID === usersId) {
       message = `${notification_course_name} - You have been mentioned in a post`;
@@ -465,15 +465,15 @@ async function markAsRead(announcementId) {
   const variables = {
     payload: {
       read_announcement_id: announcementId,
-      read_contact_id: LOGGED_IN_CONTACT_ID,
+      read_contact_id: loggedInContactIdIntAwc,
     },
   };
   try {
-    const response = await fetch(HTTP_ENDPOINT, {
+    const response = await fetch(graphQlApiEndpointUrlAwc, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Api-Key": APIii_KEY,
+        "Api-Key": graphQlApiKeyAwc,
       },
       body: JSON.stringify({
         query: MARK_READ_MUTATION,
