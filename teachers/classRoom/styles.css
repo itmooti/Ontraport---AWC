@@ -310,13 +310,6 @@ input {
     visibility: hidden;
 }
 
-.voted {
-    background: var(--primary-color) !important;
-}
-
-.voted svg path {
-    fill: white !important;
-}
 .openSans {
     font-family: "Open Sans", serif !important;
 
