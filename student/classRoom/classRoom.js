@@ -726,7 +726,7 @@ $.views.helpers({
 document.addEventListener("DOMContentLoaded", function () {
   let currentUrl = window.location.href;
   let tabMatch = currentUrl.match(/[?&]selectedTab=([^?&#]*)/);
-  let selectedTab = tabMatch ? decodeURIComponent(tabMatch[1]) : null;
+  selectedTab = tabMatch ? decodeURIComponent(tabMatch[1]) : null;
   let announcementMatch = currentUrl.match(
     /[?&]data-announcement-template-id=(\d+)/
   );
