@@ -276,7 +276,6 @@ input {
   background: var(--primary-color) !important;
 }
 
-
 .voted svg path {
   fill: white !important;
 }
@@ -454,6 +453,15 @@ textarea {
 }
 
 @keyframes shimmer {
-  0% { background-position: -100% 0; }
-  100% { background-position: 100% 0; }
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 100% 0;
+  }
+}
+
+.awc-Richtext-Content {
+  font-size: 18px !important;
+  line-height: 28px !important;
 }
