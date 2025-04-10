@@ -275,3 +275,9 @@ query calcLessons {
         }
     `;
 }
+
+document.addEventListener("DOMContentLoaded", async function () {
+  if (lessonID) {
+    await updateResumeLesson(lessonID);
+  }
+});
