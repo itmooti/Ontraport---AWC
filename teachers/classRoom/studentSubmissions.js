@@ -1,27 +1,29 @@
-let allSubmissions = [];
-let currentTemplate = "files";
-let currentPage = 1;
-const itemsPerPage = 12;
-let searchQueryssss = "";
-let sortOrder = "latest";
 
-// Function to fetch data from GraphQL
-function getUnixTimestamp(isoDate) {
+    let allSubmissions = [];
+    let currentTemplate = "files";
+    let currentPage = 1;
+    const itemsPerPage = 12;
+    let searchQueryssss = "";
+    let sortOrder = "latest";
+    const stdID = "[Visitor//Contact ID]";
+    const activeClassIDSubmission ="[Page//ID]";
+    // Function to fetch data from GraphQL
+    function getUnixTimestamp(isoDate) {
     return isoDate ? Math.floor(new Date(isoDate).getTime() / 1000) : null;
 }
 
-// Function to find the due date for a given lesson ID
-function getDueDateUnix(lessonID) {
+    // Function to find the due date for a given lesson ID
+    function getDueDateUnix(lessonID) {
     const match = dueDates.find(d => d.lessonID === lessonID);
     return match ? getUnixTimestamp(match.dueDate) : null;
 }
-// Function to check if a submission is late
-function isLateSubmission(submissionDateUnix, dueDateUnix) {
+    // Function to check if a submission is late
+    function isLateSubmission(submissionDateUnix, dueDateUnix) {
     if (!dueDateUnix) return false;
-    return submissionDateUnix > dueDateUnix;
+    return submissionDateUnix > dueDateUnix; 
 }
-async function fetchSubmissions() {
-    const query = `query calcSubmissions(
+    async function fetchSubmissions() {
+        const query = `query calcSubmissions(
     $limit: IntScalar
     $offset: IntScalar
     ) {
@@ -77,63 +79,63 @@ async function fetchSubmissions() {
 
     `;
     try {
-        const response = await fetch("https://awc.vitalstats.app/api/v1/graphql", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Api-Key": "mMzQezxyIwbtSc85rFPs3",
-            },
-            body: JSON.stringify({ query })
-        });
+            const response = await fetch("https://awc.vitalstats.app/api/v1/graphql", {
+        method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+    "Api-Key": "mMzQezxyIwbtSc85rFPs3",
+                },
+    body: JSON.stringify({query})
+            });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
+    if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
 
-        const text = await response.text();
-        if (!text) {
-            throw new Error("Empty response from server");
-        }
+    const text = await response.text();
+    if (!text) {
+                throw new Error("Empty response from server");
+            }
 
-        const result = JSON.parse(text);
-        return result.data?.calcSubmissions || [];
-    } catch (error) {
+    const result = JSON.parse(text);
+    return result.data?.calcSubmissions || [];
+        } catch (error) {
         console.error("Error fetching submissions:", error);
-        return [];
+    return [];
+        }
     }
-}
 
-// Convert timestamp to Australian time
-function formatTime(timestamp) {
-    if (!timestamp) return null;
+    // Convert timestamp to Australian time
+    function formatTime(timestamp) {
+            if (!timestamp) return null;
     const date = new Date(timestamp * 1000);
     const day = date.getDate();
-    const month = date.toLocaleString("en-AU", { month: "short" });
+    const month = date.toLocaleString("en-AU", {month: "short" });
     const time = date.toLocaleString("en-AU", {
         hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-        timeZone: "Australia/Sydney"
-    }).toLowerCase();
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Australia/Sydney"
+      }).toLowerCase();
     return `${day} ${month} - ${time}`;
-}
-
-// Extract file upload link and name
-function extractFileData(fileUpload) {
-    try {
-        if (!fileUpload) return { link: "#", name: "No File" };
-        const fileData = JSON.parse(fileUpload);
-        return {
-            link: fileData.link || "#",
-            name: fileData.name || "Unknown File"
-        };
-    } catch (e) {
-        return { link: "#", name: "Unknown File" };
     }
-}
 
-const templates = {
-    comments: `
+    // Extract file upload link and name
+    function extractFileData(fileUpload) {
+        try {
+            if (!fileUpload) return {link: "#", name: "No File" };
+    const fileData = JSON.parse(fileUpload);
+    return {
+        link: fileData.link || "#",
+    name: fileData.name || "Unknown File"
+            };
+        } catch (e) {
+            return {link: "#", name: "Unknown File" };
+        }
+    }
+
+    const templates = {
+        comments: `
     {{ if submissions.length }}
     <div class="flex w-full grid xl:grid-cols-3 lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-x-[12px] md:gap-y-[24px] gap-y-3">
         {{ for submissions }}
@@ -192,7 +194,7 @@ const templates = {
 </div>
 { {/if } }
 `,
-
+    
     files: `
 { { if submissions.length} }
 <div class="flex w-full grid xl:grid-cols-3 lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-x-[12px] md:gap-y-[24px] gap-y-3">
@@ -248,21 +250,21 @@ const templates = {
 </div>
 { {/if } }
 `
-};
+  };
 async function waitForDueDates() {
     return new Promise(resolve => {
         const checkInterval = setInterval(() => {
-            if (dueDates.length > 0) {
+            if (dueDates.length > 0) {  
                 clearInterval(checkInterval);
                 resolve();
             }
         }, 500);
     });
 }
-async function renderSubmissions() {
-
-    $("#submissionsContainer").html(`
-    < div class="flex items-center gap-4" >
+ async function renderSubmissions() {
+   
+     $("#submissionsContainer").html(`
+    <div div class="flex items-center gap-4" >
   <div class="w-full rounded-md border border-gray-300 p-4">
     <div class="flex animate-pulse space-x-4">
       <div class="size-10 rounded-full bg-gray-200"></div>
@@ -308,19 +310,19 @@ async function renderSubmissions() {
       </div>
     </div>
   </div>
-</ >
+</div>
 
 
     `);
-
-
-    await waitForDueDates();
-    const submissions = await fetchSubmissions();
+   
+   
+    await waitForDueDates();  
+    const submissions = await fetchSubmissions(); 
     allSubmissions = submissions.map(sub => {
         const fileData = extractFileData(sub.File_Upload);
         const dueDateUnix = getDueDateUnix(sub.Assessment_Lesson_ID);
         const submissionDateUnix = sub.Submission_Date_Time;
-        const formattedDueDate = dueDateUnix ? formatTime(dueDateUnix) : "No Due Date";
+      const formattedDueDate = dueDateUnix ? formatTime(dueDateUnix) : "No Due Date";
 
         return {
             ...sub,
@@ -328,35 +330,35 @@ async function renderSubmissions() {
             File_Link: fileData.link,
             File_Name: fileData.name,
             Due_Date_Unix: dueDateUnix,
-            Formatted_Due_Date: formattedDueDate,
+           Formatted_Due_Date: formattedDueDate,
             Late_Submission: isLateSubmission(submissionDateUnix, dueDateUnix) ? "(Late Submission)" : ""
         };
     });
-    // console.table(allSubmissions); 
+   // console.table(allSubmissions); 
     filterAndRender();
 }
-function filterAndRender() {
-    let filtered = allSubmissions.filter(sub =>
-        currentTemplate === "comments" ? sub.AssessmentType === "Comment Submission" : sub.AssessmentType === "File Submission"
+  function filterAndRender() {
+    let filtered = allSubmissions.filter(sub => 
+      currentTemplate === "comments" ? sub.AssessmentType === "Comment Submission" : sub.AssessmentType === "File Submission"
     );
     if (searchQuery) {
-        filtered = filtered.filter(sub =>
-            (sub.Contact_First_Name || "").toLowerCase().includes(searchQuery) ||
-            (sub.Submission_Note || "").toLowerCase().includes(searchQuery) ||
-            (sub.Contact_Last_Name || "").toLowerCase().includes(searchQuery) ||
-            (sub.File_Name || "").toLowerCase().includes(searchQuery)
-        );
+      filtered = filtered.filter(sub => 
+        (sub.Contact_First_Name || "").toLowerCase().includes(searchQuery) ||
+		(sub.Submission_Note || "").toLowerCase().includes(searchQuery) ||
+        (sub.Contact_Last_Name || "").toLowerCase().includes(searchQuery) ||
+        (sub.File_Name || "").toLowerCase().includes(searchQuery)
+      );
     }
     filtered.sort((a, b) => {
-        return sortOrder === "latest"
-            ? (b.Submission_Date_Time || 0) - (a.Submission_Date_Time || 0)
-            : (a.Submission_Date_Time || 0) - (b.Submission_Date_Time || 0);
+      return sortOrder === "latest" 
+        ? (b.Submission_Date_Time || 0) - (a.Submission_Date_Time || 0)
+        : (a.Submission_Date_Time || 0) - (b.Submission_Date_Time || 0);
     });
-
+    
     paginateAndRender(filtered);
-}
+  }
 
-function paginateAndRender(filteredData) {
+  function paginateAndRender(filteredData) {
     const start = (currentPage - 1) * itemsPerPage;
     const paginated = filteredData.slice(start, start + itemsPerPage);
 
@@ -365,66 +367,66 @@ function paginateAndRender(filteredData) {
     $("#submissionsContainer").html(htmlOutput);
 
     renderPagination(filteredData.length);
-}
+  }
 
-function renderPagination(totalItems) {
+  function renderPagination(totalItems) {
     const totalPages = Math.ceil(totalItems / itemsPerPage);
     if (totalPages <= 1) {
-        $("#pagination").html("");
-        return;
+      $("#pagination").html("");
+      return;
     }
-    let paginationHtml = `< button id = "prevPage" class="px-3 py-1 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed hidden' : ''}" > Prev</ > `;
+    let paginationHtml = `<button button id = "prevPage" class="px-3 py-1 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed hidden' : ''}" > Prev</button > `;
     for (let i = 1; i <= totalPages; i++) {
-        paginationHtml += `< button class="pagination-btn ${i === currentPage ? 'px-3 py-1 bg-[#007b8e] rounded text-white' : 'px-3 py-1 rounded bg-transparent'}" data - page="${i}" > ${i}</ > `;
+      paginationHtml += `<button button class="pagination-btn ${i === currentPage ? 'px-3 py-1 bg-[#007b8e] rounded text-white' : 'px-3 py-1 rounded bg-transparent'}" data - page="${i}" > ${ i }</button > `;
     }
-    paginationHtml += `< button id = "nextPage" class="px-3 py-1 ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed hidden' : ''}" > Next</ > `;
+    paginationHtml += `<button button id = "nextPage" class="px-3 py-1 ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed hidden' : ''}" > Next</button > `;
     $("#pagination").html(paginationHtml);
-}
+  }
 
-$(document).on("click", ".pagination-btn", function () {
+  $(document).on("click", ".pagination-btn", function() {
     currentPage = parseInt($(this).data("page"));
     filterAndRender();
-});
+  });
 
-$(document).on("click", "#prevPage", function () {
+  $(document).on("click", "#prevPage", function() {
     if (currentPage > 1) {
-        currentPage--;
-        filterAndRender();
+      currentPage--;
+      filterAndRender();
     }
-});
+  });
 
-$(document).on("click", "#nextPage", function () {
+  $(document).on("click", "#nextPage", function() {
     const totalPages = Math.ceil(allSubmissions.length / itemsPerPage);
     if (currentPage < totalPages) {
-        currentPage++;
-        filterAndRender();
+      currentPage++;
+      filterAndRender();
     }
-});
+  });
 
-$("#showComments").on("click", function () {
+  $("#showComments").on("click", function() {
     currentTemplate = "comments";
     currentPage = 1;
     filterAndRender();
-});
+  });
 
-$("#showFiles").on("click", function () {
+  $("#showFiles").on("click", function() {
     currentTemplate = "files";
     currentPage = 1;
     filterAndRender();
-});
+  });
 
-$("#searchInput").on("input", function () {
+  $("#searchInput").on("input", function() {
     searchQuery = $(this).val().toLowerCase();
     currentPage = 1;
     filterAndRender();
-});
+  });
 
-$("#sortLatest").on("click", function () {
+  $("#sortLatest").on("click", function() {
     sortOrder = "latest";
     filterAndRender();
-});
+  });
 
-$("#sortOldest").on("click", function () {
+  $("#sortOldest").on("click", function() {
     sortOrder = "oldest";
     filterAndRender();
-});
+  });
