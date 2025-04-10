@@ -278,9 +278,11 @@ select {
 html {
   font-size: 16px !important;
 }
+
 ol {
   list-style: decimal !important;
 }
+
 body::-webkit-scrollbar {
   display: none;
 }
@@ -298,18 +300,21 @@ body {
   border: none !important;
   box-shadow: none !important;
 }
+
 .comment-editor [contenteditable]:focus,
 .comment-editor [contenteditable]:focus-visible {
   outline: none !important;
   border: none !important;
   box-shadow: none !important;
 }
+
 .comment-form-wrapper:active,
 .comment-form-wrapper:focus,
 .comment-form-wrapper:focus-visible,
 .comment-form-wrapper:hover {
   border: 1px solid white;
 }
+
 .notification-content:hover {
   background: #f2f2f2;
 }

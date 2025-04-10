@@ -31,14 +31,6 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-document.addEventListener("DOMContentLoaded", function () {
-  const images = document.querySelectorAll("img");
-  if (images.src == "") {
-    img.src =
-      "https://files.ontraport.com/media/eb5d901d928f4785a1e822bf73b36dd5.phputv7sh?Expires=4895182624&Signature=gCWTVS2J4k7XtOHkrCjHaHMboB-OX5DIBA3ugCyfO~mHWkpJdEurKSpxBaYjEsmGAWkqzIN-~0UmQ1v2y-CAwjFtS~fDY5sOMjq1yG9JImwknUHqTQ2Nvm1u3fU0sAWu2JQzBjMhcEU~udsvVbLyA9NvyyDGFsGap3wQMZQH-GADUxvjCdiA0wn0ytysrFrnUw-rQAo7NQsSgvuTeTQVtG4rZ~fFQMdD8ulJJciOTFp9n-l71BEAqpnrmGFLNCYYSx5yFhZTadboSp121TjWKQfPNzEFipGxFNYi~GtG73tN3aX1~ICuzmKzgl5TUeA18NtzNG6EGj-cSi6zUfUHMw__&Key-Pair-Id=APKAJVAAMVW6XQYWSTNA";
-  }
-});
-
 const buttonLinks = new Map();
 
 function toggleButton(button, isSliderOff) {
