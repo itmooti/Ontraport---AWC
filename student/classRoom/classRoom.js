@@ -1,9 +1,22 @@
+let selectedTab = "overview";
+let currentUrl = window.location.href;
+let match = currentUrl.match(/[?&]selectedTab=([^?&#]*)/);
+
+function selectedTabChange(tabname) {
+  let url = window.location.href;
+  let match = url.match(/(\?|\&)eid=\d+/);
+  if (!match) {
+    return;
+  }
+  let eidIndex = url.indexOf(match[0]) + match[0].length;
+  let newUrl = url.substring(0, eidIndex) + `&selectedTab=${tabname}`;
+  window.history.replaceState(null, "", newUrl);
+}
 
 
-document.body.setAttribute(
-  "x-data",
-  "(() => ({ selectedTab: `${selectedTab}`}))()"
-);
+
+document.body.setAttribute("x-data", "{ selectedTab: `${selectedTab}`}");
+
 
 
 const overviewElements = document.querySelectorAll('.overview');
@@ -560,6 +573,7 @@ $.views.helpers({
     },
 });
 
+
 document.addEventListener("DOMContentLoaded", function () {
   var learningOutcomes = document
     .getElementById("allLearningOutcomes")
@@ -573,16 +587,6 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-function selectedTabChange(tabname) {
-  let url = window.location.href;
-  let match = url.match(/(\?|\&)eid=\d+/);
-  if (!match) {
-    return;
-  }
-  let eidIndex = url.indexOf(match[0]) + match[0].length;
-  let newUrl = url.substring(0, eidIndex) + `&selectedTab=${tabname}`;
-  window.history.replaceState(null, "", newUrl);
-}
 
 if (selectedTab === "content" || selectedTab === "progress") {
   console.log("Start:", selectedTab);
@@ -772,9 +776,7 @@ $.views.helpers({
   },
 });
 
-let selectedTab = "overview";
-let currentUrl = window.location.href;
-let match = currentUrl.match(/[?&]selectedTab=([^?&#]*)/);
+
 
 if (match) {
   selectedTab = decodeURIComponent(match[1]);
