@@ -374,7 +374,7 @@ async function waitForDueDates() {
     }
     let paginationHtml = `<button button id = "prevPage" class="px-3 py-1 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed hidden' : ''}" > Prev</button > `;
     for (let i = 1; i <= totalPages; i++) {
-      paginationHtml += `<button button class="pagination-btn ${i === currentPage ? 'px-3 py-1 bg-[#007b8e] rounded text-white' : 'px-3 py-1 rounded bg-transparent'}" data - page="${i}" > ${ i }</button > `;
+      paginationHtml += `<button button class="pagination-btn ${i === currentPage ? 'px-3 py-1 bg-[#007b8e] rounded text-white' : 'px-3 py-1 rounded bg-transparent'}" data-page="${i}" > ${ i }</button > `;
     }
     paginationHtml += `<button button id = "nextPage" class="px-3 py-1 ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed hidden' : ''}" > Next</button > `;
     $("#pagination").html(paginationHtml);
