@@ -317,11 +317,6 @@ input {
 .voted svg path {
     fill: white !important;
 }
-
-.voted span {
-    color: white !important;
-}
-
 .openSans {
     font-family: "Open Sans", serif !important;
 
