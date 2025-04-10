@@ -389,6 +389,10 @@ textarea {
   color: white !important;
 }
 
+.roundedButton.voted svg path {
+  fill: white !important;
+}
+
 .formInput,
 .formTextArea {
   border: 1px solid #d3d3d3 !important;
