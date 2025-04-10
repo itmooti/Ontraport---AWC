@@ -2,7 +2,7 @@
     let allSubmissions = [];
     let currentTemplate = "files";
     let currentPage = 1;
-    const itemsPerPage = 12;
+    const itemsPerPage = 6;
     let searchQueryssss = "";
     let sortOrder = "latest";
     // Function to fetch data from GraphQL
