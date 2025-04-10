@@ -1,4 +1,4 @@
-let selectedTab = "overview";
+// let selectedTab = "overview";
 let currentUrl = window.location.href;
 let match = currentUrl.match(/[?&]selectedTab=([^?&#]*)/);
 
