@@ -1,6 +1,6 @@
 // let selectedTab = "overview";
-let currentUrl = window.location.href;
-let match = currentUrl.match(/[?&]selectedTab=([^?&#]*)/);
+// let currentUrl = window.location.href;
+// let match = currentUrl.match(/[?&]selectedTab=([^?&#]*)/);
 
 function selectedTabChange(tabname) {
   let url = window.location.href;
@@ -16,7 +16,7 @@ function selectedTabChange(tabname) {
 document.addEventListener("DOMContentLoaded", function () {
   let currentUrl = window.location.href;
   let tabMatch = currentUrl.match(/[?&]selectedTab=([^?&#]*)/);
-  selectedTab = tabMatch ? decodeURIComponent(tabMatch[1]) : null;
+  let selectedTab = tabMatch ? decodeURIComponent(tabMatch[1]) : null;
   let announcementMatch = currentUrl.match(
     /[?&]data-announcement-template-id=(\d+)/
   );
