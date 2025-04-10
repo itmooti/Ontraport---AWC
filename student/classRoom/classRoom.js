@@ -1,4 +1,4 @@
-var classIdFormEnrolment = document.querySelector("#classId").getAttribute("data-id");
+
 
 document.body.setAttribute(
   "x-data",
