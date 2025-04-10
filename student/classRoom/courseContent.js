@@ -75,11 +75,11 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // Define helper function to count 'Completed' status
-$.views.helpers({
-  countCompleted: function (arr) {
-    return arr.filter((item) => item.Status === "Completed").length;
-  },
-});
+// $.views.helpers({
+//   countCompleted: function (arr) {
+//     return arr.filter((item) => item.Status === "Completed").length;
+//   },
+// });
 
 $.views.helpers({
   formatNewLines: function (text) {
