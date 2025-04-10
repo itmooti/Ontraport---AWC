@@ -70,7 +70,6 @@ query calcContacts($class_id: AwcClassID, $id: AwcClassID) {
     if (!response.ok) throw new Error("HTTP Error");
     const result = await response.json();
     if (!result?.data?.calcContacts) {
-      console.error("Invalid response structure:", result);
       return;
     }
     const finalContacts = result.data.calcContacts
@@ -103,7 +102,6 @@ query calcContacts($class_id: AwcClassID, $id: AwcClassID) {
       },
     });
   } catch (e) {
-    console.error("Error fetching contacts:", e);
   }
 }
 fetchContactsAndInitializeTribute(classIdFromSubmission);
@@ -173,7 +171,6 @@ resume_lesson_unique_id
 
     const result = await response.json();
   } catch (error) {
-    console.error("Error updating enrolment:", error);
   }
 }
 
@@ -265,19 +262,22 @@ document.body.setAttribute(
   `{ isExpanded: true,isOverlayVisible: false, currentUrl: '${window.location.href}', assessmentOpen: false }`
 );
 
-
-let assessmentVideoContainer = document.querySelectorAll(".assessmentVideoContainer");
+let assessmentVideoContainer = document.querySelectorAll(
+  ".assessmentVideoContainer"
+);
 assessmentVideoContainer.forEach((container) => {
-  if(!videoFile){
+  if (!videoFile) {
     container.classList.add("hidden");
   } else {
     container.classList.remove("hidden");
   }
 });
 
-let assessmentAudioContainer = document.querySelectorAll(".assessmentAudioContainer");
+let assessmentAudioContainer = document.querySelectorAll(
+  ".assessmentAudioContainer"
+);
 assessmentAudioContainer.forEach((container) => {
-  if(!audFile){
+  if (!audFile) {
     container.classList.add("hidden");
   } else {
     container.classList.remove("hidden");
