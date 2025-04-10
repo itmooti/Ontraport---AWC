@@ -22,7 +22,6 @@ function showIfReferenced() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-  console.log(contentOrigin);
   if (contentOrigin === "Original" || contentOrigin === "") {
     showIfOriginal();
   } else {
@@ -66,10 +65,8 @@ async function navigateAfterUpdate(event, lessonID, href) {
 
   try {
     await updateResumeLesson(lessonID);
-    console.log("Navigating to:", href);
     window.location.href = href;
   } catch (error) {
-    console.error("Error updating lesson:", error);
   }
 }
 
@@ -85,7 +82,6 @@ async function updateResumeLesson(lessonID) {
 
   const enrolmentId = getParam("eid");
   if (!enrolmentId) {
-    // console.error("Enrolment ID not found in the URL");
     return;
   }
 
@@ -120,9 +116,7 @@ async function updateResumeLesson(lessonID) {
     });
 
     const result = await response.json();
-    console.log("Mutation result:", result);
   } catch (error) {
-    console.error("Error updating enrolment:", error);
   }
 }
 
