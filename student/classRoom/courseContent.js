@@ -68,9 +68,9 @@ document.addEventListener("DOMContentLoaded", function () {
   eid = match ? parseInt(match[1]) : null;
 
   if (!eid) {
-    console.error("eid parameter not found in URL.");
-  } else {
-  }
+    //console.error("eid parameter not found in URL.");
+    return;
+  } 
   defineQuery();
 });
 
