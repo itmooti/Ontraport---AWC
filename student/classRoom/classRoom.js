@@ -1,6 +1,6 @@
 // let selectedTab = "overview";
 // let currentUrl = window.location.href;
-// let match = currentUrl.match(/[?&]selectedTab=([^?&#]*)/);
+let match = currentUrl.match(/[?&]selectedTab=([^?&#]*)/);
 
 function selectedTabChange(tabname) {
   let url = window.location.href;
