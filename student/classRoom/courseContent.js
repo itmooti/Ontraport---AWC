@@ -75,6 +75,34 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
+$.views.helpers({
+  formatNewLines: function (text) {
+    return text ? text.replace(/\n/g, "<br>") : "";
+  },
+});
+
+$.views.helpers({
+  getToday: function () {
+    let today = new Date();
+    return today.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  },
+  extractDate: function (text) {
+    let dateMatch = text.match(/([A-Za-z]+ \d{1,2}, \d{4})/);
+    return dateMatch ? dateMatch[0] : "";
+  },
+});
+
+//helper jsrender function to count the number of lessons inside the module that is completed
+$.views.helpers({
+  countMatchingLessons: function (lessons) {
+    return lessons.filter((lesson) => lesson.Status === "Completed").length;
+  },
+});
+
 // Function to hide SVG if the corresponding div is empty
 function checkLearningOutcomes() {
   const outcomes = [
@@ -513,38 +541,6 @@ async function combineUnifiedData() {
   };
 }
 
-
-
-$.views.helpers({
-  formatNewLines: function (text) {
-    return text ? text.replace(/\n/g, "<br>") : "";
-  },
-});
-
-$.views.helpers({
-  getToday: function () {
-    let today = new Date();
-    return today.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  },
-  extractDate: function (text) {
-    let dateMatch = text.match(/([A-Za-z]+ \d{1,2}, \d{4})/);
-    return dateMatch ? dateMatch[0] : "";
-  },
-});
-
-//helper jsrender function to count the number of lessons inside the module that is completed
-$.views.helpers({
-  countMatchingLessons: function (lessons) {
-    return lessons.filter((lesson) => lesson.Status === "Completed").length;
-  },
-});
-
-
-
 // Render modules and progress sections using JS render templates
 async function renderUnifiedModules() {
   const skeletonHTML = `
@@ -576,9 +572,6 @@ async function renderUnifiedModules() {
   $("#modulesContainer").html(htmlOutput);
   $("#progressModulesContainer").html(progressOutput);
 }
-
-
-
 
 // Helper to add event listeners if element exists
 function addEventListenerIfExists(id, event, handler) {
