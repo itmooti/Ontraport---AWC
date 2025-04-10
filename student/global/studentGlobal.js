@@ -18,11 +18,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     `;
 
   try {
-    const response = await fetch(graphQlApiKeyAwc, {
+    const response = await fetch(graphQlApiEndpointUrlAwc, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Api-Key": graphQlApiEndpointUrlAwc,
+        "Api-Key": graphQlApiKeyAwc,
       },
       body: JSON.stringify({ query: getEnrollmentFormat }),
     });

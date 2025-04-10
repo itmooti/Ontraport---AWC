@@ -266,3 +266,175 @@ body::-webkit-scrollbar {
 .notification-content:hover {
   background: #f2f2f2;
 }
+
+/* ========== GLOBAL/RESET STYLES ========== */
+input {
+  margin: 0 !important;
+}
+
+textarea {
+  border: none;
+  overflow: auto;
+  outline: none;
+  box-shadow: none;
+  resize: none;
+}
+
+.openSans {
+  font-family: "Open Sans", serif !important;
+}
+
+.text-primary {
+  color: #007c8f !important;
+}
+
+.primaryButton {
+  background: #007b8e !important;
+  border: 1px solid #007b8e !important;
+  padding: 8px 12px !important;
+  outline: none !important;
+  margin: 0 !important;
+  border-radius: 4px !important;
+  transition: 0.2s ease-in-out;
+}
+
+.primaryButton:hover,
+.primaryButton:active,
+.primaryButton:focus {
+  background: #00505c !important;
+  border: 1px solid #00505c !important;
+  color: white !important;
+  box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;
+}
+
+.outlineButton {
+  background: transparent !important;
+  border: 1px solid #007b8e !important;
+  padding: 8px 12px !important;
+  outline: none !important;
+  margin: 0 !important;
+  transition: 0.2s ease-in-out;
+  color: #007b8e !important;
+  border-radius: 4px !important;
+}
+
+.outlineButton:hover,
+.outlineButton:active,
+.outlineButton:focus {
+  background: #00505c !important;
+  border: 1px solid #00505c !important;
+  color: #fff !important;
+  box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;
+}
+
+.outlineButton:hover svg path,
+.outlineButton:active svg path,
+.outlineButton:focus svg path {
+  fill: white !important;
+}
+
+.roundedButton {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  border-radius: 12px !important;
+  border: 1px solid #bbbcbb !important;
+  outline: none !important;
+  background: transparent !important;
+  width: max-content !important;
+  padding: 4px 8px !important;
+  transition: 0.2s ease-in-out;
+  color: var(--primary-color) !important;
+  cursor: pointer !important;
+}
+
+.roundedButton svg path {
+  transition: 0.2s ease-in-out;
+  fill: var(--primary-color) !important;
+}
+
+.roundedButton:hover,
+.roundedButton:active,
+.roundedButton:focus {
+  border: 1px solid var(--primary-color) !important;
+  background: var(--primary-color) !important;
+  color: white !important;
+}
+
+.roundedButton:hover svg path,
+.roundedButton:active svg path,
+.roundedButton:focus svg path,
+.roundedButton.upVoted svg path {
+  fill: white !important;
+}
+
+.roundedButton.upVoted {
+  border: 1px solid var(--primary-color) !important;
+  background: var(--primary-color) !important;
+  color: white !important;
+}
+
+.formInput,
+.formTextArea {
+  border: 1px solid #d3d3d3 !important;
+  border-radius: 4px !important;
+  outline: none !important;
+  width: 100% !important;
+  transition: 0.2s ease-in-out;
+}
+
+.formInput {
+  padding: 6px 12px !important;
+  width: calc(100% - 24px) !important;
+}
+
+.formTextArea {
+  padding: 16px !important;
+}
+
+.formInput:hover,
+.formInput:active,
+.formInput:focus,
+.formTextArea:hover,
+.formTextArea:active,
+.formTextArea:focus {
+  border: 1px solid var(--primary-color) !important;
+  box-shadow: none !important;
+}
+
+.formCheckbox {
+  opacity: 1 !important;
+  pointer-events: all !important;
+  position: relative !important;
+}
+
+.state-disabled {
+  opacity: 50%;
+  pointer-events: none;
+}
+
+.skeleton-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.skeleton-card {
+  height: 150px;
+  width: 100%;
+  background: #e0e0e0;
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+@keyframes shimmer {
+  0% { background-position: -100% 0; }
+  100% { background-position: 100% 0; }
+}

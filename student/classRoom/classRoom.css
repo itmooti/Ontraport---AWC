@@ -1,0 +1,193 @@
+iframe {
+  width: 100%;
+  height: 1200px;
+  overflow: hidden;
+  border: none;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+iframe::-webkit-scrollbar,
+.hideItsScrollBar::-webkit-scrollbar,
+.tribute-container::-webkit-scrollbar {
+  display: none !important;
+}
+
+.awc-Richtext-Content {
+  font-size: 18px !important;
+  line-height: 28px !important;
+  font-family: "Open Sans", sans-serif !important;
+}
+
+.voted {
+  background: var(--primary-color) !important;
+  border: transparent !important;
+}
+
+.voted svg path,
+.voted span {
+  fill: white !important;
+  color: white !important;
+}
+
+.atTheRateButton {
+  background: #ebf6f6 !important;
+  padding: 8px 12px !important;
+  outline: none !important;
+  margin: 0 !important;
+  transition: 0.2s ease-in-out;
+  color: #007b8e !important;
+  cursor: pointer;
+}
+
+.mentionable:empty::before,
+.mainMention:empty::before {
+  content: "Post your thoughts....Type @Name to mention people";
+  color: #999;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  font-family: "Open Sans", sans-serif !important;
+}
+
+.mentionable.focused:empty::before,
+.mainMention.focused:empty::before {
+  content: "";
+}
+
+.mention {
+  background-color: lightgray;
+  color: black;
+  padding: 2px 4px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.tribute-container ul {
+  background: #fff;
+  box-shadow: 0px 3px 8px 0px #00000029;
+}
+
+.tribute-container li {
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #414042;
+}
+
+.tribute-container li.highlight,
+.tribute-container li:hover {
+  background-color: #ebf6f6 !important;
+}
+
+.contact-list {
+  position: absolute;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 150px;
+  overflow-y: auto;
+  width: 200px;
+}
+
+.contact-item {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.contact-item:hover {
+  background-color: #f0f0f0;
+}
+
+.highlightTheSelected {
+  border: 1px solid #007c8f !important;
+  transition: background-color 0.5s ease-in-out;
+}
+
+.user-liked {
+  background-color: #007c8f !important;
+}
+
+.user-liked svg {
+  fill: #ffffff !important;
+}
+
+.chevronRight {
+  width: 12px;
+  height: 12px;
+  border-right: 2px solid #007c8f;
+  border-bottom: 2px solid #007c8f;
+  transform: rotate(-45deg);
+}
+
+.tabItem {
+  transition: 0.2s ease-in-out;
+  border-bottom: 2px solid transparent;
+}
+
+.tabItem:hover {
+  border-bottom: 2px solid #007b8e;
+  color: #007b8e;
+}
+
+.inActiveTab {
+  border-bottom: 2px solid transparent;
+  color: #586a80;
+}
+
+.activeTab,
+.activePostTab {
+  border-bottom: 2px solid #007b8e;
+  color: #007b8e;
+}
+
+.controls {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.controls input {
+  margin: 0 10px;
+  padding: 5px;
+  width: 100px;
+}
+
+.controls button {
+  margin: 0 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+}
+
+#iframe1 img {
+  object-fit: cover !important;
+}
+
+@media (max-width: 1200px) {
+  #o3068a5563483 > div > div > div {
+    display: flex !important;
+    flex-direction: column-reverse !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .bblock {
+    display: block !important;
+  }
+}
+
+.iframe-container {
+  overflow: hidden;
+  padding-top: 56.25%; /* 16:9*/
+  position: relative;
+}
+
+.iframe-container iframe {
+  border: 0;
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
