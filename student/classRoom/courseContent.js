@@ -74,12 +74,6 @@ document.addEventListener("DOMContentLoaded", function () {
   defineQuery();
 });
 
-// Define helper function to count 'Completed' status
-// $.views.helpers({
-//   countCompleted: function (arr) {
-//     return arr.filter((item) => item.Status === "Completed").length;
-//   },
-// });
 
 $.views.helpers({
   formatNewLines: function (text) {
@@ -127,7 +121,9 @@ function checkLearningOutcomes() {
     const svgElement = document.getElementById(outcome.svgId);
 
     if (!textElement || !textElement.textContent.trim()) {
-      svgElement.style.display = "none";
+      if(svgElement){
+        svgElement.style.display = "none";
+      }
     }
   });
 }
