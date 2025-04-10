@@ -5,8 +5,6 @@
     const itemsPerPage = 12;
     let searchQueryssss = "";
     let sortOrder = "latest";
-    const stdID = "[Visitor//Contact ID]";
-    const activeClassIDSubmission ="[Page//ID]";
     // Function to fetch data from GraphQL
     function getUnixTimestamp(isoDate) {
     return isoDate ? Math.floor(new Date(isoDate).getTime() / 1000) : null;
@@ -136,9 +134,9 @@
 
     const templates = {
         comments: `
-    {{ if submissions.length }}
+    {{if submissions.length}}
     <div class="flex w-full grid xl:grid-cols-3 lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-x-[12px] md:gap-y-[24px] gap-y-3">
-        {{ for submissions }}
+        {{for submissions}}
         <div class="flex px-2 py-3 bg-white rounded items-center justify-between group hover:bg-[#C7E6E6] transition-all cursor-pointer"
 @click="
         document.querySelector('.iframeWrapper').classList.remove('hidden');
@@ -159,7 +157,7 @@
                 <div class="flex-col justify-center items-start gap-1 flex">
                     <div class="justify-start items-center gap-2 flex">
                         <div class="text-[#414042] text-sm font-semibold font-['Open Sans'] leading-[18px]">{{:Contact_Display_Name || 'Anoynomous'}}</div>
-                        {{ if formattedTime }} <div class="w-1 h-1 bg-[#BBBCBB] rounded-full"></div>{{/if}}
+                        {{if formattedTime }} <div class="w-1 h-1 bg-[#BBBCBB] rounded-full"></div>{{/if}}
                         <div class="justify-start items-center gap-1.5 flex">
                             <div class="text-[#586A80] text-xs font-normal font-['Open Sans'] leading-none">{{:formattedTime}}</div>
                         </div>
@@ -187,18 +185,18 @@
     </div>
     {{/for}}
 </div>
-{ {else } }
+{{else}}
 <div class="flex w-full items-center justify-center flex-col gap-[24px] max-[1100px]:px-[16px] max-[1100px]:pt-[24px] showIfNoSubmissions ">
     <img src="https://file.ontraport.com/media/1fd06d4f065a466296648360d8ff572b.phpja30lr?Expires=4889409535&Signature=GIAfD18I2mBBO52BJTTX37UfBUzoG7jQrWj3OdlLsy0fSPAfHvNz9AmAPdrZ~9yx2GFVFx8xhADn-tbH2s041MWRC05fPrBjxREuExLTGtwuZC5oGt3IDk-fL-PR99-GR~O~Vcls-0ArfMR7ktwHNZhyH02Dow-ewdX9Bu5vhGopBJ4umWsjvvMF6S0G-H2U3V1pYY6K7g-qqg20kZ-VodywACeLsn-0~zm0UK1ep9s0h6r3KpZXCseBGRFQgp0F0jZQ0MCVLbcK2bWPacnq-~RcbTcxVMYlPQDfw-cWAZZjvOJ9e~s3x0v80h6FTNdHURxIXDJ3FkTQhFAG1wEnRw__&Key-Pair-Id=APKAJVAAMVW6XQYWSTNA">
         <div class="text-center text-[#586A80] text-base font-normal font-['Open Sans'] leading-normal">No Submissions available</div>
 </div>
-{ {/if } }
+{{/if}}
 `,
     
     files: `
-{ { if submissions.length} }
+{{if submissions.length}}
 <div class="flex w-full grid xl:grid-cols-3 lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-x-[12px] md:gap-y-[24px] gap-y-3">
-    {{ for submissions }}
+    {{for submissions}}
     <div class="flex px-2 py-3 bg-white rounded items-center justify-between group hover:bg-[#C7E6E6] transition-all cursor-pointer main_submission_wrapper submissionsWrapper"
 @click="
     document.querySelector('.iframeWrapper').classList.remove('hidden');
@@ -219,7 +217,7 @@
             <div class="flex-col justify-center items-start gap-1 flex">
                 <div class="justify-start items-center gap-2 flex">
                     <div class="text-[#414042] text-sm font-semibold font-['Open Sans'] leading-[18px]">{{:Contact_Display_Name || 'Anoynomous'}}</div>
-                    {{ if formattedTime }} <div class="w-1 h-1 bg-[#BBBCBB] rounded-full"></div>{{/if}}
+                    {{if formattedTime}} <div class="w-1 h-1 bg-[#BBBCBB] rounded-full"></div>{{/if}}
                     <div class="justify-start items-center gap-1.5 flex">
                         <div class="text-[#586A80] text-xs font-normal font-['Open Sans'] leading-none">{{:formattedTime}}</div>
                     </div>
@@ -241,14 +239,14 @@
         </div>
     </div>
 </div>
-{ {/for } }
+{{/for}}
 </div >
-    {{else }}
+    {{else}}
 <div class="flex w-full items-center justify-center flex-col gap-[24px] max-[1100px]:px-[16px] max-[1100px]:pt-[24px] showIfNoSubmissions ">
     <img src="https://file.ontraport.com/media/1fd06d4f065a466296648360d8ff572b.phpja30lr?Expires=4889409535&Signature=GIAfD18I2mBBO52BJTTX37UfBUzoG7jQrWj3OdlLsy0fSPAfHvNz9AmAPdrZ~9yx2GFVFx8xhADn-tbH2s041MWRC05fPrBjxREuExLTGtwuZC5oGt3IDk-fL-PR99-GR~O~Vcls-0ArfMR7ktwHNZhyH02Dow-ewdX9Bu5vhGopBJ4umWsjvvMF6S0G-H2U3V1pYY6K7g-qqg20kZ-VodywACeLsn-0~zm0UK1ep9s0h6r3KpZXCseBGRFQgp0F0jZQ0MCVLbcK2bWPacnq-~RcbTcxVMYlPQDfw-cWAZZjvOJ9e~s3x0v80h6FTNdHURxIXDJ3FkTQhFAG1wEnRw__&Key-Pair-Id=APKAJVAAMVW6XQYWSTNA">
         <div class="text-center text-[#586A80] text-base font-normal font-['Open Sans'] leading-normal">No Submissions available</div>
 </div>
-{ {/if } }
+{{/if}}
 `
   };
 async function waitForDueDates() {
@@ -429,8 +427,3 @@ async function waitForDueDates() {
     sortOrder = "oldest";
     filterAndRender();
   });
-
-if (selectedTab == 'studentsubmissions') {
-    fetchAnnouncements();
-    renderSubmissions();
-}

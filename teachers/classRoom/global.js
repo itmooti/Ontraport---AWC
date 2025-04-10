@@ -70,7 +70,10 @@ let match = currentUrl.match(/[?&]selectedTab=([^&#?]*)/);
 if (match && match[1]) {
     selectedTab = decodeURIComponent(match[1].split('?')[0]);
 }
-
+if (selectedTab == 'studentsubmissions') {
+    loadAssignments();
+    renderSubmissions();
+}
 if (selectedTab == 'assignments') {
     loadAssignments();
 }
