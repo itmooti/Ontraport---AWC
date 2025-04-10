@@ -4,7 +4,7 @@ var classIdFormEnrolment = document
 
 document.body.setAttribute(
   "x-data",
-  "(() => ({ selectedTab: `${selectedTab}`,achievementPreviewModal:false, ...modalComponent() }))()"
+  "(() => ({ selectedTab: `${selectedTab}`}))()"
 );
 
 document.addEventListener("DOMContentLoaded", function () {
