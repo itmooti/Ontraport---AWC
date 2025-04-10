@@ -498,3 +498,32 @@ input {
          background-position: 100% 0;
      }
  }
+   #searchInput {
+       margin: 0 !important;
+       height: unset !important;
+       -webkit-box-shadow: none !important;
+       box-shadow: none !important;
+       border: 1px solid #D3D7E2 !important;
+       border-radius: 4px !important;
+       padding: 8px 12px !important;
+       width: 100% !important;
+       box-sizing: border-box !important;
+       background-color: white !important;
+       font-size: 16px !important;
+
+       &:hover {
+           border: 1px solid #007C8F !important;
+       }
+
+       &:active {
+           border: 1px solid #007C8F !important;
+       }
+
+       &:focus {
+           border: 1px solid #007C8F !important;
+       }
+   }
+
+   .text-dark {
+       color: #414042;
+   }
