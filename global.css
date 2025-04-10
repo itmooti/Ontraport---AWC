@@ -383,6 +383,12 @@ textarea {
   color: white !important;
 }
 
+.roundedButton.voted {
+  border: 1px solid var(--primary-color) !important;
+  background: var(--primary-color) !important;
+  color: white !important;
+}
+
 .formInput,
 .formTextArea {
   border: 1px solid #d3d3d3 !important;
