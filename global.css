@@ -271,6 +271,7 @@ body::-webkit-scrollbar {
 input {
   margin: 0 !important;
 }
+
 .voted {
   background: var(--primary-color) !important;
 }
@@ -279,6 +280,7 @@ input {
 .voted svg path {
   fill: white !important;
 }
+
 textarea {
   border: none;
   overflow: auto;
