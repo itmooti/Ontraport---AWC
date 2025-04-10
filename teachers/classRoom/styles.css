@@ -476,3 +476,37 @@ input {
     cursor: pointer;
     background: #EBF6F6;
 }
+ /* Skeleton Container */
+ .skeleton-container {
+     display: flex;
+     flex-direction: column;
+     gap: 15px;
+ }
+
+ /* Skeleton Card */
+ .skeleton-card {
+     height: 150px;
+     width: 100%;
+     background: #E0E0E0;
+     border-radius: 10px;
+     position: relative;
+     overflow: hidden;
+ }
+
+ /* Shimmer Effect */
+ .skeleton-shimmer {
+     background: linear-gradient(90deg, #E0E0E0 25%, #F0F0F0 50%, #E0E0E0 75%);
+     background-size: 400% 100%;
+     animation: shimmer 1.5s infinite linear;
+ }
+
+ /* Animation Keyframes */
+ @keyframes shimmer {
+     0% {
+         background-position: -100% 0;
+     }
+
+     100% {
+         background-position: 100% 0;
+     }
+ }
