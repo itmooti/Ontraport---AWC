@@ -1,285 +1,315 @@
-  @media (max-width:600px) {
-      .globalBlock>div>div {
-          background-color: #f5f5f5 !important;
+@media (max-width: 600px) {
+  .globalBlock > div > div {
+    background-color: #f5f5f5 !important;
+  }
+}
+
+.inter {
+  font-family: "Inter", serif !important;
+}
+
+.serif {
+  font-family: "Open Sans", serif !important;
+}
+
+.hideScrollBar::-webkit-scrollbar {
+  display: none;
+}
+
+.hideScrollBar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+#output {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/*removing the unnecessary style put by browser by default in input fields  --added Below --*/
+input[type="text"]:not(.browser-default) {
+  height: 16px !important;
+  margin: unset !important;
+  border: unset !important;
+}
+
+input[type="text"]:not(.browser-default):focus:not([readonly]) {
+  border: unset !important;
+  webkit-box-shadow: unset !important;
+  box-shadow: unset !important;
+}
+
+input[type="date"]:not(.browser-default) {
+  height: unset !important;
+  margin: unset !important;
+  padding: unset !important;
+  border: unset !important;
+}
+
+input[type="date"]::-webkit-datetime-edit {
+  color: #d3d3d3 !important;
+}
+
+input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  color: #d3d3d3 !important;
+  -webkit-box-shadow: unset !important;
+  box-shadow: unset !important;
+}
+
+input[type="date"]:not(.browser-default):focus:not([readonly]) {
+  border: unset !important;
+}
+
+input[type="date"]:not(.browser-default):focus:not([readonly]) {
+  box-shadow: unset !important;
+}
+
+.primaryInputField {
+  background: #fff;
+  border-radius: 4px;
+  padding: 6px 12px;
+  border: 1px solid #d3d3d3;
+}
+
+input::placeholder {
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 18px !important;
+  color: #d3d3d3 !important;
+}
+
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background: none;
+  border: none;
+}
+
+.primaryButton {
+  background: #007b8e !important;
+  border: 1px solid #007b8e !important;
+  padding: 8px 12px !important;
+  outline: none !important;
+  margin: 0 !important;
+  border-radius: 4px !important;
+  transition: 0.2s ease-in-out;
+  &:hover {
+    background: #00505c !important;
+    border: 1px solid #00505c !important;
+    color: #00505c !important;
+    outline: none !important;
+    box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;
+  }
+
+  &:active {
+    background: #00505c !important;
+    border: 1px solid #00505c !important;
+    color: #fff !important;
+    outline: none !important;
+    box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;
+  }
+
+  &:focus {
+    background: #00505c !important;
+    border: 1px solid #00505c !important;
+    color: #fff !important;
+    outline: none !important;
+    box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;
+  }
+}
+
+.faintButton {
+  background: #ebf6f6 !important;
+  border: 1px solid #ebf6f6 !important;
+  padding: 8px 12px !important;
+  outline: none !important;
+  margin: 0 !important;
+  transition: 0.2s ease-in-out;
+
+  &:hover {
+    background: #007b8e !important;
+    border: 1px solid #007b8e !important;
+    outline: none !important;
+    /* box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important; */
+    border-radius: 4px !important;
+    color: white !important;
+  }
+
+  &:active {
+    background: #007b8e !important;
+    border: 1px solid #007b8e !important;
+    outline: none !important;
+    /*  box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;*/
+    border-radius: 4px !important;
+  }
+
+  &:focus {
+    background: #007b8e !important;
+    border: 1px solid #007b8e !important;
+    outline: none !important;
+    /*  box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important; */
+    border-radius: 4px !important;
+  }
+}
+
+.primarySelect {
+  display: block !important;
+  background: transparent !important;
+  padding: 8px 12px !important;
+  height: 100% !important;
+  border: 1px solid #007b8e !important;
+  border-radius: 4px !important;
+  outline: none !important;
+  box-shadow: none !important;
+  width: 105px !important;
+}
+
+.outlineButton {
+  background: transparent !important;
+  border: 1px solid #007b8e !important;
+  padding: 8px 12px !important;
+  outline: none !important;
+  margin: 0 !important;
+  transition: 0.2s ease-in-out;
+  color: #007b8e !important;
+  border-radius: 4px !important;
+
+  &:hover {
+    background: #00505c !important;
+    border: 1px solid #00505c !important;
+    outline: none !important;
+    box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;
+    color: #fff !important;
+
+    svg {
+      path {
+        fill: white !important;
       }
+    }
   }
 
-  .inter {
-      font-family: "Inter", serif !important;
-  }
+  &:active {
+    background: #00505c !important;
+    border: 1px solid #00505c !important;
+    outline: none !important;
+    box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;
+    color: #fff !important;
+    fill: white !important;
 
-  .serif {
-      font-family: "Open Sans", serif !important;
-  }
-
-  .hideScrollBar::-webkit-scrollbar {
-      display: none;
-  }
-
-  .hideScrollBar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-  }
-
-  #output {
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-  }
-
-
-  /*removing the unnecessary style put by browser by default in input fields  --added Below --*/
-  input[type=text]:not(.browser-default) {
-      height: 16px !important;
-      margin: unset !important;
-      border: unset !important;
-  }
-
-  input[type=text]:not(.browser-default):focus:not([readonly]) {
-      border: unset !important;
-      webkit-box-shadow: unset !important;
-      box-shadow: unset !important;
-  }
-
-  input[type=date]:not(.browser-default) {
-      height: unset !important;
-      margin: unset !important;
-      padding: unset !important;
-      border: unset !important;
-  }
-
-  input[type="date"]::-webkit-datetime-edit {
-      color: #d3d3d3 !important;
-  }
-
-  input[type="date"]::-webkit-datetime-edit-fields-wrapper {
-      color: #d3d3d3 !important;
-      -webkit-box-shadow: unset !important;
-      box-shadow: unset !important;
-  }
-
-
-  input[type=date]:not(.browser-default):focus:not([readonly]) {
-      border: unset !important;
-  }
-
-  input[type=date]:not(.browser-default):focus:not([readonly]) {
-      box-shadow: unset !important;
-  }
-
-
-  .primaryInputField {
-      background: #fff;
-      border-radius: 4px;
-      padding: 6px 12px;
-      border: 1px solid #d3d3d3;
-  }
-
-  input::placeholder {
-      font-size: 14px !important;
-      font-weight: 400 !important;
-      line-height: 18px !important;
-      color: #d3d3d3 !important;
-
-  }
-
-  select {
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      appearance: none;
-      background: none;
-      border: none;
-  }
-
-
-
-  .primaryButton {
-      background: #007b8e !important;
-      border: 1px solid #007b8e !important;
-      padding: 8px 12px !important;
-      outline: none !important;
-      margin: 0 !important;
-      border-radius: 4px !important;
-      transition: 0.2s ease-in-out;
-      &:hover {
-          background: #00505C !important;
-          border: 1px solid #00505C !important;
-          color: #00505C !important;
-          outline: none !important;
-          box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;
+    svg {
+      path {
+        fill: white !important;
       }
-
-      &:active {
-          background: #00505C !important;
-          border: 1px solid #00505C !important;
-          color: #fff !important;
-          outline: none !important;
-          box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;
-      }
-
-      &:focus {
-          background: #00505C !important;
-          border: 1px solid #00505C !important;
-          color: #fff !important;
-          outline: none !important;
-          box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;
-      }
+    }
   }
 
-  .faintButton {
-      background: #EBF6F6 !important;
-      border: 1px solid #EBF6F6 !important;
-      padding: 8px 12px !important;
-      outline: none !important;
-      margin: 0 !important;
-      transition: 0.2s ease-in-out;
+  &:focus {
+    background: #00505c !important;
+    border: 1px solid #00505c !important;
+    outline: none !important;
+    box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;
+    color: #fff !important;
+    fill: white !important;
 
-      &:hover {
-          background: #007b8e !important;
-          border: 1px solid #007b8e !important;
-          outline: none !important;
-          /* box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important; */
-          border-radius: 4px !important;
-          color: white !important;
+    svg {
+      path {
+        fill: white !important;
       }
+    }
+  }
+}
 
-      &:active {
-          background: #007b8e !important;
-          border: 1px solid #007b8e !important;
-          outline: none !important;
-          /*  box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;*/
-          border-radius: 4px !important;
+.outlineRedButton {
+  background: transparent !important;
+  border: 1px solid #ff394e !important;
+  padding: 8px 12px !important;
+  outline: none !important;
+  margin: 0 !important;
+  transition: 0.2s ease-in-out;
+  color: #ff394e !important;
+  border-radius: 4px !important;
 
+  &:hover {
+    background: #ff394e !important;
+    border: 1px solid #ff394e !important;
+    outline: none !important;
+    box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;
+    color: #fff !important;
+
+    svg {
+      path {
+        fill: white !important;
       }
-
-      &:focus {
-          background: #007b8e !important;
-          border: 1px solid #007b8e !important;
-          outline: none !important;
-          /*  box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important; */
-          border-radius: 4px !important;
-
-      }
+    }
   }
 
-  .primarySelect {
-      display: block !important;
-      background: transparent !important;
-      padding: 8px 12px !important;
-      height: 100% !important;
-      border: 1px solid #007b8e !important;
-      border-radius: 4px !important;
-      outline: none !important;
-      box-shadow: none !important;
-      width: 105px !important;
+  &:active {
+    background: #ff394e !important;
+    border: 1px solid #ff394e !important;
+    outline: none !important;
+    box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;
+    color: #fff !important;
+    fill: white !important;
+
+    svg {
+      path {
+        fill: white !important;
+      }
+    }
   }
 
+  &:focus {
+    background: #ff394e !important;
+    border: 1px solid #ff394e !important;
+    outline: none !important;
+    box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;
+    color: #fff !important;
+    fill: white !important;
 
-  .outlineButton {
-      background: transparent !important;
-      border: 1px solid #007b8e !important;
-      padding: 8px 12px !important;
-      outline: none !important;
-      margin: 0 !important;
-      transition: 0.2s ease-in-out;
-      color: #007b8e !important;
-      border-radius: 4px !important;
-
-      &:hover {
-          background: #00505C !important;
-          border: 1px solid #00505C !important;
-          outline: none !important;
-          box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;
-          color: #fff !important;
-
-          svg {
-              path {
-                  fill: white !important;
-              }
-          }
+    svg {
+      path {
+        fill: white !important;
       }
-
-      &:active {
-          background: #00505C !important;
-          border: 1px solid #00505C !important;
-          outline: none !important;
-          box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;
-          color: #fff !important;
-          fill: white !important;
-
-          svg {
-              path {
-                  fill: white !important;
-              }
-          }
-      }
-
-      &:focus {
-          background: #00505C !important;
-          border: 1px solid #00505C !important;
-          outline: none !important;
-          box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;
-          color: #fff !important;
-          fill: white !important;
-
-          svg {
-              path {
-                  fill: white !important;
-              }
-          }
-      }
+    }
   }
+}
 
-  .outlineRedButton {
-      background: transparent !important;
-      border: 1px solid #ff394e !important;
-      padding: 8px 12px !important;
-      outline: none !important;
-      margin: 0 !important;
-      transition: 0.2s ease-in-out;
-      color: #ff394e !important;
-      border-radius: 4px !important;
+html {
+  font-size: 16px !important;
+}
+ol {
+  list-style: decimal !important;
+}
+body::-webkit-scrollbar {
+  display: none;
+}
 
-      &:hover {
-          background: #ff394e !important;
-          border: 1px solid #ff394e !important;
-          outline: none !important;
-          box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;
-          color: #fff !important;
+body {
+  overflow-y: scroll;
+  scrollbar-width: 0;
+  -ms-overflow-style: none;
+}
 
-          svg {
-              path {
-                  fill: white !important;
-              }
-          }
-      }
-
-      &:active {
-          background: #ff394e !important;
-          border: 1px solid #ff394e !important;
-          outline: none !important;
-          box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;
-          color: #fff !important;
-          fill: white !important;
-
-          svg {
-              path {
-                  fill: white !important;
-              }
-          }
-      }
-
-      &:focus {
-          background: #ff394e !important;
-          border: 1px solid #ff394e !important;
-          outline: none !important;
-          box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.12) !important;
-          color: #fff !important;
-          fill: white !important;
-
-          svg {
-              path {
-                  fill: white !important;
-              }
-          }
-      }
-  }
+.comment-editor:focus,
+.comment-editor:focus-visible,
+.comment-editor:active {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.comment-editor [contenteditable]:focus,
+.comment-editor [contenteditable]:focus-visible {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.comment-form-wrapper:active,
+.comment-form-wrapper:focus,
+.comment-form-wrapper:focus-visible,
+.comment-form-wrapper:hover {
+  border: 1px solid white;
+}
+.notification-content:hover {
+  background: #f2f2f2;
+}
