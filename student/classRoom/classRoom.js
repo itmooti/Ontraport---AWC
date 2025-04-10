@@ -152,7 +152,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 if (selectedTab === "content" || selectedTab === "progress") {
-  console.log("Start:", selectedTab);
   document.addEventListener("DOMContentLoaded", async () => {
     await fetchEnrollmentProgress();
     renderUnifiedModules();
