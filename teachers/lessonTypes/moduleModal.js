@@ -2,7 +2,6 @@ let showContentIfOriginal = document.querySelectorAll(".showContentIfOriginal");
 let showContentIfReferenced = document.querySelectorAll(
   ".showContentIfReferenced"
 );
-
 function showIfOriginal() {
   showContentIfOriginal.forEach((content) => {
     content.classList.remove("hidden");
@@ -11,7 +10,6 @@ function showIfOriginal() {
     content.classList.add("hidden");
   });
 }
-
 function showIfReferenced() {
   showContentIfOriginal.forEach((content) => {
     content.classList.add("hidden");
@@ -20,7 +18,6 @@ function showIfReferenced() {
     content.classList.remove("hidden");
   });
 }
-
 document.addEventListener("DOMContentLoaded", function () {
   console.log(contentOrigin);
   if (contentOrigin === "Original" || contentOrigin === "") {
@@ -166,29 +163,10 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-
-document.addEventListener("DOMContentLoaded", function () {
-  // Extract and modify eid
-  let currentUrl = window.location.href;
-  let match = currentUrl.match(/[\?&]eid=(\d+)/);
-  eid = match ? parseInt(match[1]) : null;
-
-  if (!eid) {
-    console.error("eid parameter not found in URL.");
-  } else {
-    console.log("Modified eid:", eid);
-  }
-
-  // Define getModulesQuery only after eid is set
-  defineQuery();
-});
-
-
-document.addEventListener("DOMContentLoaded", async function () {
-  if (lessonID) {
-    await updateResumeLesson(lessonID);
-  }
-});
+document.body.setAttribute(
+  "x-data",
+  `{ isExpanded: true,isOverlayVisible: false, openConformModal:false, currentUrl: '${window.location.href}', selectedTab: 'overview' }`
+);
 
 let eid = null;
 
@@ -206,107 +184,100 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Define getModulesQuery only after eid is set
   defineQuery();
-  startToProgress(eid);
 });
-
-//let getModulesQuery;
-//let getLessonsQuery;
+let getModulesQuery;
+let getLessonsQuery;
 let completedQuery;
 let inProgressQuery;
-
 function defineQuery() {
-  completedQuery = `
-          query {
-              calcOEnrolmentLessonCompletionLessonCompletions(
-                  query: [{ where: { enrolment_lesson_completion_id: ${eid} } }]
-              ) {
-                  Lesson_Completion_ID: field(arg: ["lesson_completion_id"])
+  getModulesQuery = `
+ query calcModules {
+  calcModules(
+   query: [
+      {
+        where: {
+          Course: [
+            {
+              where: {
+                Enrolments: [{ where: { id: ${eid} } }]
               }
-          }
-      `;
+            }
+          ]
+        }
+      }
+    ]
+  ) {
+        Module_Name: field(arg: ["module_name"]) 
+		EnrolmentID: field(arg: ["Course", "Enrolments", "id"]) 
+        Description: field(arg: ["description"]) 
+        Order: field(arg: ["order"]) 
+        ID: field(arg: ["id"])  
+		Lesson_Count_Visible: field(arg: ["lesson__count__visible"]) 
+		Lesson_Count_Progress: field(arg: ["lesson__count__progress"]) 
+		Enrolment_Certificate_Link: field(arg: ["Course", "Enrolments", "certificate__link"])  
+	 	Enrolment_Date_Completion: field(arg: ["Course", "Enrolments", "date_completion"])  
+        Number_of_lessons_in_module: field( arg: ["number_of_lessons_in_module"]) 
+        Module_Length_in_Hour: field(arg: ["module_length_in_hour"] ) 
+        Module_Length_in_Minute: field( arg: ["module_length_in_minute"] ) 
+        Module_Length_in_Second: field( arg: ["module_length_in_second"]) 
+        Week_Open_from_Start_Date: field( arg: ["week_open_from_start_date"]) 
+        Class_Start_Date: field(arg: [  "Course" "Classes_As_Active_Course""start_date"]) 
+        Course_Course_Access_Type: field(arg: ["Course", "course_access_type"])  
+   		Enrolment_Completed_Lessons: field(arg: ["Course", "Enrolments", "completed_lessons"])  
+    	Don_t_Track_Progress: field(arg: ["don_t_track_progress"])  
+  }
+}
+    `;
+
+  // GraphQL Query for Lessons
+  getLessonsQuery = `
+query calcLessons {
+  calcLessons(
+    limit: 50000
+    offset: 0
+	orderBy: [{ path: ["order_in_module"], type: asc }]
+  ) {
+    ID: field(arg: ["id"])
+    Module_ID: field(arg: ["module_id"]) 
+    Assessment_Due_End_of_Week: field(arg: ["assessment_due_end_of_week"])  
+	Custom_Button_Text: field(arg: ["custom__button__text"])   
+	Lesson_Progress_Not_Tracked: field(arg: ["lesson__progress__not__tracked"]) 
+    Lesson_Name: field(arg: ["lesson_name"]) 
+    AWC_Lesson_Content_Page_URL: field(arg: ["awc_lesson_content_page_url"]) 
+    Unique_ID: field(arg: ["unique_id"])
+    Lesson_Length_in_Hour: field(arg: ["lesson_length_in_hour"])  
+    Lesson_Length_in_Minute: field( arg: ["lesson_length_in_minute"]) 
+    Lesson_Length_in_Second: field(arg: ["lesson_length_in_second"]) 
+    Lesson_Introduction_Text: field(arg: ["lesson_introduction_text"]) 
+    Lesson_Learning_Outcome: field(arg: ["lesson_learning_outcome"]) 
+ 	Type: field(arg: ["type"]) 
+  }
+}
+`;
+
+  completedQuery = `
+        query {
+            calcOEnrolmentLessonCompletionLessonCompletions(
+                query: [{ where: { enrolment_lesson_completion_id: ${eid} } }]
+            ) {
+                Lesson_Completion_ID: field(arg: ["lesson_completion_id"])
+            }
+        }
+    `;
 
   inProgressQuery = `
-          query {
-              calcOLessonInProgressLessonEnrolmentinProgresses(
-                  query: [{ where: { lesson_enrolment_in_progress_id: ${eid} } }]
-              ) {
-                  Lesson_In_Progress_ID: field(arg: ["lesson_in_progress_id"])
-              }
-          }
-      `;
-}
-
-async function startToProgress(eid) {
-  const pageLessonID = parseInt("[Page//ID]");
-  const checkQuery = `
-       query calcOLessonInProgressLessonEnrolmentinProgresses {
-    calcOLessonInProgressLessonEnrolmentinProgresses(
-      query: [
-        { where: { lesson_enrolment_in_progress_id: ${eid} } }
-      ]
-    ) {
-      Lesson_In_Progress_ID: field(
-        arg: ["lesson_in_progress_id"]
-      )
-    }
-  }
-      `;
-  try {
-    const checkResponse = await fetch(
-      "https://awc.vitalstats.app/api/v1/graphql",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Api-Key": "mMzQezxyIwbtSc85rFPs3",
-        },
-        body: JSON.stringify({ query: checkQuery }),
-      }
-    );
-
-    const checkResult = await checkResponse.json();
-    const existingIDs =
-      checkResult?.data?.calcOLessonInProgressLessonEnrolmentinProgresses?.map(
-        (i) => i.Lesson_In_Progress_ID
-      );
-
-    if (existingIDs.includes(pageLessonID)) {
-      console.log("Lesson already in progress for this enrolment.");
-      return;
-    } else {
-      console.log("Lesson not in progress yet. Proceeding to create.");
-    }
-
-    const mutationQuery = `
-          mutation createOLessonInProgressLessonEnrolmentinProgress(
-            $payload: OLessonInProgressLessonEnrolmentinProgressCreateInput
-          ) {
-            createOLessonInProgressLessonEnrolmentinProgress(payload: $payload) {
-              lesson_in_progress_id
-              lesson_enrolment_in_progress_id
+        query {
+            calcOLessonInProgressLessonEnrolmentinProgresses(
+                query: [{ where: { lesson_enrolment_in_progress_id: ${eid} } }]
+            ) {
+                Lesson_In_Progress_ID: field(arg: ["lesson_in_progress_id"])
             }
-          }
-        `;
-
-    const variables = {
-      payload: {
-        lesson_in_progress_id: pageLessonID,
-        lesson_enrolment_in_progress_id: eid,
-      },
-    };
-
-    const response = await fetch("https://awc.vitalstats.app/api/v1/graphql", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Api-Key": "mMzQezxyIwbtSc85rFPs3",
-      },
-      body: JSON.stringify({ query: mutationQuery, variables }),
-    });
-
-    const result = await response.json();
-    console.log("Lesson progress created:", result);
-  } catch (error) {
-    console.error("Network or Fetch Error:", error);
-  }
+        }
+    `;
 }
+
+document.addEventListener("DOMContentLoaded", async function () {
+  if (lessonID) {
+    await updateResumeLesson(lessonID);
+  }
+});
