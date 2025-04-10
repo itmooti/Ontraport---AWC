@@ -29,3 +29,11 @@
 //         showIfReferenced();
 //     }
 // });
+
+document.addEventListener("DOMContentLoaded", function () {
+    if (contentOrigin === "Original" || contentOrigin === "") {
+        showIfOriginal();
+    } else {
+        showIfReferenced();
+    }
+});
