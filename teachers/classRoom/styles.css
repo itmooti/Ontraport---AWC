@@ -468,3 +468,11 @@ input {
 .mainMention.focused:empty::before {
     content: "";
 }
+.assignmentsWrapper {
+    transition: 0.2s ease-in-out;
+}
+
+.assignmentsWrapper:hover {
+    cursor: pointer;
+    background: #EBF6F6;
+}
