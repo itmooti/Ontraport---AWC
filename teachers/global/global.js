@@ -1,6 +1,6 @@
 
-let showContentIfOriginal = document.querySelectoryAll(".showContentIfOriginal");
-let showContentIfReferenced = document.querySelectoryAll(".showContentIfReferenced");
+let showContentIfOriginal = document.querySelectorAll(".showContentIfOriginal");
+let showContentIfReferenced = document.querySelectorAll(".showContentIfReferenced");
 
 function showIfOriginal() {
     showContentIfOriginal.forEach((content) => {
