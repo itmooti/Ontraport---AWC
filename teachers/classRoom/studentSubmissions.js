@@ -334,7 +334,6 @@ async function waitForDueDates() {
             Late_Submission: isLateSubmission(submissionDateUnix, dueDateUnix) ? "(Late Submission)" : ""
         };
     });
-   // console.table(allSubmissions); 
     filterAndRender();
 }
   function filterAndRender() {
@@ -430,3 +429,8 @@ async function waitForDueDates() {
     sortOrder = "oldest";
     filterAndRender();
   });
+  
+if (selectedTab == 'studentsubmissions') {
+    loadAssignments();
+    renderSubmissions();
+}
