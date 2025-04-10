@@ -429,8 +429,8 @@ async function waitForDueDates() {
     sortOrder = "oldest";
     filterAndRender();
   });
-  
+
 if (selectedTab == 'studentsubmissions') {
-    loadAssignments();
+    fetchAnnouncements();
     renderSubmissions();
 }
