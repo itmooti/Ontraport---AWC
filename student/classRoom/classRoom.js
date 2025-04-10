@@ -13,11 +13,49 @@ function selectedTabChange(tabname) {
   window.history.replaceState(null, "", newUrl);
 }
 
+document.addEventListener("DOMContentLoaded", function () {
+  let currentUrl = window.location.href;
+  let tabMatch = currentUrl.match(/[?&]selectedTab=([^?&#]*)/);
+  selectedTab = tabMatch ? decodeURIComponent(tabMatch[1]) : null;
+  let announcementMatch = currentUrl.match(
+    /[?&]data-announcement-template-id=(\d+)/
+  );
+  let announcementId = announcementMatch ? announcementMatch[1] : null;
+  let postMatch = currentUrl.match(/[?&]current-post-id=(\d+)/);
+  let postId = postMatch ? postMatch[1] : null;
+  function highlightElement() {
+    let targetElement = null;
+    if (selectedTab === "anouncemnt" && announcementId) {
+      targetElement = document.querySelector(
+        `[data-announcement-template-id="${announcementId}"]`
+      );
+    } else if (selectedTab === "courseChat" && postId) {
+      targetElement = document.querySelector(`[current-post-id="${postId}"]`);
+    }
+    if (targetElement) {
+      targetElement.classList.add("highlightTheSelected");
+      setTimeout(() => {
+        targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 1000);
+      return true;
+    }
+    return false;
+  }
+  if (!highlightElement()) {
+    const observer = new MutationObserver(() => {
+      if (highlightElement()) {
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+});
 
+if (match) {
+  selectedTab = decodeURIComponent(match[1]);
+}
 
 document.body.setAttribute("x-data", "{ selectedTab: `${selectedTab}`}");
-
-
 
 const overviewElements = document.querySelectorAll('.overview');
 if (overviewElements.length) {
@@ -723,43 +761,6 @@ $.views.helpers({
   },
 });
 
-document.addEventListener("DOMContentLoaded", function () {
-  let currentUrl = window.location.href;
-  let tabMatch = currentUrl.match(/[?&]selectedTab=([^?&#]*)/);
-  selectedTab = tabMatch ? decodeURIComponent(tabMatch[1]) : null;
-  let announcementMatch = currentUrl.match(
-    /[?&]data-announcement-template-id=(\d+)/
-  );
-  let announcementId = announcementMatch ? announcementMatch[1] : null;
-  let postMatch = currentUrl.match(/[?&]current-post-id=(\d+)/);
-  let postId = postMatch ? postMatch[1] : null;
-  function highlightElement() {
-    let targetElement = null;
-    if (selectedTab === "anouncemnt" && announcementId) {
-      targetElement = document.querySelector(
-        `[data-announcement-template-id="${announcementId}"]`
-      );
-    } else if (selectedTab === "courseChat" && postId) {
-      targetElement = document.querySelector(`[current-post-id="${postId}"]`);
-    }
-    if (targetElement) {
-      targetElement.classList.add("highlightTheSelected");
-      setTimeout(() => {
-        targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 1000);
-      return true;
-    }
-    return false;
-  }
-  if (!highlightElement()) {
-    const observer = new MutationObserver(() => {
-      if (highlightElement()) {
-        observer.disconnect();
-      }
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-  }
-});
 
 $.views.helpers({
   getToday: function () {
@@ -775,12 +776,6 @@ $.views.helpers({
     return dateMatch ? dateMatch[0] : "";
   },
 });
-
-
-
-if (match) {
-  selectedTab = decodeURIComponent(match[1]);
-}
 
 //helper jsrender function to count the number of lessons inside the module that is completed
 $.views.helpers({
