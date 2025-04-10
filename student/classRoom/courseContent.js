@@ -81,6 +81,11 @@ $.views.helpers({
   },
 });
 
+$.views.helpers({
+    formatNewLines: function (text) {
+        return text ? text.replace(/\n/g, "<br>") : "";
+    },
+});
 
 $.views.helpers({
   getToday: function () {

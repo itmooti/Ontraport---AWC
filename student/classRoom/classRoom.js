@@ -137,14 +137,6 @@ if (announcementsElements.length) {
     });
 }
 
-
-$.views.helpers({
-    formatNewLines: function (text) {
-        return text ? text.replace(/\n/g, "<br>") : "";
-    },
-});
-
-
 document.addEventListener("DOMContentLoaded", function () {
   var learningOutcomes = document
     .getElementById("allLearningOutcomes")
