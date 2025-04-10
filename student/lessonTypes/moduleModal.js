@@ -85,7 +85,7 @@ async function updateResumeLesson(lessonID) {
 
   const enrolmentId = getParam("eid");
   if (!enrolmentId) {
-    console.error("Enrolment ID not found in the URL");
+    // console.error("Enrolment ID not found in the URL");
     return;
   }
 
