@@ -5,8 +5,6 @@ window.addEventListener("load", function () {
     loader.classList.add("fade-out");
   }, 500);
 });
-
-// tailwind config
 tailwind.config = {
   theme: {
     extend: {

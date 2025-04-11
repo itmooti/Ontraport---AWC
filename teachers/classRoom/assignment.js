@@ -180,6 +180,7 @@ async function loadAssignments() {
 
         // Render each assignment.
         lessons.forEach(async (lesson) => {
+            if (!lesson) return;
             let dueDate = null;
             const customizationResponse = await fetchGraphQL(FetchLessonCustomizationQuery, { lesson_to_modify_id: lesson.ID });
             const customizations = customizationResponse.data.calcClassCustomisations;

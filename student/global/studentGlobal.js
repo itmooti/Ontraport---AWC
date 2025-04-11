@@ -45,7 +45,3 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error("GraphQL fetch error:", error);
   }
 });
-
-
-
-  
