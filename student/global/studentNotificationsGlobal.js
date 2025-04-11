@@ -13,6 +13,9 @@ if (dates.length > 0) {
   window.earliestEnrollmentDate = createdAt;
 }
 
+function getEidasAStudentPortal() {
+  return new URLSearchParams(window.location.search).get("eid");
+}
 
 //Set user preferences
 const POSTS_TYPE =
@@ -633,6 +636,7 @@ function createNotificationCard(notification, isRead) {
     const id = Number(notification.ID);
     const type = notification.Notification_Type;
     const loader = document.getElementById("loader");
+    const getEidasAStudentPortal = getEidasAStudentPortal();
     const anouncementScrollId =
       String(notification.Notification_Type) !== "Announcements"
         ? notification.ForumComments_Parent_Announcement_ID
@@ -642,11 +646,11 @@ function createNotificationCard(notification, isRead) {
       await markAsRead(id);
     }
     if (type === "Posts" || type === "Post Comments") {
-      window.location.href = `https://courses.writerscentre.com.au/students/course-details/${notification.Course_Unique_ID}?eid=${notification.EnrolmentID}&selectedTab=courseChat?current-post-id=${notification.Post_ID}`;
+      window.location.href = `https://courses.writerscentre.com.au/students/course-details/${notification.Course_Unique_ID}?eid=${getEidasAStudentPortal}&selectedTab=courseChat?current-post-id=${notification.Post_ID}`;
     } else if (type === "Submissions" || type === "Submission Comments") {
-      window.location.href = `https://courses.writerscentre.com.au/course-details/content/${notification.Lesson_Unique_ID1}?eid=${notification.EnrolmentID}`;
+      window.location.href = `https://courses.writerscentre.com.au/course-details/content/${notification.Lesson_Unique_ID1}?eid=${getEidasAStudentPortal}`;
     } else {
-      window.location.href = `https://courses.writerscentre.com.au/students/course-details/${notification.Course_Unique_ID}?eid=${notification.EnrolmentID}&selectedTab=anouncemnt?data-announcement-template-id=${anouncementScrollId}`;
+      window.location.href = `https://courses.writerscentre.com.au/students/course-details/${notification.Course_Unique_ID}?eid=${getEidasAStudentPortal}&selectedTab=anouncemnt?data-announcement-template-id=${anouncementScrollId}`;
     }
   });
   return card;
