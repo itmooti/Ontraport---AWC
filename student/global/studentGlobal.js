@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       query calcEnrolments {
         calcEnrolments(query: [{ where: { id: ${eid} } }]) {
           Format: field(arg: ["format"])
+          Date_Completion: field(arg: ["date_completion"]) @dateFormat(value: "DD MONTH YYYY")
         }
       }
     `;
