@@ -267,7 +267,9 @@ Class {
 }
 course_name
 course_access_type
-Modules {
+Modules (
+    orderBy: [{ path: ["order"], type: asc }]
+  ){
 id
 unique_id
 order
@@ -293,7 +295,9 @@ ClassCustomisations(
   days_to_offset
   specific_date
 }
-Lessons {
+Lessons(
+    orderBy: [{ path: ["order_in_module"], type: asc }]
+  ) {
   id
   unique_id
   order_in_module

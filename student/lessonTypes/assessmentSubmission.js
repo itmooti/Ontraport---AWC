@@ -101,8 +101,7 @@ query calcContacts($class_id: AwcClassID, $id: AwcClassID) {
         return `<span class="mention-handle label bg-[#C7E6E6] py-1 px-2 rounded text-dark small-text" data-mention-id="${item.original.value}">@${item.original.key}</span>`;
       },
     });
-  } catch (e) {
-  }
+  } catch (e) {}
 }
 fetchContactsAndInitializeTribute(classIdFromSubmission);
 document.addEventListener("focusin", (e) => {
@@ -170,8 +169,7 @@ resume_lesson_unique_id
     });
 
     const result = await response.json();
-  } catch (error) {
-  }
+  } catch (error) {}
 }
 
 let storedDueDate = null;
