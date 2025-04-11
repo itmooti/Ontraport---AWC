@@ -187,6 +187,8 @@ subscription subscribeToCalcAnnouncements(
     EnrolmentID: field(arg: ["Class", "Enrolments", "id"]) 
     Course_Unique_ID: field(arg: ["Class", "Active_Course", "unique_id"]) 
     Course_Course_Name: field(arg: ["Class", "Active_Course", "course_name"]) 
+    Course_Unique_ID_NotActive: field(arg: ["Class", "Course", "unique_id"]) 
+    Course_Course_Name_NotActive: field(arg: ["Class", "Course", "course_name"]) 
     Comment_ID: field(arg: ["comment_id"]) 
     Content: field(arg: ["content"]) 
     Course_ID: field(arg: ["course_id"])  
@@ -642,11 +644,11 @@ function createNotificationCard(notification, isRead) {
       await markAsRead(id);
     }
     if (type === "Posts" || type === "Post Comments") {
-      window.location.href = `https://courses.writerscentre.com.au/students/course-details/${notification.Course_Unique_ID}?eid=${enrollID}&selectedTab=courseChat?current-post-id=${notification.Post_ID}`;
+      window.location.href = `https://courses.writerscentre.com.au/students/course-details/${notification.Course_Unique_ID}?eid=${notification.EnrolmentID}&selectedTab=courseChat?current-post-id=${notification.Post_ID}`;
     } else if (type === "Submissions" || type === "Submission Comments") {
-      window.location.href = `https://courses.writerscentre.com.au/course-details/content/${notification.Lesson_Unique_ID1}?eid=${enrollID}`;
-    } else {
-      window.location.href = `https://courses.writerscentre.com.au/students/course-details/${notification.Course_Unique_ID}?eid=${enrollID}&selectedTab=anouncemnt?data-announcement-template-id=${anouncementScrollId}`;
+      window.location.href = `https://courses.writerscentre.com.au/course-details/content/${notification.Lesson_Unique_ID1}?eid=${notification.EnrolmentID}`;
+    } else {notification.Enrolment_ID
+      window.location.href = `https://courses.writerscentre.com.au/students/course-details/${notification.Course_Unique_ID}?eid=${notification.EnrolmentID}&selectedTab=anouncemnt?data-announcement-template-id=${anouncementScrollId}`;
     }
   });
   return card;
