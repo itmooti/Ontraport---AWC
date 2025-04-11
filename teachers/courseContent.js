@@ -132,7 +132,10 @@ LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
   }
   course_name
   course_access_type
-  Modules {
+  Modules (
+		limit: 1000 
+    orderBy: [{ path: ["order"], type: asc }]
+  ){
     id
     unique_id
     order
@@ -159,6 +162,8 @@ LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
       specific_date
     }
     Lessons (
+    limit: 1000 
+    orderBy: [{ path: ["order_in_module"], type: asc }]
     query: [
       {
         where: {

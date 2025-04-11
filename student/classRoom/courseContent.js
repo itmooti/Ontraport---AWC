@@ -268,6 +268,7 @@ Class {
 course_name
 course_access_type
 Modules (
+		limit: 1000 
     orderBy: [{ path: ["order"], type: asc }]
   ){
 id
@@ -296,6 +297,7 @@ ClassCustomisations(
   specific_date
 }
 Lessons(
+  	limit: 1000 
     orderBy: [{ path: ["order_in_module"], type: asc }]
   ) {
   id
