@@ -1,4 +1,4 @@
-let enrolmentCompletionDate;
+
 // get student enrolment id
 const getEIDFromURLOnly = () => {
   const match = window.location.href.match(/[?&]eid=(\d+)/);
@@ -31,7 +31,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const result = await response.json();
     const format = result?.data?.calcEnrolments?.[0]?.Format;
-    enrolmentCompletionDate = result?.data?.calcEnrolments?.[0]?.Date_Completion;
+    let enrolmentCompletionDate = result?.data?.calcEnrolments?.[0]?.Date_Completion;
+    
+    let enrolmentCompletionDateDiv = document.querySelectorAll(".enrolmentCompletionDateDiv");
+    enrolmentCompletionDateDiv.forEach((div) => {
+      div.textContent = enrolmentCompletionDate;
+    })
 
     if (format === "Online Tutor-led" || format === "Online Live") {
       document.querySelectorAll(".hideIfOnline").forEach((el) => {
@@ -48,5 +53,3 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error("GraphQL fetch error:", error);
   }
 });
-
-console.log("Completion date is ", enrolmentCompletionDate);
