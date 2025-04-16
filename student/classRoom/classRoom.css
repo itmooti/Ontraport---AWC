@@ -39,7 +39,9 @@ iframe::-webkit-scrollbar,
   color: #007b8e !important;
   cursor: pointer;
 }
-
+#post-editor :focus-visible {
+  outline: none !important;
+}
 .mentionable:empty::before,
 .mainMention:empty::before {
   content: "Post your thoughts....Type @Name to mention people";

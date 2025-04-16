@@ -16,7 +16,9 @@
 .bg-unread {
   background: #ebf6f6;
 }
-
+.mentionable :focus-visible {
+  outline: none !important;
+}
 ol {
   list-style: decimal !important;
 }
