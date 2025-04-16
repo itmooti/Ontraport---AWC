@@ -56,7 +56,7 @@ iframe::-webkit-scrollbar,
 }
 
 .mention {
-  background-color: lightgray;
+  background-color: #c7e6e6;
   color: black;
   padding: 2px 4px;
   border-radius: 3px;
