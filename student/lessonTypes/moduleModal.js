@@ -30,6 +30,19 @@ function downloadFile(fileLink, button, fileNames) {
     });
 }
 
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll("a").forEach(function (link) {
+    link.addEventListener("click", function (event) {
+      const fileName = link.getAttribute("data-file_name");
+      const fileLink = link.getAttribute("href");
+
+      if (fileName && fileLink && fileLink.startsWith("http")) {
+        event.preventDefault();
+        downloadFile(fileLink, link, fileName);
+      }
+    });
+  });
+});
 async function navigateAfterUpdate(event, lessonID, href) {
   event.preventDefault();
 
