@@ -94,7 +94,7 @@ query calcContacts($class_id: AwcClassID, $id: AwcClassID) {
      const finalContacts = Array.from(
       new Map(
         result.data.calcContacts
-          .filter((contact) => contact.Display_Name)
+          // .filter((contact) => contact.Display_Name)
           .map((contact) => { 
             let displayName = contact.Display_Name;
             if (!displayName && (contact.First_Name || contact.Last_Name)) {
