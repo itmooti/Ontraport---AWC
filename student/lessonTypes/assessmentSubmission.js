@@ -43,6 +43,8 @@ query calcContacts($class_id: AwcClassID, $id: AwcClassID) {
       { orWhere: { Classes: [{ where: { id: $id } }] } }
       { orWhere: { email: "courses@writerscentre.com.au" } }
     ]
+    limit: 50000
+    offset: 0
   ) {
     Display_Name: field(arg: ["display_name"])
     Contact_ID: field(arg: ["id"])
