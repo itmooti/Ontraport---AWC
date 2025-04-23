@@ -105,12 +105,8 @@ query calcContacts($class_id: AwcClassID, $id: AwcClassID) {
               {
                 key: `${contact.Display_Name} ${userType}`,
                 value: String(contact.Contact_ID),
-                image:
-                        !contact.Profile_Image ||
-                        contact.Profile_Image === "https://i.ontraport.com/abc.jpg"
-                          ? defaultImageUrl
-                          : contact.Profile_Image,
-                image: contact.Profile_Image || defaultImageUrl,
+                image: !contact.Profile_Image || contact.Profile_Image === "https://i.ontraport.com/abc.jpg" ? defaultImageUrl : contact.Profile_Image,
+                //image: contact.Profile_Image || defaultImageUrl,
               },
             ];
           })
