@@ -46,7 +46,9 @@ query calcContacts($class_id: AwcClassID, $id: AwcClassID) {
     limit: 50000
     offset: 0
   ) {
-    Display_Name: field(arg: ["display_name"])
+    Display_Name: field(arg: ["display_name"]) 
+    First_Name: field(arg: ["first_name"])
+    Last_Name: field(arg: ["last_name"]) 
     Contact_ID: field(arg: ["id"])
     Profile_Image: field(arg: ["profile_image"])
     Is_Instructor: field(arg: ["is_instructor"])
@@ -94,6 +96,13 @@ query calcContacts($class_id: AwcClassID, $id: AwcClassID) {
         result.data.calcContacts
           .filter((contact) => contact.Display_Name)
           .map((contact) => {
+            map((contact) => {
+            let displayName = contact.Display_Name;
+            if (!displayName && (contact.First_Name || contact.Last_Name)) {
+              displayName = `${contact.First_Name || ""} ${contact.Last_Name || ""}`.trim();
+            }
+            if (!displayName) return null;
+              
             let userType = "(Student)";
             if (contact.Is_Admin) {
               userType = "(Admin)";
@@ -103,7 +112,8 @@ query calcContacts($class_id: AwcClassID, $id: AwcClassID) {
             return [
               contact.Contact_ID,
               {
-                key: `${contact.Display_Name} ${userType}`,
+                // key: `${contact.Display_Name} ${userType}`,
+                  key: `${displayName} ${userType}`,
                 value: String(contact.Contact_ID),
                 image: !contact.Profile_Image || contact.Profile_Image === "https://i.ontraport.com/abc.jpg" ? defaultImageUrl : contact.Profile_Image,
                 //image: contact.Profile_Image || defaultImageUrl,
