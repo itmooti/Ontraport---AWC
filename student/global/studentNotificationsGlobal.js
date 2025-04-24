@@ -643,15 +643,20 @@ function createNotificationCard(notification, isRead) {
   card.addEventListener("click", async function () {
     const id = Number(notification.ID);
     const type = notification.Notification_Type;
-    const loader = document.getElementById("loader");
+    
+    // const loader = document.getElementById("loader");
+
     const enrolmentID = notification.EnrolmentID;
     console.log("Eid from notifications is", enrolmentID);
+    
     const anouncementScrollId =
       String(notification.Notification_Type) !== "Announcements"
         ? notification.ForumComments_Parent_Announcement_ID
         : notification.ID;
-    loader.classList.remove("fade-out");
-    if (!readAnnouncements.has(id) && !pendingAnnouncements.has(id)) {
+    
+        // loader.classList.remove("fade-out");
+    
+        if (!readAnnouncements.has(id) && !pendingAnnouncements.has(id)) {
       await markAsRead(id);
     }
     if (type === "Posts" || type === "Post Comments") {
