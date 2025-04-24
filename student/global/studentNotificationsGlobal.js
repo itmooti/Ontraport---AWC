@@ -51,7 +51,93 @@ const fetchUserDate =
   user_Preference_Turn_Off_All_Notifications === "Yes"
     ? ` { andWhere: { created_at: "${Turn_Off_All_Notifications_Time_Unix}" } }`
     : "";
-    
+//Het eid from lesson UIs
+async function getEnrolmentIdsByLessonUid(lessonUid) {
+  const query = `
+    query getEnrolment {
+      getEnrolment(
+        query: [
+          { where: { student_id: 78 } }
+          {
+            andWhere: {
+              Class: [
+                {
+                  where: {
+                    Active_Course: [
+                      {
+                        where: {
+                          Lessons: [
+                            { where: { unique_id: "${lessonUid}" } }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      ) {
+        ID: id
+      }
+    }
+  `;
+
+  const response = await fetch(graphQlApiEndpointUrlAwc, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Api-Key": graphQlApiKeyAwc
+    },
+    body: JSON.stringify({ query })
+  });
+
+  const result = await response.json();
+  return result?.data?.getEnrolment?.map(e => e.ID) || [];
+}
+
+// Get the eid from the courseUid
+async function getEnrolmentIdsByCourseUid(courseUid) {
+  const query = `
+    query getEnrolment {
+      getEnrolment(
+        query: [
+          { where: { student_id: ${CONTACTss_ID} } }
+          {
+            andWhere: {
+              Class: [
+                {
+                  where: {
+                    Active_Course: [
+                      { where: { unique_id: "${courseUid}" } }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      ) {
+        ID: id
+      }
+    }
+  `;
+
+  const response = await fetch(graphQlApiEndpointUrlAwc, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Api-Key": graphQlApiKeyAwc
+    },
+    body: JSON.stringify({ query })
+  });
+
+  const result = await response.json();
+  return result?.data?.getEnrolment?.map(e => e.ID) || [];
+}
+
+
 let SUBSCRIPTION_QUERY = `
 subscription subscribeToCalcAnnouncements(
   $class_id: AwcClassID
@@ -652,11 +738,14 @@ function createNotificationCard(notification, isRead) {
       await markAsRead(id);
     }
     if (type === "Posts" || type === "Post Comments") {
-      window.location.href = `https://courses.writerscentre.com.au/students/course-details/${notification.Course_Unique_ID}?eid=${notification.EnrolmentID}&selectedTab=courseChat?current-post-id=${notification.Post_ID}`;
+      const myEidFromCourse = await getEnrolmentIdsByCourseUid(notification.Course_Unique_ID);
+      window.location.href = `https://courses.writerscentre.com.au/students/course-details/${notification.Course_Unique_ID}?eid=${myEidFromCourse}&selectedTab=courseChat?current-post-id=${notification.Post_ID}`;
     } else if (type === "Submissions" || type === "Submission Comments") {
-      window.location.href = `https://courses.writerscentre.com.au/course-details/content/${notification.Lesson_Unique_ID5}?eid=${notification.EnrolmentID}`;
-    } else {notification.Enrolment_ID
-      window.location.href = `https://courses.writerscentre.com.au/students/course-details/${notification.Course_Unique_ID}?eid=${notification.EnrolmentID}&selectedTab=anouncemnt?data-announcement-template-id=${anouncementScrollId}`;
+      const myEidFromLesson = await getEnrolmentIdsByLessonUid(notification.Lesson_Unique_ID5);
+      window.location.href = `https://courses.writerscentre.com.au/course-details/content/${notification.Lesson_Unique_ID5}?eid=${myEidFromLesson}`;
+    } else {
+      const myEidFromCourse = await getEnrolmentIdsByCourseUid(notification.Course_Unique_ID);
+      window.location.href = `https://courses.writerscentre.com.au/students/course-details/${notification.Course_Unique_ID}?eid=${myEidFromCourse}&selectedTab=anouncemnt?data-announcement-template-id=${anouncementScrollId}`;
     }
   });
   return card;
