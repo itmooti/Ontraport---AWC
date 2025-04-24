@@ -192,18 +192,18 @@ subscription subscribeToCalcAnnouncements(
     Comment_ID: field(arg: ["comment_id"]) 
     Content: field(arg: ["content"]) 
     Course_ID: field(arg: ["course_id"])  
-	  Notification_Type: field(arg: ["notification__type"])
+    Notification_Type: field(arg: ["notification__type"])
     Date_Added: field(arg: ["created_at"]) 
     Instructor_ID: field(arg: ["instructor_id"]) 
     Post_ID: field(arg: ["post_id"]) 
-	  Contact_Display_Name: field(arg: ["Post", "Author", "display_name"]) 
+    Contact_Display_Name: field(arg: ["Post", "Author", "display_name"]) 
     Contact_First_Name: field(arg: ["Post", "Author", "first_name"]) 
     Contact_Last_Name: field(arg: ["Post", "Author", "last_name"]) 
     Contact_Display_Name1: field(arg: ["Post", "Mentions", "display_name"]) 
     Contact_First_Name1: field(arg: ["Post", "Mentions", "first_name"]) 
     Contact_Last_Name1: field(arg: ["Post", "Mentions", "last_name"])  
     Contact_Contact_ID: field(arg: ["Post", "Mentions", "id"])  
- 	  Mentions_Contact_ID: field(arg: ["Mentions", "id"]) 
+    Mentions_Contact_ID: field(arg: ["Mentions", "id"]) 
     Status: field(arg: ["status"]) 
     Submissions_ID: field(arg: ["submissions_id"]) 
     Title: field(arg: ["title"]) 
@@ -213,6 +213,14 @@ subscription subscribeToCalcAnnouncements(
     Enrolment_Student_ID: field(arg: ["Submissions", "Student", "student_id"]) 
     Comment_Author_ID: field(arg: ["Comment", "author_id"]) 
     Lesson_Unique_ID1: field(arg: ["Submissions", "Announcements", "Course", "Lessons", "unique_id"])   
+    Lesson_Unique_ID5: field(
+      arg: [
+        "Class"
+        "Active_Course"
+        "Lessons"
+        "unique_id"
+      ]
+    )
     Instructor_Display_Name: field(arg: ["Instructor", "display_name"]) 
     Instructor_First_Name: field(arg: ["Instructor", "first_name"]) 
     Instructor_Last_Name: field(arg: ["Instructor", "last_name"]) 
@@ -646,7 +654,7 @@ function createNotificationCard(notification, isRead) {
     if (type === "Posts" || type === "Post Comments") {
       window.location.href = `https://courses.writerscentre.com.au/students/course-details/${notification.Course_Unique_ID}?eid=${notification.EnrolmentID}&selectedTab=courseChat?current-post-id=${notification.Post_ID}`;
     } else if (type === "Submissions" || type === "Submission Comments") {
-      window.location.href = `https://courses.writerscentre.com.au/course-details/content/${notification.Lesson_Unique_ID1}?eid=${notification.EnrolmentID}`;
+      window.location.href = `https://courses.writerscentre.com.au/course-details/content/${notification.Lesson_Unique_ID5}?eid=${notification.EnrolmentID}`;
     } else {notification.Enrolment_ID
       window.location.href = `https://courses.writerscentre.com.au/students/course-details/${notification.Course_Unique_ID}?eid=${notification.EnrolmentID}&selectedTab=anouncemnt?data-announcement-template-id=${anouncementScrollId}`;
     }
