@@ -94,7 +94,7 @@ async function getEnrolmentIdsByLessonUid(lessonUid) {
   });
 
   const result = await response.json();
-  return result?.data?.getEnrolment?.map(e => e.ID) || [];
+ return result?.data?.getEnrolment?.ID ? [result.data.getEnrolment.ID] : [];
 }
 
 // Get the eid from the courseUid
@@ -134,7 +134,7 @@ async function getEnrolmentIdsByCourseUid(courseUid) {
   });
 
   const result = await response.json();
-  return result?.data?.getEnrolment?.map(e => e.ID) || [];
+ return result?.data?.getEnrolment?.ID ? [result.data.getEnrolment.ID] : [];
 }
 
 
