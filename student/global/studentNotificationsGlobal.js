@@ -606,7 +606,7 @@ initializeSocket();
 function createNotificationCard(notification, isRead) {
   const card = document.createElement("div");
   const notification_Type = notification.Notification_Type;
-  const notification_course_name =  notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive;
+  const notification_course_name =  notification.Course_Course_Name || notification.Course_Name_NotActive;
   const commentMentionID = String(notification.Contact_Contact_ID1);
   const postMentionID = String(notification.Contact_Contact_ID);
   const announcementMentionID = String(notification.Mentions_Contact_ID);
