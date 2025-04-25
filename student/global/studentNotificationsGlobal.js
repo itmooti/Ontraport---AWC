@@ -754,7 +754,7 @@ function createNotificationCard(notification, isRead) {
       window.location.href = `https://courses.writerscentre.com.au/course-details/content/${notification.Lesson_Unique_ID_For_Submission}?eid=${myEidFromLesson}`;
     } else {
       const myEidFromCourse = await getEnrolmentIdsByCourseUid(notification.Course_Unique_ID);
-      window.location.href = `https://courses.writerscentre.com.au/students/course-details/${ notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive;}?eid=${myEidFromCourse}&selectedTab=anouncemnt?data-announcement-template-id=${anouncementScrollId}`;
+      window.location.href = `https://courses.writerscentre.com.au/students/course-details/${ notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive}?eid=${myEidFromCourse}&selectedTab=anouncemnt?data-announcement-template-id=${anouncementScrollId}`;
     }
   });
   return card;
