@@ -52,7 +52,7 @@ const fetchUserDate =
     ? ` { andWhere: { created_at: "${Turn_Off_All_Notifications_Time_Unix}" } }`
     : "";
 //Het eid from lesson UIs
-async function getEnrolmentIdsByLessonUid(lessonUid) {
+async function getEnrolmentIdsByLessonUid(lessonUid,activeOrInactive) {
   const query = `
     query getEnrolment {
       getEnrolment(
@@ -63,7 +63,7 @@ async function getEnrolmentIdsByLessonUid(lessonUid) {
               Class: [
                 {
                   where: {
-                    Active_Course: [
+                     ${activeOrInactive}: [
                       {
                         where: {
                           Lessons: [
@@ -98,7 +98,7 @@ async function getEnrolmentIdsByLessonUid(lessonUid) {
 }
 
 // Get the eid from the courseUid
-async function getEnrolmentIdsByCourseUid(courseUid) {
+async function getEnrolmentIdsByCourseUid(courseUid, activeOrInactive) {
   const query = `
     query getEnrolment {
       getEnrolment(
@@ -109,7 +109,7 @@ async function getEnrolmentIdsByCourseUid(courseUid) {
               Class: [
                 {
                   where: {
-                    Active_Course: [
+                    ${activeOrInactive}: [
                       { where: { unique_id: "${courseUid}" } }
                     ]
                   }
@@ -745,13 +745,19 @@ function createNotificationCard(notification, isRead) {
       await markAsRead(id);
     }
     if (type === "Posts" || type === "Post Comments") {
-      const myEidFromCourse = await getEnrolmentIdsByCourseUid( notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive);
+   const courseUid = notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive;
+   const activeOrInactive = notification.Course_Unique_ID ? "Active_Course" : "Course";	
+   const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
+    //  const myEidFromCourse = await getEnrolmentIdsByCourseUid( notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive);
       window.location.href = `https://courses.writerscentre.com.au/students/course-details/${ notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive}?eid=${myEidFromCourse}&selectedTab=courseChat?current-post-id=${notification.Post_ID}`;
     } else if (type === "Submissions" || type === "Submission Comments") {
-      const myEidFromLesson = await getEnrolmentIdsByLessonUid(notification.Lesson_Unique_ID_For_Submission);
+      const activeOrInactive = notification.Course_Unique_ID ? "Active_Course" : "Course";	
+      const myEidFromLesson = await getEnrolmentIdsByLessonUid(notification.Lesson_Unique_ID_For_Submission, activeOrInactive);
       window.location.href = `https://courses.writerscentre.com.au/course-details/content/${notification.Lesson_Unique_ID_For_Submission}?eid=${myEidFromLesson}`;
     } else {
-      const myEidFromCourse = await getEnrolmentIdsByCourseUid( notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive);
+     const courseUid = notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive;
+     const activeOrInactive = notification.Course_Unique_ID ? "Active_Course" : "Course";	
+      const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
       window.location.href = `https://courses.writerscentre.com.au/students/course-details/${ notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive}?eid=${myEidFromCourse}&selectedTab=anouncemnt?data-announcement-template-id=${anouncementScrollId}`;
     }
   });
