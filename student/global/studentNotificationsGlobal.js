@@ -57,7 +57,7 @@ async function getEnrolmentIdsByLessonUid(lessonUid) {
     query getEnrolment {
       getEnrolment(
         query: [
-          { where: { student_id: 78 } }
+          { where: { student_id: ${CONTACTss_ID} } }
           {
             andWhere: {
               Class: [
