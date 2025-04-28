@@ -355,7 +355,7 @@ const mentionables = document.querySelectorAll('.mentionable');
 
 mentionables.forEach((editableArea) => {
     const toolbar = document.createElement('div');
-    toolbar.className = 'flex flex-wrap items-center gap-2 bg-white border border-gray-300 rounded p-2 shadow mb-2';
+    toolbar.className = 'flex flex-wrap items-center gap-2 bg-white border border-gray-300 rounded p-2 shadow';
     
     toolbars.set(editableArea, toolbar);
     renderToolbar(toolbar);
