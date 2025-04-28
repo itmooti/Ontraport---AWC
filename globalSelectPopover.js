@@ -5,8 +5,8 @@
             popoverForSelect.className = 'fixed z-[9999] hidden gap-2 bg-cyan-700 text-white px-3 py-2 text-sm rounded shadow-lg flex';
 
             const baseButtons = [
-                { action: 'copy', icon: '📋' },
-                { action: 'paste', icon: '📥' },
+                // { action: 'copy', icon: '📋' },
+                // { action: 'paste', icon: '📥' },
                 { action: 'bold', icon: '𝐁', classes: 'font-bold' },
                 { action: 'italic', icon: '𝐼', classes: 'italic' },
                 { action: 'underline', icon: 'U̲', classes: 'underline' }
@@ -16,8 +16,8 @@
             const unlinkButton = { action: 'unlink', icon: '🔗🚫' };
             function getTooltipLabel(action) {
                 switch (action) {
-                    case 'copy': return 'Copy';
-                    case 'paste': return 'Paste';
+                    // case 'copy': return 'Copy';
+                    // case 'paste': return 'Paste';
                     case 'bold': return 'Bold';
                     case 'italic': return 'Italic';
                     case 'underline': return 'Underline';
