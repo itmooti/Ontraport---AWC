@@ -176,8 +176,12 @@
         //         }, 0);
 
 
-document.addEventListener('DOMContentLoaded', function() {
-        (function () {
+
+        //     }
+        // })();
+
+
+    (function () {
             const popoverForSelect = document.createElement('div');
             popoverForSelect.id = 'popoverForSelect';
             popoverForSelect.className = 'fixed z-[9999] hidden gap-2 bg-cyan-700 text-white px-3 py-2 text-sm rounded shadow-lg flex';
@@ -347,29 +351,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 0);
             }
 
-            const mentionables = document.querySelectorAll('.mentionable');
+           const mentionables = document.querySelectorAll('.mentionable');
 
             mentionables.forEach((editableArea) => {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'relative mb-8';
-
                 const toolbar = document.createElement('div');
-                toolbar.className = 'flex flex-wrap items-center gap-2 bg-white border border-gray-300 rounded-t p-2 shadow mb-0';
+                toolbar.className = 'flex flex-wrap items-center gap-2 bg-white border border-gray-300 rounded p-2 shadow mb-2';
 
                 toolbars.set(editableArea, toolbar);
 
                 renderToolbar(toolbar);
 
-                const parent = editableArea.parentNode;
-                parent.replaceChild(wrapper, editableArea);
-                wrapper.appendChild(toolbar);
-                wrapper.appendChild(editableArea);
+                // Find the nearest containerForToolbar to insert toolbar
+                let containerForToolbar = editableArea.previousElementSibling;
+                if (containerForToolbar && containerForToolbar.classList.contains('containerForToolbar')) {
+                    containerForToolbar.appendChild(toolbar);
+                } else {
+                    console.warn('No containerForToolbar found before mentionable, toolbar not attached.');
+                }
 
                 editableArea.addEventListener('keyup', saveSelection);
                 editableArea.addEventListener('mouseup', saveSelection);
             });
+
         })();
-        });
-        //     }
-        // })();
-    
+   
