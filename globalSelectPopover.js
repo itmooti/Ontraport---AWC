@@ -176,7 +176,7 @@
         //         }, 0);
 
 
-
+document.addEventListener('DOMContentLoaded', function() {
         (function () {
             const popoverForSelect = document.createElement('div');
             popoverForSelect.id = 'popoverForSelect';
@@ -369,6 +369,7 @@
                 editableArea.addEventListener('mouseup', saveSelection);
             });
         })();
+        });
         //     }
         // })();
     
