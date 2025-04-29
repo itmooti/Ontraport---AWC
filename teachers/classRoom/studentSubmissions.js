@@ -156,7 +156,7 @@
                     </div></div>
                 <div class="flex-col justify-center items-start gap-1 flex">
                     <div class="justify-start items-center gap-2 flex">
-                        <div class="text-[#414042] text-sm font-semibold font-['Open Sans'] leading-[18px]">{{:Contact_Display_Name || 'Anoynomous'}}</div>
+                        <div class="text-[#414042] text-sm font-semibold font-['Open Sans'] leading-[18px]">{{:Contact_Display_Name || (Contact_First_Name || Contact_Last_Name ? Contact_First_Name + ' ' + Contact_Last_Name : 'Anonymous')}}</div>
                         {{if formattedTime }} <div class="w-1 h-1 bg-[#BBBCBB] rounded-full"></div>{{/if}}
                         <div class="justify-start items-center gap-1.5 flex">
                             <div class="text-[#586A80] text-xs font-normal font-['Open Sans'] leading-none">{{:formattedTime}}</div>
