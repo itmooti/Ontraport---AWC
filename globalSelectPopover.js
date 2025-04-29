@@ -335,6 +335,21 @@ function loadToolbar() {
     const mentionables = document.querySelectorAll('.mentionable');
     mentionables.forEach((editableArea) => initializeMentionable(editableArea));
 
+    const observer = new MutationObserver((mutationsList) => {
+        for (const mutation of mutationsList) {
+            mutation.addedNodes.forEach(node => {
+                if (node.nodeType === 1) {
+                    if (node.classList.contains('mentionable')) {
+                        initializeMentionable(node);
+                    }
+                    node.querySelectorAll?.('.mentionable')?.forEach(inner => initializeMentionable(inner));
+                }
+            });
+        }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
     document.addEventListener('mouseup', () => {
         setTimeout(() => {
             const selection = window.getSelection();
@@ -384,11 +399,10 @@ function loadToolbar() {
         }
     });
 
-    window.initializeMentionable = initializeMentionable;
-
 })();
 }
 
 document.addEventListener('DOMContentLoaded', function() {
     loadToolbar();
 });
+
