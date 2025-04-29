@@ -185,7 +185,7 @@ function loadToolbar() {
 (function () {
     const popoverForSelect = document.createElement('div');
     popoverForSelect.id = 'popoverForSelect';
-    popoverForSelect.className = 'fixed z-[9999] hidden gap-2 bg-cyan-700 text-white px-3 py-2 text-sm rounded shadow-lg flex';
+    popoverForSelect.className = 'fixed z-[9999] hidden gap-2 bg-cyan-700 text-white px-3 py-2 text-sm rounded flex';
    popoverForSelect.style.display = 'none';
 
     const baseButtons = [
