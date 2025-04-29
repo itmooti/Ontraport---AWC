@@ -371,7 +371,7 @@ function loadToolbar() {
                 popoverForSelect.style.position = 'fixed';
                 popoverForSelect.style.visibility = 'hidden';
                 popoverForSelect.classList.remove('hidden');
-                popoverForSelect.style.display = 'flex';
+                popoverForSelect.style.display = 'none';
 
                 const left = rect.left + (rect.width / 2) - (popoverForSelect.offsetWidth / 2);
                 const top = rect.bottom + 8;
