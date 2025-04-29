@@ -403,7 +403,7 @@ textarea {
 .formInput,
 .formTextArea {
   border: 1px solid #d3d3d3 !important;
-  border-radius: 4px !important;
+   border-radius: 0 0 4px 4px !important;
   outline: none !important;
   width: 100% !important;
   transition: 0.2s ease-in-out;
