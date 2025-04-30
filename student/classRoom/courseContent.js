@@ -217,38 +217,78 @@ function determineAssessmentDueDateUnified(
   return { dueDateUnix, dueDateText };
 }
 // Determine lesson/module availability using the provided customisation data from the unified query
-function determineAvailability(startDateUnix, weeks, customisation) {
+// function determineAvailability(startDateUnix, weeks, customisation) {
+//   if (!startDateUnix) {
+//     return { isAvailable: false, openDateText: "No Start Date" };
+//   }
+//   let openDateUnix, openDateText;
+//   if (!customisation) {
+//     openDateUnix = startDateUnix + weeks * 7 * 24 * 60 * 60;
+//     openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
+//   } else {
+//     if (customisation.specific_date) {
+//       openDateUnix =
+//         customisation.specific_date > 9999999999
+//           ? Math.floor(customisation.specific_date / 1000)
+//           : customisation.specific_date;
+//       openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
+//     } else if (
+//       customisation.days_to_offset !== null &&
+//       customisation.days_to_offset !== undefined
+//     ) {
+//       openDateUnix =
+//         startDateUnix + customisation.days_to_offset * 24 * 60 * 60;
+//       openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
+//     } else {
+//       openDateUnix = startDateUnix + weeks * 7 * 24 * 60 * 60;
+//       openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
+//     }
+//   }
+//   const todayUnix = Math.floor(Date.now() / 1000);
+//   // Original logic preserved: available if unlock date is greater than or equal to today
+//   const isAvailable = openDateUnix >= todayUnix;
+//   return { isAvailable, openDateText };
+// }
+
+
+function determineAvailability(startDateUnix, weekOpen, customisation) {
   if (!startDateUnix) {
     return { isAvailable: false, openDateText: "No Start Date" };
   }
-  let openDateUnix, openDateText;
-  if (!customisation) {
-    openDateUnix = startDateUnix + weeks * 7 * 24 * 60 * 60;
-    openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
+
+  let openDateUnix;
+  const SECONDS_IN_DAY = 86400;
+  const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
+
+  const todayUnix = Math.floor(Date.now() / 1000);
+
+  if (customisation?.specific_date) {
+    openDateUnix = customisation.specific_date > 9999999999
+      ? Math.floor(customisation.specific_date / 1000)
+      : customisation.specific_date;
   } else {
-    if (customisation.specific_date) {
-      openDateUnix =
-        customisation.specific_date > 9999999999
-          ? Math.floor(customisation.specific_date / 1000)
-          : customisation.specific_date;
-      openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
-    } else if (
-      customisation.days_to_offset !== null &&
-      customisation.days_to_offset !== undefined
+    // Base date depending on weekOpen
+    const weekOffsetSeconds = weekOpen > 0 ? (weekOpen - 1) * SECONDS_IN_WEEK : 0;
+    openDateUnix = startDateUnix + weekOffsetSeconds;
+
+    // Apply day offset, if any
+    if (
+      customisation?.days_to_offset !== null &&
+      customisation?.days_to_offset !== undefined
     ) {
-      openDateUnix =
-        startDateUnix + customisation.days_to_offset * 24 * 60 * 60;
-      openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
-    } else {
-      openDateUnix = startDateUnix + weeks * 7 * 24 * 60 * 60;
-      openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
+      openDateUnix += customisation.days_to_offset * SECONDS_IN_DAY;
     }
   }
-  const todayUnix = Math.floor(Date.now() / 1000);
-  // Original logic preserved: available if unlock date is greater than or equal to today
-  const isAvailable = openDateUnix >= todayUnix;
+
+  const isAvailable = weekOpen === 0 || todayUnix >= openDateUnix;
+  const openDateText = weekOpen === 0
+    ? "Available anytime"
+    : `Unlocks on ${formatDate(openDateUnix)}`;
+
   return { isAvailable, openDateText };
 }
+
+
 
 // Unified GraphQL query (includes all customisations)
 const lmsQuery = `
