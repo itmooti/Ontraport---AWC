@@ -21,10 +21,7 @@
     return submissionDateUnix > dueDateUnix; 
 }
     async function fetchSubmissions() {
-        const query = `query calcSubmissions(
-    $limit: IntScalar
-    $offset: IntScalar
-    ) {
+        const query = `query calcSubmissions {
         calcSubmissions(
             query: [
     {
@@ -39,8 +36,8 @@
       }
       { andWhere: { submission_hidden: false } }
     ]
-    limit: $limit
-    offset: $offset
+    limit: 500000
+    offset: 0
     orderBy: [
     {path: ["submission_date_time"], type: desc }
     ]
