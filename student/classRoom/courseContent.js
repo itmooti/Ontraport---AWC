@@ -250,28 +250,29 @@ function determineAssessmentDueDateUnified(
 //   return { isAvailable, openDateText };
 // }
 
-
 function determineAvailability(startDateUnix, weekOpen, customisation) {
   if (!startDateUnix) {
     return { isAvailable: false, openDateText: "No Start Date" };
   }
 
-  let openDateUnix;
   const SECONDS_IN_DAY = 86400;
   const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
-
   const todayUnix = Math.floor(Date.now() / 1000);
+
+  let openDateUnix;
 
   if (customisation?.specific_date) {
     openDateUnix = customisation.specific_date > 9999999999
       ? Math.floor(customisation.specific_date / 1000)
       : customisation.specific_date;
+  } else if (weekOpen === 0) {
+    // Always open module, no specific date, no offset logic applies
+    return { isAvailable: true, openDateText: "Available anytime" };
   } else {
-    // Base date depending on weekOpen
-    const weekOffsetSeconds = weekOpen > 0 ? (weekOpen - 1) * SECONDS_IN_WEEK : 0;
-    openDateUnix = startDateUnix + weekOffsetSeconds;
+    // Compute open date based on week offset
+    openDateUnix = startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK;
 
-    // Apply day offset, if any
+    // Apply offset if present
     if (
       customisation?.days_to_offset !== null &&
       customisation?.days_to_offset !== undefined
@@ -280,10 +281,8 @@ function determineAvailability(startDateUnix, weekOpen, customisation) {
     }
   }
 
-  const isAvailable = weekOpen === 0 || todayUnix <= openDateUnix;
-  const openDateText = weekOpen === 0
-    ? "Available anytime"
-    : `Unlocks on ${formatDate(openDateUnix)}`;
+  const isAvailable = todayUnix <= openDateUnix;
+  const openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
 
   return { isAvailable, openDateText };
 }
