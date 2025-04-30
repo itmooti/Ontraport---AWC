@@ -37,6 +37,7 @@
     ]
         }
       }
+      { andWhere: { submission_hidden: false } }
     ]
     limit: $limit
     offset: $offset
