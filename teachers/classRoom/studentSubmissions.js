@@ -24,16 +24,25 @@
         const query = `query calcSubmissions {
         calcSubmissions(
             query: [
-    {
+
+ {
         where: {
-        Assessment: [
-    {
-        where: {Course: [{where: {active_class_id: ${activeClassIDSubmission} } }]
+          Assessments: [
+            {
+              where: {
+                Submissions: [
+                  {
+                    where: {
+                      Student: [{ where: { class_id: ${activeClassIDSubmission} } }]
+                    }
+                  }
+                ]
               }
             }
-    ]
+          ]
         }
       }
+
       { andWhere: { submission_hidden: false } }
     ]
     limit: 500000
