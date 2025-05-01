@@ -20,7 +20,7 @@ query: [
                 Submissions: [
                   {
                     where: {
-                      Student: [{ where: { class_id: 9 } }]
+                      Student: [{ where: { class_id: ${activeClassID} } }]
                     }
                   }
                 ]
