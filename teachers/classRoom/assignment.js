@@ -7,11 +7,28 @@ $orderBy: [QueryOrderByInput!]
 calcLessons(
 query: [
 { where: { type: "Assessment" } },
-{
-andWhere: {
-Course: [{ where: { active_class_id: $active_class_id } }]
-}
-}
+// {
+// andWhere: {
+// Course: [{ where: { active_class_id: $active_class_id } }]
+// }
+// }
+      {
+        andWhere: {
+          Assessments: [
+            {
+              where: {
+                Submissions: [
+                  {
+                    where: {
+                      Student: [{ where: { class_id: 9 } }]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
 ],
 orderBy: $orderBy
 ) {
