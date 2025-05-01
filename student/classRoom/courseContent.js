@@ -326,6 +326,7 @@ lesson__count__visible
 lesson__count__progress
 don_t_track_progress
 ClassCustomisations(
+ query: [{ where: {class_to_modify_id: ${classID}} }]
   limit: 1
   offset: 0
   orderBy: [{ path: ["created_at"], type: desc }]
