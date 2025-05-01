@@ -7,7 +7,7 @@ calcLessons(
 query: [
 { where: { type: "Assessment" } },
       {
-        where: {
+        andWhere: {
           Course: [{ where: { unique_id: ${CourseUniqueIDForTeacher} } }]
         }
       }
