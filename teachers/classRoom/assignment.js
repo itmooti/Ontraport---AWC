@@ -8,7 +8,7 @@ query: [
 { where: { type: "Assessment" } },
       {
         andWhere: {
-          Course: [{ where: { unique_id: ${CourseUniqueIDForTeacher} } }]
+          Course: [{ where: { unique_id: "${CourseUniqueIDForTeacher}" } }]
         }
       }
 ],
