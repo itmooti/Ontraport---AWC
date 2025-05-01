@@ -1,7 +1,6 @@
 // Updated GraphQL query (search parameter removed)
 let FetchLessonQuery = `
 query calcLessons(
-$active_class_id: IntScalarPositive_1_2147483647,
 $orderBy: [QueryOrderByInput!]
 ) {
 calcLessons(
