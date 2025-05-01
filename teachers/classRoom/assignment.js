@@ -7,20 +7,8 @@ calcLessons(
 query: [
 { where: { type: "Assessment" } },
       {
-        andWhere: {
-          Assessments: [
-            {
-              where: {
-                Submissions: [
-                  {
-                    where: {
-                      Student: [{ where: { class_id: ${activeClassID} } }]
-                    }
-                  }
-                ]
-              }
-            }
-          ]
+        where: {
+          Course: [{ where: { unique_id: ${CourseUniqueIDForTeacher} } }]
         }
       }
 ],
