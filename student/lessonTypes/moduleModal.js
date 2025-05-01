@@ -144,9 +144,9 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 document.addEventListener("DOMContentLoaded", async function () {
-  if (lessonID) {
+  // if (lessonID) {
     await updateResumeLesson(lessonID);
-  }
+  // }
 });
 
 
