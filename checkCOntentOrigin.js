@@ -19,6 +19,7 @@ function showIfReferenced() {
     })
 }
 document.addEventListener("DOMContentLoaded", function () {
+    console.log("Content origin here from function is", contentOrigin);
     if (contentOrigin === "Original" || contentOrigin === "") {
         showIfOriginal();
     } else {
