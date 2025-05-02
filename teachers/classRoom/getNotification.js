@@ -292,11 +292,11 @@ function createNotificationCard(notification, isRead) {
             await markAsRead(id);
         }
         if (type === "Posts" || type === "Post Comments") {
-            window.location.href = `https://courses.writerscentre.com.au/teacher/class/${notification.Course_Unique_ID}?selectedTab=chats?current-post-id=${notification.Post_ID}`;
+            window.location.href = `https://courses.writerscentre.com.au/teacher/class/${notification.Class_Unique_ID}?selectedTab=chats?current-post-id=${notification.Post_ID}`;
         } else if (type === "Submissions" || type === "Submission Comments") {
             window.location.href = `https://courses.writerscentre.com.au/course-details/content/${notification.Lesson_Unique_ID1}`;
         } else {
-            window.location.href = `https://courses.writerscentre.com.au/teacher/class/${notification.Course_Unique_ID}?selectedTab=announcements?data-announcement-template-id=${anouncementScrollId}`;
+            window.location.href = `https://courses.writerscentre.com.au/teacher/class/${notification.Class_Unique_ID}?selectedTab=announcements?data-announcement-template-id=${anouncementScrollId}`;
         }
     });
     return card;
