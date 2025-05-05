@@ -258,11 +258,9 @@ function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customis
   ) {
     console.log('customisation?.days_to_offset');
     const offsetDays = customisation.days_to_offset;
-    dueDateUnix = normalizedStartUnix + offsetDays * 86400;
 
-    // Optional: Set to end of day
-    dueDateUnix += 23 * 3600 + 59 * 60;
-
+    // Add day offset to normalized start and set time to 23:59
+    dueDateUnix = normalizedStartUnix + offsetDays * 86400 + 23 * 3600 + 59 * 60;
     dueDateText = `Due on ${formatDate(dueDateUnix)}`;
     return { dueDateUnix, dueDateText };
   }
