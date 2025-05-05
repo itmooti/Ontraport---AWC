@@ -224,30 +224,33 @@ function formatDate(unixTimestamp) {
 function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisation) {
   const dueWeek = lesson.assessmentDueEndOfWeek;
   let dueDateUnix = null, dueDateText = null;
- if (dueWeek === 0 || dueWeek === null) {
+
+  // Rule 1: No due date if dueWeek is 0 or null
+  if (dueWeek === 0 || dueWeek === null) {
     return { dueDateUnix: null, dueDateText: null };
   }
-	
+
+  // Rule 2: Specific date overrides everything
   if (customisation?.specific_date) {
     dueDateUnix =
       customisation.specific_date > 9999999999
         ? Math.floor(customisation.specific_date / 1000)
         : customisation.specific_date;
     dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-  } else if (
-    customisation?.days_to_offset !== null &&
-    customisation?.days_to_offset !== undefined
-  ) {
-    const offsetDays = customisation.days_to_offset;
-    dueDateUnix = moduleStartDateUnix + offsetDays * 86400;
-    dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-  } else {
-    dueDateUnix = moduleStartDateUnix + dueWeek * 7 * 86400 - 1;
-    dueDateText = `Due on ${formatDate(dueDateUnix)}`;
+    return { dueDateUnix, dueDateText };
   }
+
+  // Rule 3: Due end of Nth week = start date + N weeks - 1 day + 23:59:59 on Sunday
+  const secondsInAWeek = 7 * 86400;
+  const sundayOffset = 6 * 86400; // from Monday to Sunday
+  const endOfDayOffset = 23 * 3600 + 59 * 60; // 23:59
+
+  dueDateUnix = moduleStartDateUnix + dueWeek * secondsInAWeek - 86400 + endOfDayOffset;
+  dueDateText = `Due on ${formatDate(dueDateUnix)}`;
 
   return { dueDateUnix, dueDateText };
 }
+
 
 function determineAvailability(startDateUnix, weekOpen, customisation) {
   if (!startDateUnix) {
