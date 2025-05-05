@@ -270,6 +270,7 @@ Class {
   start_date
   end_date
   id 
+  show_modules_drop_fed 
 }
 }
 course_name
