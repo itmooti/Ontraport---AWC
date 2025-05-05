@@ -224,7 +224,10 @@ function formatDate(unixTimestamp) {
 function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisation) {
   const dueWeek = lesson.assessmentDueEndOfWeek;
   let dueDateUnix = null, dueDateText = null;
-
+ if (dueWeek === 0 || dueWeek === null) {
+    return { dueDateUnix: null, dueDateText: null };
+  }
+	
   if (customisation?.specific_date) {
     dueDateUnix =
       customisation.specific_date > 9999999999
@@ -238,9 +241,6 @@ function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customis
     const offsetDays = customisation.days_to_offset;
     dueDateUnix = moduleStartDateUnix + offsetDays * 86400;
     dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-  } else if (dueWeek === 0 || dueWeek === null ) {
-    dueDateUnix = null;
-    dueDateText = null;
   } else {
     dueDateUnix = moduleStartDateUnix + dueWeek * 7 * 86400 - 1;
     dueDateText = `Due on ${formatDate(dueDateUnix)}`;
