@@ -271,13 +271,12 @@ function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customis
   const secondsInAWeek = 7 * 86400;
   const sundayEndOfDayOffset = 6 * 86400 + 23 * 3600 + 59 * 60;
 
-  dueDateUnix = normalizedStartUnix + (dueWeek-1) * secondsInAWeek - sundayEndOfDayOffset;
+  dueDateUnix = normalizedStartUnix + (dueWeek - 1) * secondsInAWeek + sundayEndOfDayOffset;
   dueDateText = `Due on ${formatDate(dueDateUnix)}`;
   console.log('standard dueWeek-based offset');
 
   return { dueDateUnix, dueDateText };
 }
-
 
 
 function determineAvailability(startDateUnix, weekOpen, customisation) {
