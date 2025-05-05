@@ -378,8 +378,7 @@ Lessons(
   }
   ClassCustomisations(
     query: [
-      { where: { type: "Assessment" }}
-        { andWhere: { class_to_modify_id: ${classID} } }
+        { where: { class_to_modify_id: ${classID} } }
       ]
     limit: 1
     offset: 0
