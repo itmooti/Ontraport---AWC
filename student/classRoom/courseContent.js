@@ -222,23 +222,27 @@ function formatDate(unixTimestamp) {
 
 
 function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisation) {
-	console.log('lesson', lesson);
-	
-	console.log('moduleStartDateUnix', moduleStartDateUnix);
-	
-	console.log('customisation', customisation);
+  console.log('lesson', lesson);
+  console.log('moduleStartDateUnix', moduleStartDateUnix);
+  console.log('customisation', customisation);
+
   const dueWeek = lesson.assessmentDueEndOfWeek;
   let dueDateUnix = null, dueDateText = null;
 
   // Rule 1: No due date if dueWeek is 0 or null
   if (dueWeek === 0 || dueWeek === null) {
-	  console.log('inside dueWeek === 0 || dueWeek === null');
+    console.log('inside dueWeek === 0 || dueWeek === null');
     return { dueDateUnix: null, dueDateText: null };
   }
 
+  // Normalize moduleStartDate to 00:00 UTC
+  const baseDate = new Date(moduleStartDateUnix * 1000);
+  baseDate.setUTCHours(0, 0, 0, 0);
+  const normalizedStartUnix = Math.floor(baseDate.getTime() / 1000);
+
   // Rule 2: Specific date overrides everything
   if (customisation?.specific_date) {
-	    console.log(' customisation?.specific_date');
+    console.log('customisation?.specific_date');
     dueDateUnix =
       customisation.specific_date > 9999999999
         ? Math.floor(customisation.specific_date / 1000)
@@ -247,16 +251,33 @@ function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customis
     return { dueDateUnix, dueDateText };
   }
 
-  // Rule 3: Due end of Nth week = start date + N weeks - 1 day + 23:59:59 on Sunday
-  const secondsInAWeek = 7 * 86400;
-  const sundayOffset = 6 * 86400; // from Monday to Sunday
-  const endOfDayOffset = 23 * 3600 + 59 * 60; // 23:59
+  // Rule 3: days_to_offset overrides week logic
+  if (
+    customisation?.days_to_offset !== null &&
+    customisation?.days_to_offset !== undefined
+  ) {
+    console.log('customisation?.days_to_offset');
+    const offsetDays = customisation.days_to_offset;
+    dueDateUnix = normalizedStartUnix + offsetDays * 86400;
 
-  dueDateUnix = moduleStartDateUnix + dueWeek * secondsInAWeek - 86400 + endOfDayOffset;
+    // Optional: Set to end of day
+    dueDateUnix += 23 * 3600 + 59 * 60;
+
+    dueDateText = `Due on ${formatDate(dueDateUnix)}`;
+    return { dueDateUnix, dueDateText };
+  }
+
+  // Rule 4: Standard due week logic (Sunday 23:59 of week N)
+  const secondsInAWeek = 7 * 86400;
+  const sundayEndOfDayOffset = 6 * 86400 + 23 * 3600 + 59 * 60;
+
+  dueDateUnix = normalizedStartUnix + dueWeek * secondsInAWeek - sundayEndOfDayOffset;
   dueDateText = `Due on ${formatDate(dueDateUnix)}`;
- console.log(' offset');
+  console.log('standard dueWeek-based offset');
+
   return { dueDateUnix, dueDateText };
 }
+
 
 
 function determineAvailability(startDateUnix, weekOpen, customisation) {
