@@ -10,13 +10,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!eid) return;
 
   const getEnrollmentFormat = `
-      query calcEnrolments {
-        calcEnrolments(query: [{ where: { id: ${eid} } }]) {
-          Format: field(arg: ["format"])
-          Date_Completion: field(arg: ["date_completion"]) @dateFormat(value: "DD MONTH YYYY")
-        }
+    query calcEnrolments {
+      calcEnrolments(query: [{ where: { id: ${eid} } }]) {
+        Date_Completion: field(arg: ["date_completion"]) @dateFormat(value: "DD MONTH YYYY")
+        Class_Show_Course_Chat: field(arg: ["Class", "show_course_chat"])
+        Class_Show_Announcements: field(arg: ["Class", "show_announcements"])
       }
-    `;
+    }
+  `;
 
   try {
     const response = await fetch(graphQlApiEndpointUrlAwc, {
@@ -29,30 +30,37 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     const result = await response.json();
-    const format = result?.data?.calcEnrolments?.[0]?.Format;
-    let enrolmentCompletionDate =
-      result?.data?.calcEnrolments?.[0]?.Date_Completion;
+    const enrolment = result?.data?.calcEnrolments?.[0];
+    const enrolmentCompletionDate = enrolment?.Date_Completion;
 
-    enrolmentCompletionDatePreview = enrolmentCompletionDate;
-    let enrolmentCompletionDateDiv = document.querySelectorAll(
-      ".enrolmentCompletionDateDiv"
-    );
-    enrolmentCompletionDateDiv.forEach((div) => {
+    document.querySelectorAll(".enrolmentCompletionDateDiv").forEach(div => {
       div.textContent = enrolmentCompletionDate;
     });
 
-    if (format === "Online Tutor-led" || format === "Online Live") {
-      document.querySelectorAll(".hideIfOnline").forEach((el) => {
+    const chatEnabled = enrolment?.Class_Show_Course_Chat;
+    document.querySelectorAll(".hideIfOnline").forEach(el => {
+      if (chatEnabled) {
         el.classList.add("flex");
         el.classList.remove("hidden");
-      });
-    } else {
-      document.querySelectorAll(".hideIfOnline").forEach((el) => {
+      } else {
         el.classList.remove("flex");
         el.classList.add("hidden");
-      });
-    }
+      }
+    });
+
+    const announcementsEnabled = enrolment?.Class_Show_Announcements;
+    document.querySelectorAll(".hideIfNoAnnouncement").forEach(el => {
+      if (announcementsEnabled) {
+        el.classList.add("flex");
+        el.classList.remove("hidden");
+      } else {
+        el.classList.remove("flex");
+        el.classList.add("hidden");
+      }
+    });
+
   } catch (error) {
     console.error("GraphQL fetch error:", error);
   }
 });
+
