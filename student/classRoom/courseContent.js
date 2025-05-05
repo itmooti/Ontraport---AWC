@@ -164,61 +164,98 @@ function formatDate(unixTimestamp) {
   });
 }
 
-Get the upcoming Sunday given a start date and a weeks offset
-function getUpcomingSunday(startDateUnix, weeksOffset = 0) {
-  const startDate = new Date(startDateUnix * 1000);
-  let nextSunday = new Date(startDate);
-  nextSunday.setDate(
-    nextSunday.getDate() + (7 - nextSunday.getDay()) + weeksOffset * 7
-  );
-  return Math.floor(nextSunday.getTime() / 1000);
-}
+// //Get the upcoming Sunday given a start date and a weeks offset
+// function getUpcomingSunday(startDateUnix, weeksOffset = 0) {
+//   const startDate = new Date(startDateUnix * 1000);
+//   let nextSunday = new Date(startDate);
+//   nextSunday.setDate(
+//     nextSunday.getDate() + (7 - nextSunday.getDay()) + weeksOffset * 7
+//   );
+//   return Math.floor(nextSunday.getTime() / 1000);
+// }
 
-// Synchronously determine the due date for assessment lessons using customisation data from the unified query
-function determineAssessmentDueDateUnified(
-  lesson,
-  moduleStartDateUnix,
-  customisation
-) {
+// // Synchronously determine the due date for assessment lessons using customisation data from the unified query
+// function determineAssessmentDueDateUnified(
+//   lesson,
+//   moduleStartDateUnix,
+//   customisation
+// ) {
+//   const dueWeek = lesson.assessmentDueEndOfWeek;
+//   let dueDateUnix, dueDateText;
+//   if (customisation) {
+//     if (customisation.specific_date) {
+//       dueDateUnix =
+//         customisation.specific_date > 9999999999
+//           ? Math.floor(customisation.specific_date / 1000)
+//           : customisation.specific_date;
+//       dueDateText = `Due on ${formatDate(dueDateUnix)}`;
+//     } else if (
+//       customisation.days_to_offset !== null &&
+//       customisation.days_to_offset !== undefined
+//     ) {
+//       if (customisation.days_to_offset === 0) {
+//         dueDateUnix = moduleStartDateUnix;
+//       } else if (customisation.days_to_offset === -1) {
+//         dueDateUnix = getUpcomingSunday(moduleStartDateUnix, 0) - 24 * 60 * 60;
+//       } else if (customisation.days_to_offset === 1) {
+//         dueDateUnix = getUpcomingSunday(moduleStartDateUnix, 1) + 24 * 60 * 60;
+//       } else {
+//         dueDateUnix = getUpcomingSunday(
+//           moduleStartDateUnix,
+//           customisation.days_to_offset
+//         );
+//       }
+//       dueDateText = `Due on ${formatDate(dueDateUnix)}`;
+//     } else {
+//       dueDateUnix = getUpcomingSunday(moduleStartDateUnix, dueWeek);
+//       dueDateText = `Due on ${formatDate(dueDateUnix)}`;
+//     }
+//   } else {
+//     dueDateUnix =
+//       dueWeek === 0
+//         ? moduleStartDateUnix
+//         : getUpcomingSunday(moduleStartDateUnix, dueWeek);
+//     dueDateText = `Due on ${formatDate(dueDateUnix)}`;
+//   }
+//   return { dueDateUnix, dueDateText };
+// }
+
+
+function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisation) {
   const dueWeek = lesson.assessmentDueEndOfWeek;
-  let dueDateUnix, dueDateText;
-  if (customisation) {
-    if (customisation.specific_date) {
-      dueDateUnix =
-        customisation.specific_date > 9999999999
-          ? Math.floor(customisation.specific_date / 1000)
-          : customisation.specific_date;
-      dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-    } else if (
-      customisation.days_to_offset !== null &&
-      customisation.days_to_offset !== undefined
-    ) {
-      if (customisation.days_to_offset === 0) {
-        dueDateUnix = moduleStartDateUnix;
-      } else if (customisation.days_to_offset === -1) {
-        dueDateUnix = getUpcomingSunday(moduleStartDateUnix, 0) - 24 * 60 * 60;
-      } else if (customisation.days_to_offset === 1) {
-        dueDateUnix = getUpcomingSunday(moduleStartDateUnix, 1) + 24 * 60 * 60;
-      } else {
-        dueDateUnix = getUpcomingSunday(
-          moduleStartDateUnix,
-          customisation.days_to_offset
-        );
-      }
-      dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-    } else {
-      dueDateUnix = getUpcomingSunday(moduleStartDateUnix, dueWeek);
-      dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-    }
-  } else {
+  let dueDateUnix = null, dueDateText = null;
+
+  if (customisation?.specific_date) {
     dueDateUnix =
-      dueWeek === 0
-        ? moduleStartDateUnix
-        : getUpcomingSunday(moduleStartDateUnix, dueWeek);
+      customisation.specific_date > 9999999999
+        ? Math.floor(customisation.specific_date / 1000)
+        : customisation.specific_date;
+    dueDateText = `Due on ${formatDate(dueDateUnix)}`;
+  } else if (customisation?.days_to_offset !== null && customisation?.days_to_offset !== undefined) {
+    const offset = customisation.days_to_offset;
+
+    if (offset === 0) {
+      dueDateUnix = moduleStartDateUnix;
+    } else if (offset === -1) {
+      dueDateUnix = moduleStartDateUnix + 6 * 86400; // Saturday of first week
+    } else if (offset === 1) {
+      dueDateUnix = moduleStartDateUnix + 8 * 86400; // Monday of second week
+    } else {
+      dueDateUnix = moduleStartDateUnix + offset * 7 * 86400;
+    }
+
+    dueDateText = `Due on ${formatDate(dueDateUnix)}`;
+  } else if (dueWeek === 0) {
+    dueDateUnix = null;
+    dueDateText = null;
+  } else {
+    dueDateUnix = moduleStartDateUnix + dueWeek * 7 * 86400 - 1; // End of week N (Saturday 11:59:59 PM)
     dueDateText = `Due on ${formatDate(dueDateUnix)}`;
   }
+
   return { dueDateUnix, dueDateText };
 }
+
 
 function determineAvailability(startDateUnix, weekOpen, customisation) {
   if (!startDateUnix) {
