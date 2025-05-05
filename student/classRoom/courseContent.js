@@ -216,39 +216,6 @@ function determineAssessmentDueDateUnified(
   }
   return { dueDateUnix, dueDateText };
 }
-// Determine lesson/module availability using the provided customisation data from the unified query
-// function determineAvailability(startDateUnix, weeks, customisation) {
-//   if (!startDateUnix) {
-//     return { isAvailable: false, openDateText: "No Start Date" };
-//   }
-//   let openDateUnix, openDateText;
-//   if (!customisation) {
-//     openDateUnix = startDateUnix + weeks * 7 * 24 * 60 * 60;
-//     openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
-//   } else {
-//     if (customisation.specific_date) {
-//       openDateUnix =
-//         customisation.specific_date > 9999999999
-//           ? Math.floor(customisation.specific_date / 1000)
-//           : customisation.specific_date;
-//       openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
-//     } else if (
-//       customisation.days_to_offset !== null &&
-//       customisation.days_to_offset !== undefined
-//     ) {
-//       openDateUnix =
-//         startDateUnix + customisation.days_to_offset * 24 * 60 * 60;
-//       openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
-//     } else {
-//       openDateUnix = startDateUnix + weeks * 7 * 24 * 60 * 60;
-//       openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
-//     }
-//   }
-//   const todayUnix = Math.floor(Date.now() / 1000);
-//   // Original logic preserved: available if unlock date is greater than or equal to today
-//   const isAvailable = openDateUnix >= todayUnix;
-//   return { isAvailable, openDateText };
-// }
 
 function determineAvailability(startDateUnix, weekOpen, customisation) {
   if (!startDateUnix) {
@@ -302,6 +269,7 @@ completed__lessons
 Class {
   start_date
   end_date
+  id 
 }
 }
 course_name
