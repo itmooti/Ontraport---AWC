@@ -224,6 +224,7 @@ function determineAssessmentDueDateUnified(
   moduleStartDateUnix,
   customisation
 ) {
+	console.log('determineAssessmentDueDateUnified',moduleStartDateUnix);
   let dueDateUnix, dueDateText;
   if (customisation) {
     if (customisation.specific_date) {
