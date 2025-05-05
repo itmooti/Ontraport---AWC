@@ -250,21 +250,19 @@ function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customis
     return { dueDateUnix, dueDateText };
   }
 
-  // Rule 3: days_to_offset overrides week logic
+  // Rule 3: days_to_offset as number of days
   if (
     customisation?.days_to_offset !== null &&
     customisation?.days_to_offset !== undefined
   ) {
     console.log('customisation?.days_to_offset');
     const offsetDays = customisation.days_to_offset;
-
-    // Add day offset to normalized start and set time to 23:59
-    dueDateUnix = normalizedStartUnix + offsetDays * 86400 + 23 * 3600 + 59 * 60;
+    dueDateUnix = normalizedStartUnix + offsetDays * 86400;
     dueDateText = `Due on ${formatDate(dueDateUnix)}`;
     return { dueDateUnix, dueDateText };
   }
 
-  // Rule 4: Standard due week logic (Sunday 23:59 of week N)
+  // Rule 4: Default week logic — Sunday 23:59 of week N
   const secondsInAWeek = 7 * 86400;
   const sundayEndOfDayOffset = 6 * 86400 + 23 * 3600 + 59 * 60;
 
@@ -274,7 +272,6 @@ function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customis
 
   return { dueDateUnix, dueDateText };
 }
-
 
 function determineAvailability(startDateUnix, weekOpen, customisation) {
   if (!startDateUnix) {
