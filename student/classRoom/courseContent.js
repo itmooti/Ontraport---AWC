@@ -227,11 +227,13 @@ function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customis
 
   // Rule 1: No due date if dueWeek is 0 or null
   if (dueWeek === 0 || dueWeek === null) {
+	  console.log('inside dueWeek === 0 || dueWeek === null');
     return { dueDateUnix: null, dueDateText: null };
   }
 
   // Rule 2: Specific date overrides everything
   if (customisation?.specific_date) {
+	    console.log(' customisation?.specific_date');
     dueDateUnix =
       customisation.specific_date > 9999999999
         ? Math.floor(customisation.specific_date / 1000)
@@ -247,7 +249,7 @@ function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customis
 
   dueDateUnix = moduleStartDateUnix + dueWeek * secondsInAWeek - 86400 + endOfDayOffset;
   dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-
+ console.log(' offset');
   return { dueDateUnix, dueDateText };
 }
 
