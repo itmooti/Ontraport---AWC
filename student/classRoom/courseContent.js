@@ -395,6 +395,7 @@ async function fetchLmsUnifiedData() {
       })),
       modules: (course.Modules ?? []).map((mod) => ({
         id: mod.id,
+	classId,
         uniqueId: mod.unique_id,
         order: mod.order,
         moduleName: mod.module_name,
@@ -510,6 +511,7 @@ async function combineUnifiedData() {
           return {
             ...lesson,
             status,
+	    classId,
             eid: data.enrolments?.[0]?.id || null,
             dueDateUnix: dueDateInfo.dueDateUnix,
             dontTrackProgress: module.dontTrackProgress,
