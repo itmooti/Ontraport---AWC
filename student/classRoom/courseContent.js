@@ -3,6 +3,7 @@ let inProgressQuery;
 let enrollmentCourseProgressQuery;
 let lessonDateProgress;
 let getEnrollmentFormat;
+let globalClassId = null;
 
 function defineQuery() {
   getEnrollmentFormat = `
@@ -373,9 +374,12 @@ async function fetchLmsUnifiedData() {
     }
 
     const course = response.LMSQuery[0];
+    const classId = course.Enrolments_As_Course?.[0]?.Class?.id ?? null;
+    globalClassId = classId;
     const mappedData = {
       courseName: course.course_name,
       courseAccessType: course.course_access_type,
+      classId, 
       enrolments: (course.Enrolments_As_Course ?? []).map((enr) => ({
         id: enr.id,
         resumeLessonUniqueId: enr.resume_lesson_unique_id,
