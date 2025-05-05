@@ -4,6 +4,7 @@ let enrollmentCourseProgressQuery;
 let lessonDateProgress;
 let getEnrollmentFormat;
 let globalClassId = null;
+let showDripFed = false;
 
 function defineQuery() {
   getEnrollmentFormat = `
@@ -376,10 +377,14 @@ async function fetchLmsUnifiedData() {
     const course = response.LMSQuery[0];
     const classId = course.Enrolments_As_Course?.[0]?.Class?.id ?? null;
     globalClassId = classId;
+
+   const dripFad = course.Enrolments_As_Course?.[0]?.Class?.show_modules_drop_fed  ?? null;
+    showDripFed = dripFad;
     const mappedData = {
       courseName: course.course_name,
       courseAccessType: course.course_access_type,
       classId, 
+      dripFad,
       enrolments: (course.Enrolments_As_Course ?? []).map((enr) => ({
         id: enr.id,
         resumeLessonUniqueId: enr.resume_lesson_unique_id,
@@ -396,6 +401,7 @@ async function fetchLmsUnifiedData() {
       modules: (course.Modules ?? []).map((mod) => ({
         id: mod.id,
 	classId,
+	      dripFad,
         uniqueId: mod.unique_id,
         order: mod.order,
         moduleName: mod.module_name,
@@ -512,6 +518,7 @@ async function combineUnifiedData() {
             ...lesson,
             status,
 	    classId,
+		  dripFad,
             eid: data.enrolments?.[0]?.id || null,
             dueDateUnix: dueDateInfo.dueDateUnix,
             dontTrackProgress: module.dontTrackProgress,
