@@ -231,31 +231,23 @@ function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customis
         ? Math.floor(customisation.specific_date / 1000)
         : customisation.specific_date;
     dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-  } else if (customisation?.days_to_offset !== null && customisation?.days_to_offset !== undefined) {
-    const offset = customisation.days_to_offset;
-
-    if (offset === 0) {
-      dueDateUnix = moduleStartDateUnix;
-    } else if (offset === -1) {
-      dueDateUnix = moduleStartDateUnix + 6 * 86400; // Saturday of first week
-    } else if (offset === 1) {
-      dueDateUnix = moduleStartDateUnix + 8 * 86400; // Monday of second week
-    } else {
-      dueDateUnix = moduleStartDateUnix + offset * 7 * 86400;
-    }
-
+  } else if (
+    customisation?.days_to_offset !== null &&
+    customisation?.days_to_offset !== undefined
+  ) {
+    const offsetDays = customisation.days_to_offset;
+    dueDateUnix = moduleStartDateUnix + offsetDays * 86400;
     dueDateText = `Due on ${formatDate(dueDateUnix)}`;
   } else if (dueWeek === 0) {
     dueDateUnix = null;
     dueDateText = null;
   } else {
-    dueDateUnix = moduleStartDateUnix + dueWeek * 7 * 86400 - 1; // End of week N (Saturday 11:59:59 PM)
+    dueDateUnix = moduleStartDateUnix + dueWeek * 7 * 86400 - 1;
     dueDateText = `Due on ${formatDate(dueDateUnix)}`;
   }
 
   return { dueDateUnix, dueDateText };
 }
-
 
 function determineAvailability(startDateUnix, weekOpen, customisation) {
   if (!startDateUnix) {
