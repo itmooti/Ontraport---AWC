@@ -238,7 +238,7 @@ function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customis
     const offsetDays = customisation.days_to_offset;
     dueDateUnix = moduleStartDateUnix + offsetDays * 86400;
     dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-  } else if (dueWeek === 0) {
+  } else if (dueWeek === 0 || dueWeek === null ) {
     dueDateUnix = null;
     dueDateText = null;
   } else {
