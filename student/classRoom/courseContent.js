@@ -222,6 +222,11 @@ function formatDate(unixTimestamp) {
 
 
 function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisation) {
+	console.log('lesson', lesson);
+	
+	console.log('moduleStartDateUnix', moduleStartDateUnix);
+	
+	console.log('customisation', customisation);
   const dueWeek = lesson.assessmentDueEndOfWeek;
   let dueDateUnix = null, dueDateText = null;
 
