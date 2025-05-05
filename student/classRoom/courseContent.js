@@ -401,7 +401,7 @@ async function fetchLmsUnifiedData() {
       modules: (course.Modules ?? []).map((mod) => ({
         id: mod.id,
 	classId,
-	      dripFad,
+	dripFad,
         uniqueId: mod.unique_id,
         order: mod.order,
         moduleName: mod.module_name,
@@ -451,6 +451,7 @@ async function combineUnifiedData() {
   const data = await fetchLmsUnifiedData();
 
   if (!data) return null;
+ const { classId, dripFad } = data;  
   const enrolments = (data.enrolments || []).map((enr) => ({
     id: enr.id,
     resumeLessonUniqueId: enr.resumeLessonUniqueId,
@@ -518,7 +519,7 @@ async function combineUnifiedData() {
             ...lesson,
             status,
 	    classId,
-		  dripFad,
+	    dripFad,
             eid: data.enrolments?.[0]?.id || null,
             dueDateUnix: dueDateInfo.dueDateUnix,
             dontTrackProgress: module.dontTrackProgress,
