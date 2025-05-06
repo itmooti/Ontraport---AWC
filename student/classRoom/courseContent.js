@@ -220,7 +220,7 @@ function formatDate(unixTimestamp) {
 // }
 
 
-function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisation) {
+function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisation = []) {
   console.log('lesson', lesson);
   console.log('moduleStartDateUnix', moduleStartDateUnix);
   console.log('customisation', customisation);
@@ -529,15 +529,23 @@ async function combineUnifiedData() {
   const modules = await Promise.all(
     data.modules.map(async (module) => {
       // Use customisations from the unified query for module-level due/open date
-      const moduleCustomisation =
-        module.customisations && module.customisations.length > 0
-          ? module.customisations[0]
-          : null;
-      const availability = determineAvailability(
-        defaultClassStartDate,
-        module.weekOpenFromStartDate,
-        moduleCustomisation
-      );
+      // const moduleCustomisation =
+      //   module.customisations && module.customisations.length > 0
+      //     ? module.customisations[0]
+      //     : null;
+      // const availability = determineAvailability(
+      //   defaultClassStartDate,
+      //   module.weekOpenFromStartDate,
+      //   moduleCustomisation
+      // );
+
+	    const moduleCustomisations = module.customisations || [];
+const availability = determineAvailability(
+  defaultClassStartDate,
+  module.weekOpenFromStartDate,
+  moduleCustomisations
+);
+
 
       const lessons = await Promise.all(
         module.lessons.map(async (lesson) => {
@@ -559,16 +567,23 @@ async function combineUnifiedData() {
           };
           if (lesson.type === "Assessment") {
             // Use lesson customisation data from the unified query
-            const lessonCustomisation =
-              lesson.lessonCustomisations &&
-              lesson.lessonCustomisations.length > 0
-                ? lesson.lessonCustomisations[0]
-                : null;
-            dueDateInfo = determineAssessmentDueDateUnified(
-              lesson,
-              defaultClassStartDate,
-              lessonCustomisation
-            );
+            // const lessonCustomisation =
+            //   lesson.lessonCustomisations &&
+            //   lesson.lessonCustomisations.length > 0
+            //     ? lesson.lessonCustomisations[0]
+            //     : null;
+            // dueDateInfo = determineAssessmentDueDateUnified(
+            //   lesson,
+            //   defaultClassStartDate,
+            //   lessonCustomisation
+            // );
+		  const lessonCustomisations = lesson.lessonCustomisations || [];
+const dueDateInfo = determineAssessmentDueDateUnified(
+  lesson,
+  defaultClassStartDate,
+  lessonCustomisations
+);
+
           }
           return {
             ...lesson,
