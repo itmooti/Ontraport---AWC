@@ -274,6 +274,7 @@ function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customis
 }
 
 function determineAvailability(startDateUnix, weekOpen, customisation) {
+	console.log('determineAvailability',customisation);
   if (!startDateUnix) {
     return { isAvailable: false, openDateText: "No Start Date" };
   }
