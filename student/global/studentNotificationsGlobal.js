@@ -401,23 +401,35 @@ let socketConnections = new Map();
 
 async function fetchClassIds() {
   if (cachedClassIds !== null) return cachedClassIds;
-  const query = `
+  // const query = `
+  //   query calcEnrolments {
+  //     calcEnrolments(
+  //       query: [
+  //         { where: { student_id: ${loggedInContactIdIntAwc} } }
+  //         {
+  //           andWhereGroup: [
+  //             { where: { format: "Online Live" } }
+  //             { orWhere: { format: "Online Tutor-led" } }
+  //           ]
+  //         }
+  //         {
+  //           andWhereGroup: [
+  //             { where: { status: "New" } }
+  //             { orWhere: { status: "Active" } }
+  //           ]
+  //         }
+  //       ]
+  //     ) {
+  //       Class_ID: field(arg: ["class_id"])
+  //     }
+  //   }
+  // `;
+
+	const query = `
     query calcEnrolments {
       calcEnrolments(
         query: [
           { where: { student_id: ${loggedInContactIdIntAwc} } }
-          {
-            andWhereGroup: [
-              { where: { format: "Online Live" } }
-              { orWhere: { format: "Online Tutor-led" } }
-            ]
-          }
-          {
-            andWhereGroup: [
-              { where: { status: "New" } }
-              { orWhere: { status: "Active" } }
-            ]
-          }
         ]
       ) {
         Class_ID: field(arg: ["class_id"])
