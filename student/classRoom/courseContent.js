@@ -343,7 +343,7 @@ function determineAvailability(startDateUnix, weekOpen, customisations = []) {
     }
   }
 
-  const isAvailable = todayUnix >= openDateUnix;
+  const isAvailable = todayUnix <= openDateUnix;
   const openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
 
   return { isAvailable, openDateText };
