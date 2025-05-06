@@ -220,58 +220,6 @@ function formatDate(unixTimestamp) {
 // }
 
 
-function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisation) {
-  // console.log('lesson', lesson);
-  // console.log('moduleStartDateUnix', moduleStartDateUnix);
-  // console.log('customisation', customisation);
-
-  const dueWeek = lesson.assessmentDueEndOfWeek;
-  let dueDateUnix = null, dueDateText = null;
-
-  // Rule 1: No due date if dueWeek is 0 or null
-  if (dueWeek === 0 || dueWeek === null) {
-    console.log('inside dueWeek === 0 || dueWeek === null');
-    return { dueDateUnix: null, dueDateText: null };
-  }
-
-  // Normalize moduleStartDate to 00:00 UTC
-  const baseDate = new Date(moduleStartDateUnix * 1000);
-  baseDate.setUTCHours(0, 0, 0, 0);
-  const normalizedStartUnix = Math.floor(baseDate.getTime() / 1000);
-
-  // Rule 2: Specific date overrides everything
-  if (customisation?.specific_date) {
-    console.log('customisation?.specific_date');
-    dueDateUnix =
-      customisation.specific_date > 9999999999
-        ? Math.floor(customisation.specific_date / 1000)
-        : customisation.specific_date;
-    dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-    return { dueDateUnix, dueDateText };
-  }
-
-  // Rule 3: days_to_offset as number of days
-  if (
-    customisation?.days_to_offset !== null &&
-    customisation?.days_to_offset !== undefined
-  ) {
-    //console.log('customisation?.days_to_offset');
-    const offsetDays = customisation.days_to_offset;
-    dueDateUnix = normalizedStartUnix + offsetDays * 86400;
-    dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-    return { dueDateUnix, dueDateText };
-  }
-
-  // Rule 4: Default week logic — Sunday 23:59 of week N
-  const secondsInAWeek = 7 * 86400;
-  const sundayEndOfDayOffset = 6 * 86400 + 23 * 3600 + 59 * 60;
-
-  dueDateUnix = normalizedStartUnix + (dueWeek - 1) * secondsInAWeek + sundayEndOfDayOffset;
-  dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-  console.log('standard dueWeek-based offset');
-
-  return { dueDateUnix, dueDateText };
-}
 
 // function determineAvailability(startDateUnix, weekOpen, customisation) {
 // 	console.log('determineAvailability',customisation);
@@ -311,6 +259,7 @@ function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customis
 //   return { isAvailable, openDateText };
 // }
 
+
 function determineAvailability(startDateUnix, weekOpen, customisations = []) {
   if (!startDateUnix) {
     return { isAvailable: false, openDateText: "No Start Date" };
@@ -349,6 +298,44 @@ function determineAvailability(startDateUnix, weekOpen, customisations = []) {
   return { isAvailable, openDateText };
 }
 
+function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisations = []) {
+  const dueWeek = lesson.assessmentDueEndOfWeek;
+  let dueDateUnix = null, dueDateText = null;
+
+  if (dueWeek === 0 || dueWeek === null) {
+    return { dueDateUnix: null, dueDateText: null };
+  }
+
+  const baseDate = new Date(moduleStartDateUnix * 1000);
+  baseDate.setUTCHours(0, 0, 0, 0);
+  const normalizedStartUnix = Math.floor(baseDate.getTime() / 1000);
+
+  const sorted = [...customisations].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const latestWithDate = sorted.find(c => c.specific_date);
+  const latestWithOffset = sorted.find(c => c.days_to_offset !== null && c.days_to_offset !== undefined);
+
+  if (latestWithDate) {
+    dueDateUnix = latestWithDate.specific_date > 9999999999
+      ? Math.floor(latestWithDate.specific_date / 1000)
+      : latestWithDate.specific_date;
+    dueDateText = `Due on ${formatDate(dueDateUnix)}`;
+    return { dueDateUnix, dueDateText };
+  }
+
+  if (latestWithOffset) {
+    dueDateUnix = normalizedStartUnix + latestWithOffset.days_to_offset * 86400;
+    dueDateText = `Due on ${formatDate(dueDateUnix)}`;
+    return { dueDateUnix, dueDateText };
+  }
+
+  const secondsInAWeek = 7 * 86400;
+  const sundayEndOfDayOffset = 6 * 86400 + 23 * 3600 + 59 * 60;
+
+  dueDateUnix = normalizedStartUnix + (dueWeek - 1) * secondsInAWeek + sundayEndOfDayOffset;
+  dueDateText = `Due on ${formatDate(dueDateUnix)}`;
+
+  return { dueDateUnix, dueDateText };
+}
 
 // Unified GraphQL query (includes all customisations)
 const lmsQuery = `
@@ -539,123 +526,224 @@ async function fetchLmsUnifiedData() {
 }
 
 // Combine and map course, module, and lesson data with progress and due date calculations
+// async function combineUnifiedData() {
+//   const data = await fetchLmsUnifiedData();
+
+//   if (!data) return null;
+//  const { classId, dripFad } = data;  
+//   const enrolments = (data.enrolments || []).map((enr) => ({
+//     id: enr.id,
+//     resumeLessonUniqueId: enr.resumeLessonUniqueId,
+//     dateCompletion: enr.dateCompletion,
+//     certificateLink: enr.certificateLink,
+//     completedLessons: enr.completedLessons,
+//     classInfo: enr.classInfo
+//       ? {
+//           startDate: enr.classInfo.startDate,
+//           endDate: enr.classInfo.endDate,
+//         }
+//       : null,
+//   }));
+
+//   // Use class start date from enrolments (fallback to current time)
+//   const defaultClassStartDate =
+//     enrolments.length && enrolments[0].classInfo?.startDate
+//       ? Number(enrolments[0].classInfo.startDate)
+//       : Math.floor(Date.now() / 1000);
+//   const modules = await Promise.all(
+//     data.modules.map(async (module) => {
+//       // Use customisations from the unified query for module-level due/open date
+//       // const moduleCustomisation =
+//       //   module.customisations && module.customisations.length > 0
+//       //     ? module.customisations[0]
+//       //     : null;
+//       // const availability = determineAvailability(
+//       //   defaultClassStartDate,
+//       //   module.weekOpenFromStartDate,
+//       //   moduleCustomisation
+//       // );
+
+// 	    const moduleCustomisations = module.customisations || [];
+// const availability = determineAvailability(
+//   defaultClassStartDate,
+//   module.weekOpenFromStartDate,
+//   moduleCustomisations
+// );
+
+
+//       const lessons = await Promise.all(
+//         module.lessons.map(async (lesson) => {
+//           let status = "NotStarted";
+//           if (
+//             lesson.enrolmentLessonCompletions &&
+//             lesson.enrolmentLessonCompletions.length > 0
+//           ) {
+//             status = "Completed";
+//           } else if (
+//             lesson.lessonEnrolmentInProgresses &&
+//             lesson.lessonEnrolmentInProgresses.length > 0
+//           ) {
+//             status = "InProgress";
+//           }
+//           let dueDateInfo = {
+//             dueDateUnix: null,
+//             dueDateText: "No Due Date",
+//           };
+//           if (lesson.type === "Assessment") {
+//             // Use lesson customisation data from the unified query
+//             // const lessonCustomisation =
+//             //   lesson.lessonCustomisations &&
+//             //   lesson.lessonCustomisations.length > 0
+//             //     ? lesson.lessonCustomisations[0]
+//             //     : null;
+//             // dueDateInfo = determineAssessmentDueDateUnified(
+//             //   lesson,
+//             //   defaultClassStartDate,
+//             //   lessonCustomisation
+//             // );
+// 		  const lessonCustomisations = lesson.lessonCustomisations || [];
+// const dueDateInfo = determineAssessmentDueDateUnified(
+//   lesson,
+//   defaultClassStartDate,
+//   lessonCustomisations
+// );
+
+//           }
+//           return {
+//             ...lesson,
+//             status,
+// 	    classId,
+// 	    dripFad,
+//             eid: data.enrolments?.[0]?.id || null,
+//             dueDateUnix: dueDateInfo.dueDateUnix,
+//             dontTrackProgress: module.dontTrackProgress,
+//             dueDateText: dueDateInfo.dueDateText,
+//             availability: availability.isAvailable,
+//             openDateText: availability.openDateText,
+//             courseAccessType: data.courseAccessType,
+//             dateCompletion: data.enrolments?.[0]?.dateCompletion || null,
+//           };
+//         })
+//       );
+//       const lessonCompletedIDsFlat = module.lessons.flatMap((lesson) =>
+//         (lesson.enrolmentLessonCompletions || []).flatMap((elc) =>
+//           (elc.Lesson_Completions || []).map((comp) => comp.id)
+//         )
+//       );
+
+//       // Optional deduplication:
+//       const uniqueCompletedIDs = new Set(lessonCompletedIDsFlat);
+
+//       const completedCount = module.lessons.filter((lesson) =>
+//         uniqueCompletedIDs.has(lesson.id)
+//       ).length;
+
+//       return {
+//         ...module,
+//         lessons,
+//         dontTrackProgress: module.dontTrackProgress,
+
+//         lessonID: module.lessons.map((lesson) => lesson.id),
+//         lessonCompletedID: Array.from(uniqueCompletedIDs),
+//         completedCount,
+//         courseName: data.courseName,
+//         eid: data.enrolments?.[0]?.id || null,
+//         courseAccessType: data.courseAccessType,
+//         availability: availability.isAvailable,
+//         dateCompletion: data.enrolments?.[0]?.dateCompletion || null,
+//         openDateText: availability.openDateText,
+//       };
+//     })
+//   );
+//   return {
+//     courseName: data.courseName,
+//     courseAccessType: data.courseAccessType,
+//     dateCompletion: data.enrolments?.[0]?.dateCompletion || null,
+//     eid: data.enrolments?.[0]?.id || null,
+//     modules,
+//   };
+// }
 async function combineUnifiedData() {
   const data = await fetchLmsUnifiedData();
-
   if (!data) return null;
- const { classId, dripFad } = data;  
+
+  const { classId, dripFad } = data;
+
   const enrolments = (data.enrolments || []).map((enr) => ({
     id: enr.id,
     resumeLessonUniqueId: enr.resumeLessonUniqueId,
     dateCompletion: enr.dateCompletion,
     certificateLink: enr.certificateLink,
     completedLessons: enr.completedLessons,
-    classInfo: enr.classInfo
-      ? {
-          startDate: enr.classInfo.startDate,
-          endDate: enr.classInfo.endDate,
-        }
-      : null,
+    classInfo: enr.classInfo,
   }));
 
-  // Use class start date from enrolments (fallback to current time)
   const defaultClassStartDate =
     enrolments.length && enrolments[0].classInfo?.startDate
       ? Number(enrolments[0].classInfo.startDate)
       : Math.floor(Date.now() / 1000);
+
   const modules = await Promise.all(
     data.modules.map(async (module) => {
-      // Use customisations from the unified query for module-level due/open date
-      // const moduleCustomisation =
-      //   module.customisations && module.customisations.length > 0
-      //     ? module.customisations[0]
-      //     : null;
-      // const availability = determineAvailability(
-      //   defaultClassStartDate,
-      //   module.weekOpenFromStartDate,
-      //   moduleCustomisation
-      // );
-
-	    const moduleCustomisations = module.customisations || [];
-const availability = determineAvailability(
-  defaultClassStartDate,
-  module.weekOpenFromStartDate,
-  moduleCustomisations
-);
-
+      const moduleCustomisations = module.customisations || [];
+      const availability = determineAvailability(
+        defaultClassStartDate,
+        module.weekOpenFromStartDate,
+        moduleCustomisations
+      );
 
       const lessons = await Promise.all(
         module.lessons.map(async (lesson) => {
           let status = "NotStarted";
-          if (
-            lesson.enrolmentLessonCompletions &&
-            lesson.enrolmentLessonCompletions.length > 0
-          ) {
+          if (lesson.enrolmentLessonCompletions?.length > 0) {
             status = "Completed";
-          } else if (
-            lesson.lessonEnrolmentInProgresses &&
-            lesson.lessonEnrolmentInProgresses.length > 0
-          ) {
+          } else if (lesson.lessonEnrolmentInProgresses?.length > 0) {
             status = "InProgress";
           }
-          let dueDateInfo = {
-            dueDateUnix: null,
-            dueDateText: "No Due Date",
-          };
-          if (lesson.type === "Assessment") {
-            // Use lesson customisation data from the unified query
-            // const lessonCustomisation =
-            //   lesson.lessonCustomisations &&
-            //   lesson.lessonCustomisations.length > 0
-            //     ? lesson.lessonCustomisations[0]
-            //     : null;
-            // dueDateInfo = determineAssessmentDueDateUnified(
-            //   lesson,
-            //   defaultClassStartDate,
-            //   lessonCustomisation
-            // );
-		  const lessonCustomisations = lesson.lessonCustomisations || [];
-const dueDateInfo = determineAssessmentDueDateUnified(
-  lesson,
-  defaultClassStartDate,
-  lessonCustomisations
-);
 
+          let dueDateInfo = { dueDateUnix: null, dueDateText: "No Due Date" };
+          if (lesson.type === "Assessment") {
+            const lessonCustomisations = lesson.lessonCustomisations || [];
+            dueDateInfo = determineAssessmentDueDateUnified(
+              lesson,
+              defaultClassStartDate,
+              lessonCustomisations
+            );
           }
+
           return {
             ...lesson,
             status,
-	    classId,
-	    dripFad,
+            classId,
+            dripFad,
             eid: data.enrolments?.[0]?.id || null,
             dueDateUnix: dueDateInfo.dueDateUnix,
-            dontTrackProgress: module.dontTrackProgress,
             dueDateText: dueDateInfo.dueDateText,
             availability: availability.isAvailable,
             openDateText: availability.openDateText,
+            dontTrackProgress: module.dontTrackProgress,
             courseAccessType: data.courseAccessType,
             dateCompletion: data.enrolments?.[0]?.dateCompletion || null,
           };
         })
       );
+
       const lessonCompletedIDsFlat = module.lessons.flatMap((lesson) =>
         (lesson.enrolmentLessonCompletions || []).flatMap((elc) =>
           (elc.Lesson_Completions || []).map((comp) => comp.id)
         )
       );
 
-      // Optional deduplication:
       const uniqueCompletedIDs = new Set(lessonCompletedIDsFlat);
-
       const completedCount = module.lessons.filter((lesson) =>
         uniqueCompletedIDs.has(lesson.id)
       ).length;
 
       return {
         ...module,
+        classId,
+        dripFad,
         lessons,
-        dontTrackProgress: module.dontTrackProgress,
-
         lessonID: module.lessons.map((lesson) => lesson.id),
         lessonCompletedID: Array.from(uniqueCompletedIDs),
         completedCount,
@@ -663,51 +751,86 @@ const dueDateInfo = determineAssessmentDueDateUnified(
         eid: data.enrolments?.[0]?.id || null,
         courseAccessType: data.courseAccessType,
         availability: availability.isAvailable,
-        dateCompletion: data.enrolments?.[0]?.dateCompletion || null,
         openDateText: availability.openDateText,
+        dateCompletion: data.enrolments?.[0]?.dateCompletion || null,
       };
     })
   );
+
   return {
     courseName: data.courseName,
     courseAccessType: data.courseAccessType,
     dateCompletion: data.enrolments?.[0]?.dateCompletion || null,
     eid: data.enrolments?.[0]?.id || null,
+    classId,
+    dripFad,
     modules,
+    enrolments,
   };
 }
-
-// Render modules and progress sections using JS render templates
 async function renderUnifiedModules() {
   const skeletonHTML = `
-      <div class="skeleton-container">
-        <div class="skeleton-card skeleton-shimmer"></div>
-        <div class="skeleton-card skeleton-shimmer"></div>
-        <div class="skeleton-card skeleton-shimmer"></div>
-        <div class="skeleton-card skeleton-shimmer"></div>
-        <div class="skeleton-card skeleton-shimmer"></div>
-      </div>
-    `;
+    <div class="skeleton-container">
+      <div class="skeleton-card skeleton-shimmer"></div>
+      <div class="skeleton-card skeleton-shimmer"></div>
+      <div class="skeleton-card skeleton-shimmer"></div>
+      <div class="skeleton-card skeleton-shimmer"></div>
+      <div class="skeleton-card skeleton-shimmer"></div>
+    </div>
+  `;
+
   $("#modulesContainer").html(skeletonHTML);
-  // $("#progressModulesContainer").html(skeletonHTML);
+
   const unifiedData = await combineUnifiedData();
 
-  if (!unifiedData || !Array.isArray(unifiedData.modules)) {
-    return;
-  }
+  if (!unifiedData || !Array.isArray(unifiedData.modules)) return;
+
   const template = $.templates("#modulesTemplate");
   const htmlOutput = template.render({
     modules: unifiedData.modules,
     courseName: unifiedData.courseName,
   });
+
   const progressTemplate = $.templates("#progressModulesTemplate");
   const progressOutput = progressTemplate.render({
     modules: unifiedData.modules,
     courseName: unifiedData.courseName,
   });
+
   $("#modulesContainer").html(htmlOutput);
   $("#progressModulesContainer").html(progressOutput);
 }
+// Render modules and progress sections using JS render templates
+// async function renderUnifiedModules() {
+//   const skeletonHTML = `
+//       <div class="skeleton-container">
+//         <div class="skeleton-card skeleton-shimmer"></div>
+//         <div class="skeleton-card skeleton-shimmer"></div>
+//         <div class="skeleton-card skeleton-shimmer"></div>
+//         <div class="skeleton-card skeleton-shimmer"></div>
+//         <div class="skeleton-card skeleton-shimmer"></div>
+//       </div>
+//     `;
+//   $("#modulesContainer").html(skeletonHTML);
+//   // $("#progressModulesContainer").html(skeletonHTML);
+//   const unifiedData = await combineUnifiedData();
+
+//   if (!unifiedData || !Array.isArray(unifiedData.modules)) {
+//     return;
+//   }
+//   const template = $.templates("#modulesTemplate");
+//   const htmlOutput = template.render({
+//     modules: unifiedData.modules,
+//     courseName: unifiedData.courseName,
+//   });
+//   const progressTemplate = $.templates("#progressModulesTemplate");
+//   const progressOutput = progressTemplate.render({
+//     modules: unifiedData.modules,
+//     courseName: unifiedData.courseName,
+//   });
+//   $("#modulesContainer").html(htmlOutput);
+//   $("#progressModulesContainer").html(progressOutput);
+// }
 
 // Helper to add event listeners if element exists
 function addEventListenerIfExists(id, event, handler) {
