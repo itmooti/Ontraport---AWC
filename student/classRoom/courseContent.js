@@ -220,10 +220,10 @@ function formatDate(unixTimestamp) {
 // }
 
 
-function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisation = []) {
-  console.log('lesson', lesson);
-  console.log('moduleStartDateUnix', moduleStartDateUnix);
-  console.log('customisation', customisation);
+function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisation) {
+  // console.log('lesson', lesson);
+  // console.log('moduleStartDateUnix', moduleStartDateUnix);
+  // console.log('customisation', customisation);
 
   const dueWeek = lesson.assessmentDueEndOfWeek;
   let dueDateUnix = null, dueDateText = null;
@@ -255,7 +255,7 @@ function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customis
     customisation?.days_to_offset !== null &&
     customisation?.days_to_offset !== undefined
   ) {
-    console.log('customisation?.days_to_offset');
+    //console.log('customisation?.days_to_offset');
     const offsetDays = customisation.days_to_offset;
     dueDateUnix = normalizedStartUnix + offsetDays * 86400;
     dueDateText = `Due on ${formatDate(dueDateUnix)}`;
@@ -273,8 +273,45 @@ function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customis
   return { dueDateUnix, dueDateText };
 }
 
-function determineAvailability(startDateUnix, weekOpen, customisation) {
-	console.log('determineAvailability',customisation);
+// function determineAvailability(startDateUnix, weekOpen, customisation) {
+// 	console.log('determineAvailability',customisation);
+//   if (!startDateUnix) {
+//     return { isAvailable: false, openDateText: "No Start Date" };
+//   }
+
+//   const SECONDS_IN_DAY = 86400;
+//   const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
+//   const todayUnix = Math.floor(Date.now() / 1000);
+
+//   let openDateUnix;
+
+//   if (customisation?.specific_date) {
+//     openDateUnix = customisation.specific_date > 9999999999
+//       ? Math.floor(customisation.specific_date / 1000)
+//       : customisation.specific_date;
+//   } else if (weekOpen === 0) {
+//     // Always open module, no specific date, no offset logic applies
+//     return { isAvailable: true, openDateText: "Available anytime" };
+//   } else {
+//     // Compute open date based on week offset
+//     openDateUnix = startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK;
+
+//     // Apply offset if present
+//     if (
+//       customisation?.days_to_offset !== null &&
+//       customisation?.days_to_offset !== undefined
+//     ) {
+//       openDateUnix += customisation.days_to_offset * SECONDS_IN_DAY;
+//     }
+//   }
+
+//   const isAvailable = todayUnix <= openDateUnix;
+//   const openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
+
+//   return { isAvailable, openDateText };
+// }
+
+function determineAvailability(startDateUnix, weekOpen, customisations = []) {
   if (!startDateUnix) {
     return { isAvailable: false, openDateText: "No Start Date" };
   }
@@ -285,32 +322,32 @@ function determineAvailability(startDateUnix, weekOpen, customisation) {
 
   let openDateUnix;
 
-  if (customisation?.specific_date) {
-    openDateUnix = customisation.specific_date > 9999999999
-      ? Math.floor(customisation.specific_date / 1000)
-      : customisation.specific_date;
+  const sortedCustomisations = [...customisations].sort(
+    (a, b) => new Date(b.created_at) - new Date(a.created_at)
+  );
+
+  const latestWithDate = sortedCustomisations.find(c => c.specific_date);
+  const latestWithOffset = sortedCustomisations.find(c => c.days_to_offset !== null && c.days_to_offset !== undefined);
+
+  if (latestWithDate) {
+    openDateUnix = latestWithDate.specific_date > 9999999999
+      ? Math.floor(latestWithDate.specific_date / 1000)
+      : latestWithDate.specific_date;
   } else if (weekOpen === 0) {
-    // Always open module, no specific date, no offset logic applies
     return { isAvailable: true, openDateText: "Available anytime" };
   } else {
-    // Compute open date based on week offset
     openDateUnix = startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK;
 
-    // Apply offset if present
-    if (
-      customisation?.days_to_offset !== null &&
-      customisation?.days_to_offset !== undefined
-    ) {
-      openDateUnix += customisation.days_to_offset * SECONDS_IN_DAY;
+    if (latestWithOffset) {
+      openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY;
     }
   }
 
-  const isAvailable = todayUnix <= openDateUnix;
+  const isAvailable = todayUnix >= openDateUnix;
   const openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
 
   return { isAvailable, openDateText };
 }
-
 
 
 // Unified GraphQL query (includes all customisations)
