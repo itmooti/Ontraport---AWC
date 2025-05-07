@@ -5,7 +5,6 @@ let lessonDateProgress;
 let getEnrollmentFormat;
 let globalClassId = null;
 let showDripFed = false;
-
 function defineQuery() {
   getEnrollmentFormat = `
         query calcEnrolments {
