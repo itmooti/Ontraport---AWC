@@ -1,38 +1,101 @@
+// class MentionManager {
+//   static allContacts = [];
+//   static initContacts() {
+//     const query = `
+//         query calcContacts {
+//         calcContacts(
+//             query: [
+//             { where: { email: "courses@writerscentre.com.au" } }
+//             {
+//                 orWhere: {
+//                 Enrolments: [
+//                     { where: { Class: [{ where: { id: ${classId} } }] } }
+//                 ]
+//             }
+//             }
+//             ]
+//         ) {
+//                 Display_Name: field(arg: ["display_name"]) 
+//                 FirstName:field(arg:["first_name"]) 
+//                 LastName:field(arg:["last_name"]) 
+//                 Contact_ID: field(arg: ["id"])
+//                 Profile_Image: field(arg: ["profile_image"])  
+//                 Is_Instructor: field(arg: ["is_instructor"]) 
+//                 Is_Admin: field(arg: ["is_admin"]) 
+//                 Email: field(arg: ["email"]) 
+//           }
+//         }
+// `;
+//     fetch(graphqlApiEndpoint, {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//         "Api-Key": apiAccessKey,
+//       },
+//       body: JSON.stringify({
+//         query,
+//       }),
+//     })
+//       .then((response) => {
+//         if (!response.ok) throw new Error("Network response not ok");
+//         return response.json();
+//       })
+//       .then((data) => {
+//         const contacts = data.data.calcContacts || [];
+//         const validContacts = contacts.filter(
+//           (contact) =>
+//             contact.Display_Name && contact.Display_Name.trim() !== ""
+//         );
+
+//         MentionManager.allContacts = validContacts.map((contact) => ({
+//           key: contact.Display_Name,
+//           value: contact.Display_Name,
+//           name: contact.Display_Name,
+//           id: contact.Contact_ID,
+//           profileImage: contact.Profile_Image,
+//           isAdmin: contact.Is_Admin, // add admin flag
+//           isInstructor: contact.Is_Instructor, // add instructor flag
+//         }));
+//       })
+//       .catch((error) =>
+//         console.error("Error fetching contacts for mentions:", error)
+//       );
+//   }
 class MentionManager {
   static allContacts = [];
   static initContacts() {
     const query = `
-        query calcContacts {
+      query calcContacts {
         calcContacts(
-            query: [
+          query: [
             { where: { email: "courses@writerscentre.com.au" } }
             {
-                orWhere: {
+              orWhere: {
                 Enrolments: [
-                    { where: { Class: [{ where: { id: ${classId} } }] } }
+                  { where: { Class: [{ where: { id: ${classId} } }] } }
                 ]
+              }
             }
-            }
-            ]
+          ]
         ) {
-                Display_Name: field(arg: ["display_name"])
-                Contact_ID: field(arg: ["id"])
-                Profile_Image: field(arg: ["profile_image"])
-                Is_Instructor: field(arg: ["is_instructor"])
-                Is_Admin: field(arg: ["is_admin"])
-                Email: field(arg: ["email"])
-          }
+          Display_Name: field(arg: ["display_name"]) 
+          FirstName: field(arg:["first_name"]) 
+          LastName: field(arg:["last_name"]) 
+          Contact_ID: field(arg: ["id"])
+          Profile_Image: field(arg: ["profile_image"])  
+          Is_Instructor: field(arg: ["is_instructor"]) 
+          Is_Admin: field(arg: ["is_admin"]) 
+          Email: field(arg: ["email"]) 
         }
-`;
+      }
+    `;
     fetch(graphqlApiEndpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Api-Key": apiAccessKey,
       },
-      body: JSON.stringify({
-        query,
-      }),
+      body: JSON.stringify({ query }),
     })
       .then((response) => {
         if (!response.ok) throw new Error("Network response not ok");
@@ -40,25 +103,35 @@ class MentionManager {
       })
       .then((data) => {
         const contacts = data.data.calcContacts || [];
-        const validContacts = contacts.filter(
-          (contact) =>
-            contact.Display_Name && contact.Display_Name.trim() !== ""
-        );
+        const validContacts = contacts
+          .filter(
+            (contact) =>
+              (contact.Display_Name && contact.Display_Name.trim() !== "") ||
+              contact.FirstName ||
+              contact.LastName
+          )
+          .map((contact) => {
+            const displayName = contact.Display_Name?.trim() !== ""
+              ? contact.Display_Name
+              : [contact.FirstName, contact.LastName].filter(Boolean).join(" ");
+            return {
+              key: displayName,
+              value: displayName,
+              name: displayName,
+              id: contact.Contact_ID,
+              profileImage: contact.Profile_Image,
+              isAdmin: contact.Is_Admin,
+              isInstructor: contact.Is_Instructor,
+            };
+          });
 
-        MentionManager.allContacts = validContacts.map((contact) => ({
-          key: contact.Display_Name,
-          value: contact.Display_Name,
-          name: contact.Display_Name,
-          id: contact.Contact_ID,
-          profileImage: contact.Profile_Image,
-          isAdmin: contact.Is_Admin, // add admin flag
-          isInstructor: contact.Is_Instructor, // add instructor flag
-        }));
+        MentionManager.allContacts = validContacts;
       })
       .catch((error) =>
         console.error("Error fetching contacts for mentions:", error)
       );
   }
+}
 
   static initEditor(editor) {
     new Tribute({
