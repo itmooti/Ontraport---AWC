@@ -180,13 +180,12 @@ function determineAvailability(startDateUnix, weekOpen, customisations = []) {
 
   const latestWithDate = sortedCustomisations.find(c => c.specific_date);
   const latestWithOffset = sortedCustomisations.find(c => c.days_to_offset !== null && c.days_to_offset !== undefined);
-if (weekOpen === 0) {
-    return { isAvailable: true, openDateText: "Available anytime" };
-  } 
   if (latestWithDate) {
     openDateUnix = latestWithDate.specific_date > 9999999999
       ? Math.floor(latestWithDate.specific_date / 1000)
       : latestWithDate.specific_date;
+  } else if (weekOpen === 0) {
+    return { isAvailable: true, openDateText: "Available anytime" };
   } else {
     openDateUnix = startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK;
 
