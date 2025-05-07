@@ -159,7 +159,7 @@ notificationData.sort((a, b) => a.Date_Added - b.Date_Added);
 
 // Clear UI and re-render in order
 displayedNotifications.clear();
-card.innerHTML = "";
+document.getElementById('parentNotificationTemplatesInBody').innerHTML = "";
 notificationData.forEach((notification) => {
     if (!displayedNotifications.has(Number(notification.ID))) {
         processNotification(notification);
