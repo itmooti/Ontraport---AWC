@@ -458,285 +458,165 @@ async function fetchClassIds() {
   }
 }
 
-// async function initializeSocket() {
-//   if (document.hidden) return;
-//   const classIds = await fetchClassIds();
-//   if (!classIds || classIds.length === 0) {
-//     return;
-//   }
-//   classIds.forEach((classId) => {
-//     if (socketConnections.has(classId)) return;
-//     const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
-//     let keepAliveInterval;
-//     socket.onopen = () => {
-//       keepAliveInterval = setInterval(() => {
-//         if (socket.readyState === WebSocket.OPEN) {
-//           socket.send(JSON.stringify({ type: "KEEP_ALIVE" }));
-//         }
-//       }, 28000);
-//       socket.send(JSON.stringify({ type: "connection_init" }));
-//       socket.send(
-//         JSON.stringify({
-//           id: `subscription_${classId}`,
-//           type: "GQL_START",
-//           payload: {
-//             query: SUBSCRIPTION_QUERY,
-//             variables: {
-//               author_id: loggedInContactIdIntAwc,
-//               id: loggedInContactIdIntAwc,
-//               class_id: classId,
-//               created_at: createdAt,
-//             },
-//           },
-//         })
-//       );
-//     };
-//     socket.onmessage = (event) => {
-//       const data = JSON.parse(event.data);
-//       if (data.type !== "GQL_DATA") return;
-//       if (!data.payload || !data.payload.data) return;
-//       const result = data.payload.data.subscribeToCalcAnnouncements;
-//       if (!result) return;
-//       const notifications = Array.isArray(result) ? result : [result];
-//       notifications.forEach((notification) => {
-//         if (
-//           notification.Read_Contacts_Data_Read_Announcement_ID &&
-//           Number(notification.Read_Contacts_Data_Read_Contact_ID) ===
-//             Number(loggedInContactIdIntAwc)
-//         ) {
-//           readAnnouncements.add(Number(notification.ID));
-//         }
-//       });
-//       const filteredNotifications = notifications.filter((notification) => {
-//         const userId = Number(loggedInContactIdIntAwc);
-//         switch (notification.Notification_Type) {
-//           case "Posts":
-//             if (
-//               (user_Preference_Posts === "Yes" &&
-//                 notification.Post_Author_ID === userId) ||
-//               (user_Preference_Post_Mentions === "Yes" &&
-//                 notification.Contact_Contact_ID === userId)
-//             ) {
-//               return false;
-//             }
-//             break;
-//           case "Post Comments":
-//             if (
-//               (user_Preference_Post_Comments === "Yes" &&
-//                 notification.Comment_Author_ID === userId) ||
-//               (user_Preference_Post_Comment_Mentions === "Yes" &&
-//                 notification.Contact_Contact_ID === userId) ||
-//               (user_Preference_Comments_On_My_Posts === "Yes" &&
-//                 notification.Comment_Author_ID === userId)
-//             ) {
-//               return false;
-//             }
-//             break;
-//           case "Submissions":
-//             if (
-//               (user_Preference_Submissions === "Yes" &&
-//                 notification.Enrolment_Student_ID === userId) ||
-//               (user_Preference_Submission_Mentions === "Yes" &&
-//                 notification.Contact_Contact_ID1 === userId)
-//             ) {
-//               return false;
-//             }
-//             break;
-//           case "Submission Comments":
-//             if (
-//               (user_Preference_Submission_Comments === "Yes" &&
-//                 notification.Comment_Author_ID === userId) ||
-//               (user_Preference_Submission_Comment_Mentions === "Yes" &&
-//                 notification.Contact_Contact_ID1 === userId) ||
-//               (user_Preference_Comments_On_My_Submissions === "Yes" &&
-//                 notification.Comment_Author_ID === userId)
-//             ) {
-//               return false;
-//             }
-//             break;
-//           case "Announcements":
-//             if (
-//               (user_Preference_Announcements === "Yes" &&
-//                 notification.Instructor_ID === userId) ||
-//               (user_Preference_Announcement_Mentions === "Yes" &&
-//                 notification.Mentions_Contact_ID === userId)
-//             ) {
-//               return false;
-//             }
-//             break;
-//           case "Announcement Comments":
-//             if (
-//               (user_Preference_Announcement_Comments === "Yes" &&
-//                 notification.Comment_Author_ID === userId) ||
-//               (user_Preference_Announcement_Comment_Mentions === "Yes" &&
-//                 notification.Mentions_Contact_ID === userId) ||
-//               (user_Preference_Comments_On_My_Announcements === "Yes" &&
-//                 notification.Comment_Author_ID === userId)
-//             ) {
-//               return false;
-//             }
-//             break;
-//         }
-//         return true;
-//       });
-//       if (filteredNotifications.length === 0) return;
-//       filteredNotifications.forEach((notification) => {
-//         processNotification(notification);
-//         notificationIDs.add(Number(notification.ID));
-//         notificationData.push(notification);
-//       });
-//       updateMarkAllReadVisibility();
-//     };
-//     socket.onerror = (error) => {};
-//     socket.onclose = () => {
-//       clearInterval(keepAliveInterval);
-//       socketConnections.delete(classId);
-//       if (!document.hidden) {
-//         setTimeout(() => {
-//           initializeSocket();
-//         }, 28000);
-//       }
-//     };
-//     socketConnections.set(classId, { socket, keepAliveInterval });
-//   });
-// }
 async function initializeSocket() {
-    if (document.hidden) return;
-    const classIds = await fetchClassIds();
-    if (!classIds || classIds.length === 0) return;
-
-    classIds.forEach((classId) => {
-        if (socketConnections.has(classId)) return;
-
-        const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
-        let keepAliveInterval;
-
-        socket.onopen = () => {
-            keepAliveInterval = setInterval(() => {
-                if (socket.readyState === WebSocket.OPEN) {
-                    socket.send(JSON.stringify({ type: "KEEP_ALIVE" }));
-                }
-            }, 28000);
-
-            socket.send(JSON.stringify({ type: "connection_init" }));
-            socket.send(
-                JSON.stringify({
-                    id: `subscription_${classId}`,
-                    type: "GQL_START",
-                    payload: {
-                        query: SUBSCRIPTION_QUERY,
-                        variables: {
-                            author_id: loggedInContactIdIntAwc,
-                            id: loggedInContactIdIntAwc,
-                            class_id: classId,
-                            created_at: createdAt,
-                        },
-                    },
-                })
-            );
-        };
-
-        socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if (data.type !== "GQL_DATA" || !data.payload?.data) return;
-
-            const results = data.payload.data.subscribeToCalcAnnouncements;
-            const notifications = Array.isArray(results) ? results : [results];
-
-            // Track read status
-            notifications.forEach((notification) => {
-                if (
-                    notification.Read_Contacts_Data_Read_Announcement_ID &&
-                    Number(notification.Read_Contacts_Data_Read_Contact_ID) === Number(loggedInContactIdIntAwc)
-                ) {
-                    readAnnouncements.add(Number(notification.ID));
-                }
-            });
-
-            // Filter notifications based on preferences
-            const filtered = notifications.filter((notification) => {
-                const userId = Number(loggedInContactIdIntAwc);
-                const type = notification.Notification_Type;
-
-                switch (type) {
-                    case "Posts":
-                        if ((user_Preference_Posts === "Yes" && notification.Post_Author_ID === userId) ||
-                            (user_Preference_Post_Mentions === "Yes" && notification.Contact_Contact_ID === userId)) return false;
-                        break;
-                    case "Post Comments":
-                        if ((user_Preference_Post_Comments === "Yes" && notification.Comment_Author_ID === userId) ||
-                            (user_Preference_Post_Comment_Mentions === "Yes" && notification.Contact_Contact_ID === userId) ||
-                            (user_Preference_Comments_On_My_Posts === "Yes" && notification.Comment_Author_ID === userId)) return false;
-                        break;
-                    case "Submissions":
-                        if ((user_Preference_Submissions === "Yes" && notification.Enrolment_Student_ID === userId) ||
-                            (user_Preference_Submission_Mentions === "Yes" && notification.Contact_Contact_ID1 === userId)) return false;
-                        break;
-                    case "Submission Comments":
-                        if ((user_Preference_Submission_Comments === "Yes" && notification.Comment_Author_ID === userId) ||
-                            (user_Preference_Submission_Comment_Mentions === "Yes" && notification.Contact_Contact_ID1 === userId) ||
-                            (user_Preference_Comments_On_My_Submissions === "Yes" && notification.Comment_Author_ID === userId)) return false;
-                        break;
-                    case "Announcements":
-                        if ((user_Preference_Announcements === "Yes" && notification.Instructor_ID === userId) ||
-                            (user_Preference_Announcement_Mentions === "Yes" && notification.Mentions_Contact_ID === userId)) return false;
-                        break;
-                    case "Announcement Comments":
-                        if ((user_Preference_Announcement_Comments === "Yes" && notification.Comment_Author_ID === userId) ||
-                            (user_Preference_Announcement_Comment_Mentions === "Yes" && notification.Mentions_Contact_ID === userId) ||
-                            (user_Preference_Comments_On_My_Announcements === "Yes" && notification.Comment_Author_ID === userId)) return false;
-                        break;
-                }
-
-                return true;
-            });
-
-            if (filtered.length === 0) return;
-
-            // Add and deduplicate by ID
-            filtered.forEach((n) => {
-                const id = Number(n.ID);
-                if (!notificationIDs.has(id)) {
-                    notificationIDs.add(id);
-                    notificationData.push(n);
-                }
-            });
-
-            // Sort notifications by date
-            notificationData.sort((a, b) => a.Date_Added - b.Date_Added);
-
-            // Clear containers
-            container.innerHTML = "";
-            displayedNotifications.clear();
-            cardMap.clear();
-
-            // Re-render in order
-            notificationData.forEach((notification) => {
-                const id = Number(notification.ID);
-                if (!displayedNotifications.has(id)) {
-                    processNotification(notification);
-                }
-            });
-
-            updateMarkAllReadVisibility();
-        };
-
-        socket.onerror = (error) => {};
-
-        socket.onclose = () => {
-            clearInterval(keepAliveInterval);
-            socketConnections.delete(classId);
-            if (!document.hidden) {
-                setTimeout(() => {
-                    initializeSocket();
-                }, 28000);
+  if (document.hidden) return;
+  const classIds = await fetchClassIds();
+  if (!classIds || classIds.length === 0) {
+    return;
+  }
+  classIds.forEach((classId) => {
+    if (socketConnections.has(classId)) return;
+    const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
+    let keepAliveInterval;
+    socket.onopen = () => {
+      keepAliveInterval = setInterval(() => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ type: "KEEP_ALIVE" }));
+        }
+      }, 28000);
+      socket.send(JSON.stringify({ type: "connection_init" }));
+      socket.send(
+        JSON.stringify({
+          id: `subscription_${classId}`,
+          type: "GQL_START",
+          payload: {
+            query: SUBSCRIPTION_QUERY,
+            variables: {
+              author_id: loggedInContactIdIntAwc,
+              id: loggedInContactIdIntAwc,
+              class_id: classId,
+              created_at: createdAt,
+            },
+          },
+        })
+      );
+    };
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type !== "GQL_DATA") return;
+      if (!data.payload || !data.payload.data) return;
+      const result = data.payload.data.subscribeToCalcAnnouncements;
+      if (!result) return;
+      const notifications = Array.isArray(result) ? result : [result];
+      notifications.forEach((notification) => {
+        if (
+          notification.Read_Contacts_Data_Read_Announcement_ID &&
+          Number(notification.Read_Contacts_Data_Read_Contact_ID) ===
+            Number(loggedInContactIdIntAwc)
+        ) {
+          readAnnouncements.add(Number(notification.ID));
+        }
+      });
+      const filteredNotifications = notifications.filter((notification) => {
+        const userId = Number(loggedInContactIdIntAwc);
+        switch (notification.Notification_Type) {
+          case "Posts":
+            if (
+              (user_Preference_Posts === "Yes" &&
+                notification.Post_Author_ID === userId) ||
+              (user_Preference_Post_Mentions === "Yes" &&
+                notification.Contact_Contact_ID === userId)
+            ) {
+              return false;
             }
-        };
+            break;
+          case "Post Comments":
+            if (
+              (user_Preference_Post_Comments === "Yes" &&
+                notification.Comment_Author_ID === userId) ||
+              (user_Preference_Post_Comment_Mentions === "Yes" &&
+                notification.Contact_Contact_ID === userId) ||
+              (user_Preference_Comments_On_My_Posts === "Yes" &&
+                notification.Comment_Author_ID === userId)
+            ) {
+              return false;
+            }
+            break;
+          case "Submissions":
+            if (
+              (user_Preference_Submissions === "Yes" &&
+                notification.Enrolment_Student_ID === userId) ||
+              (user_Preference_Submission_Mentions === "Yes" &&
+                notification.Contact_Contact_ID1 === userId)
+            ) {
+              return false;
+            }
+            break;
+          case "Submission Comments":
+            if (
+              (user_Preference_Submission_Comments === "Yes" &&
+                notification.Comment_Author_ID === userId) ||
+              (user_Preference_Submission_Comment_Mentions === "Yes" &&
+                notification.Contact_Contact_ID1 === userId) ||
+              (user_Preference_Comments_On_My_Submissions === "Yes" &&
+                notification.Comment_Author_ID === userId)
+            ) {
+              return false;
+            }
+            break;
+          case "Announcements":
+            if (
+              (user_Preference_Announcements === "Yes" &&
+                notification.Instructor_ID === userId) ||
+              (user_Preference_Announcement_Mentions === "Yes" &&
+                notification.Mentions_Contact_ID === userId)
+            ) {
+              return false;
+            }
+            break;
+          case "Announcement Comments":
+            if (
+              (user_Preference_Announcement_Comments === "Yes" &&
+                notification.Comment_Author_ID === userId) ||
+              (user_Preference_Announcement_Comment_Mentions === "Yes" &&
+                notification.Mentions_Contact_ID === userId) ||
+              (user_Preference_Comments_On_My_Announcements === "Yes" &&
+                notification.Comment_Author_ID === userId)
+            ) {
+              return false;
+            }
+            break;
+        }
+        return true;
+      });
+      if (filteredNotifications.length === 0) return;
+      // filteredNotifications.forEach((notification) => {
+      //   processNotification(notification);
+      //   notificationIDs.add(Number(notification.ID));
+      //   notificationData.push(notification);
+      // });
+    filteredNotifications.forEach((notification) => {
+    notificationIDs.add(Number(notification.ID));
+    notificationData.push(notification);
+});
 
-        socketConnections.set(classId, { socket, keepAliveInterval });
-    });
+// Sort by created_at after adding new ones
+notificationData.sort((a, b) => a.Date_Added - b.Date_Added);
+
+// Clear UI and re-render in order
+displayedNotifications.clear();
+container.innerHTML = "";
+notificationData.forEach((notification) => {
+    if (!displayedNotifications.has(Number(notification.ID))) {
+        processNotification(notification);
+    }
+});
+
+      updateMarkAllReadVisibility();
+    };
+    socket.onerror = (error) => {};
+    socket.onclose = () => {
+      clearInterval(keepAliveInterval);
+      socketConnections.delete(classId);
+      if (!document.hidden) {
+        setTimeout(() => {
+          initializeSocket();
+        }, 28000);
+      }
+    };
+    socketConnections.set(classId, { socket, keepAliveInterval });
+  });
 }
-
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     socketConnections.forEach((conn) => {
