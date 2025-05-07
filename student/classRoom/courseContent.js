@@ -233,10 +233,15 @@ function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customis
     return { dueDateUnix, dueDateText };
   }
 
-  const secondsInAWeek = 7 * 86400;
-  const sundayEndOfDayOffset = 6 * 86400 + 23 * 3600 + 59 * 60;
+  // const secondsInAWeek = 7 * 86400;
+  // const sundayEndOfDayOffset = 6 * 86400 + 23 * 3600 + 59 * 60;
 
-  dueDateUnix = normalizedStartUnix + (dueWeek - 1) * secondsInAWeek + sundayEndOfDayOffset;
+  // dueDateUnix = normalizedStartUnix + (dueWeek - 1) * secondsInAWeek + sundayEndOfDayOffset;
+const secondsInADay = 86400;
+const endOfDayOffset = 23 * 3600 + 59 * 60;
+
+dueDateUnix = normalizedStartUnix + dueWeek * secondsInADay + endOfDayOffset;
+
   dueDateText = `Due on ${formatDate(dueDateUnix)}`;
 
   return { dueDateUnix, dueDateText };
