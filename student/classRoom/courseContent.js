@@ -199,7 +199,8 @@ function determineAvailability(startDateUnix, weekOpen, customisations = []) {
   const isAvailable = todayUnix <= openDateUnix;
   const openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
 
-  return { isAvailable, openDateText };
+  // return { isAvailable, openDateText };
+ return { isAvailable, openDateText, openDateUnix };
 }
 
 function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisations = []) {
@@ -468,11 +469,17 @@ async function combineUnifiedData() {
           let dueDateInfo = { dueDateUnix: null, dueDateText: "No Due Date" };
           if (lesson.type === "Assessment") {
             const lessonCustomisations = lesson.lessonCustomisations || [];
-            dueDateInfo = determineAssessmentDueDateUnified(
-              lesson,
-              defaultClassStartDate,
-              lessonCustomisations
-            );
+            // dueDateInfo = determineAssessmentDueDateUnified(
+            //   lesson,
+            //   defaultClassStartDate,
+            //   lessonCustomisations
+            // );
+ dueDateInfo = determineAssessmentDueDateUnified(
+    lesson,
+    availability.openDateUnix, 
+    lessonCustomisations
+);
+
           }
 
           return {
