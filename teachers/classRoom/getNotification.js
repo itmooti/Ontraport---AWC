@@ -144,11 +144,28 @@ async function initializeSocket() {
                 return true;
             });
             if (filteredNotifications.length === 0) return;
-            filteredNotifications.forEach(notification => {
-                processNotification(notification);
-                notificationIDs.add(Number(notification.ID));
-                notificationData.push(notification);
-            });
+            // filteredNotifications.forEach(notification => {
+            //     processNotification(notification);
+            //     notificationIDs.add(Number(notification.ID));
+            //     notificationData.push(notification);
+            // });
+            filteredNotifications.forEach((notification) => {
+    notificationIDs.add(Number(notification.ID));
+    notificationData.push(notification);
+});
+
+// Sort by created_at after adding new ones
+notificationData.sort((a, b) => a.Date_Added - b.Date_Added);
+
+// Clear UI and re-render in order
+displayedNotifications.clear();
+container.innerHTML = "";
+notificationData.forEach((notification) => {
+    if (!displayedNotifications.has(Number(notification.ID))) {
+        processNotification(notification);
+    }
+});
+
             updateMarkAllReadVisibility();
         };
         socket.onerror = (error) => { };
