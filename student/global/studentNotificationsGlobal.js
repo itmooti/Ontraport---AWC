@@ -350,12 +350,12 @@ async function getEnrolmentIdsByCourseUid(courseUid, activeOrInactive) {
 //   }
 // }
 // `;
-// ✅ 1. Updated SUBSCRIPTION_QUERY using subscribeToManyCalcAnnouncements
+// ✅ 1. Updated SUBSCRIPTION_QUERY using subscribeToAnnouncements
 let SUBSCRIPTION_QUERY = `
 subscription subscribeToAnnouncements(
   $class_ids: [AwcClassID]
 ) {
-  subscribeToManyCalcAnnouncements(
+  subscribeToAnnouncements(
     query: [
       {
         queryGroup: [
@@ -830,7 +830,7 @@ async function initializeSocket() {
         if (data.type !== "GQL_DATA") return;
         if (!data.payload || !data.payload.data) return;
 
-        const result = data.payload.data.subscribeToManyCalcAnnouncements;
+        const result = data.payload.data.subscribeToAnnouncements;
         if (!result) return;
 
         const notifications = Array.isArray(result) ? result : [result];
