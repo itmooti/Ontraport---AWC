@@ -352,7 +352,7 @@ async function getEnrolmentIdsByCourseUid(courseUid, activeOrInactive) {
 // `;
 // ✅ 1. Updated SUBSCRIPTION_QUERY using subscribeToManyCalcAnnouncements
 let SUBSCRIPTION_QUERY = `
-subscription subscribeToManyCalcAnnouncements(
+subscription subscribeToAnnouncements(
   $class_ids: [AwcClassID]
 ) {
   subscribeToManyCalcAnnouncements(
