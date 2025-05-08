@@ -355,143 +355,161 @@ let SUBSCRIPTION_QUERY = `
 subscription subscribeToAnnouncements(
   $class_ids: [AwcClassID]
 ) {
-  subscribeToAnnouncements(
+   subscribeToAnnouncements(
     query: [
+      { where: { class_id: { _IN_: $class_ids } } }
       {
-        queryGroup: [
+        andWhereGroup: [
           {
-            alias: "AnnounceGroup1"
-            query: [
-              { where: { class_id: { _IN_: $class_ids } } }
-              ${fetchUserDate}
+            whereGroup: [
               {
-                andWhereGroup: [
-                  {
-                    whereGroup: [
-                      { where: { notification__type: "${POSTS_TYPE}" } }
-                      {
-                        andWhere: {
-                          Post: [
-                            {
-                              where: {
-                                author_id: ${CONTACTss_ID}
-                                _OPERATOR_: neq
-                              }
-                            }
-                          ]
-                        }
+                where: {
+                  notification__type: "${POSTS_TYPE}"
+                }
+              }
+              {
+                andWhere: {
+                  Post: [
+                    {
+                      where: {
+                        author_id:  ${CONTACTss_ID}
+                        _OPERATOR_: neq
                       }
-                    ]
-                  },
-                  {
-                    orWhereGroup: [
-                      { where: { notification__type: "${POST_COMMENTS_TYPE}" } },
-                      {
-                        andWhere: {
-                          Comment: [
-                            {
-                              where: {
-                                author_id: ${CONTACTss_ID}
-                                _OPERATOR_: neq
-                              }
-                            }
-                          ]
-                        }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+          {
+            orWhereGroup: [
+              {
+                where: {
+                  notification__type: "${POST_COMMENTS_TYPE}"
+                }
+              }
+              {
+                andWhere: {
+                  Comment: [
+                    {
+                      where: {
+                        author_id:  ${CONTACTss_ID}
+                        _OPERATOR_: neq
                       }
-                    ]
-                  },
-                  {
-                    orWhereGroup: [
-                      { where: { notification__type: "${ANNOUNCEMENTS_TYPE}" } }
-                    ]
-                  },
-                  {
-                    orWhereGroup: [
-                      { where: { notification__type: "${ANNOUNCEMENT_COMMENTS_TYPE}" } },
-                      {
-                        andWhere: {
-                          Comment: [
-                            {
-                              where: {
-                                author_id: ${CONTACTss_ID}
-                                _OPERATOR_: neq
-                              }
-                            }
-                          ]
-                        }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+          {
+            orWhereGroup: [
+              {
+                where: {
+                  notification__type: "${ANNOUNCEMENTS_TYPE}"
+                }
+              }
+            ]
+          }
+          {
+            orWhereGroup: [
+              {
+                where: {
+                  notification__type: "${ANNOUNCEMENT_COMMENTS_TYPE}"
+                }
+              }
+              {
+                andWhere: {
+                  Comment: [
+                    {
+                      where: {
+                        author_id:  ${CONTACTss_ID}
+                        _OPERATOR_: neq
                       }
-                    ]
-                  },
-                  {
-                    orWhereGroup: [
-                      { where: { notification__type: "${SUBMISSIONS_TYPE}" } },
-                      {
-                        andWhere: {
-                          Submissions: [
-                            {
-                              where: {
-                                Student: [
-                                  {
-                                    where: {
-                                      Student: [
-                                        {
-                                          where: {
-                                            id: ${CONTACTss_ID}
-                                            _OPERATOR_: neq
-                                          }
-                                        }
-                                      ]
-                                    }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+          {
+            orWhereGroup: [
+              {
+                where: {
+                  notification__type: "${SUBMISSIONS_TYPE}"
+                }
+              }
+              {
+                andWhere: {
+                  Submissions: [
+                    {
+                      where: {
+                        Student: [
+                          {
+                            where: {
+                              Student: [
+                                {
+                                  where: {
+                                    id:  ${CONTACTss_ID}
+                                    _OPERATOR_: neq
                                   }
-                                ]
-                              }
-                            },
-                            {
-                              andWhere: {
-                                Assessment: [
-                                  { where: { private_submission: false } }
-                                ]
-                              }
+                                }
+                              ]
                             }
-                          ]
-                        }
+                          }
+                        ]
                       }
-                    ]
-                  },
-                  {
-                    orWhereGroup: [
-                      { where: { notification__type: "${SUBMISSION_COMMENTS_TYPE}" } },
-                      {
-                        andWhere: {
-                          Submissions: [
-                            {
-                              where: {
-                                ForumComments: [
-                                  {
-                                    where: {
-                                      author_id: ${CONTACTss_ID}
-                                      _OPERATOR_: neq
-                                    }
-                                  }
-                                ]
-                              }
+                    }
+                    {
+                      andWhere: {
+                        Assessment: [
+                          {
+                            where: {
+                              private_submission: false
                             }
-                          ]
-                        }
+                          }
+                        ]
                       }
-                    ]
-                  }
-                ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+          {
+            orWhereGroup: [
+              {
+                where: {
+                  notification__type: "${SUBMISSION_COMMENTS_TYPE}"
+                }
+              }
+              {
+                andWhere: {
+                  Submissions: [
+                    {
+                      where: {
+                        ForumComments: [
+                          {
+                            where: {
+                              author_id:  ${CONTACTss_ID}
+                              _OPERATOR_: neq
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
               }
             ]
           }
         ]
       }
     ]
+    limit: $limit
+    offset: $offset
     orderBy: [{ path: ["created_at"], type: asc }]
-    limit: 5000
-    offset: 0
-  ) {
+  )  {
     ID: field(arg: ["id"])
     Class_ID: field(arg: ["class_id"])
     Comment_ID: field(arg: ["comment_id"])
