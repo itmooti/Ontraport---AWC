@@ -1146,6 +1146,22 @@ function createNotificationCard(notification, isRead) {
       message = `${notification_course_name} - A new comment has been added in an announcement`;
       messageContent = `${commentFullname} added a new comment in an announcement`;
     }
+  } else if (notification_Type === "Submissions") {
+    if (submissionMentionID && String(submissionMentionID) === usersId) {
+      message = `${notification_course_name} - You have been mentioned in a submission`;
+      messageContent = `You were mentioned in a submission`;
+    } else {
+      message = `${notification_course_name} - A submission has been made`;
+      messageContent = `A submission has been made`;
+    }
+  } else if (notification_Type === "Submission Comments") {
+    if (submissionMentionID && String(submissionMentionID) === usersId) {
+      message = `${notification_course_name} - You have been mentioned in a comment on a submission`;
+      messageContent = `You were mentioned in a submission comment`;
+    } else {
+      message = `${notification_course_name} - A new comment has been added on a submission`;
+      messageContent = `A new comment has been added on a submission`;
+    }
   } else {
     message = `${notification_course_name} - A new notification has arrived`;
     messageContent = `${notification_Type || "Someone"} added something`;
