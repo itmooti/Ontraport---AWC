@@ -1190,8 +1190,10 @@ function createNotificationCard(notification, isRead) {
     } else {
       console.log("No redirection path matched for notification:", notification);
     }
+    });
   return card;
 }
+
 
 function processNotification(notification) {
     const container1 = document.getElementById(
