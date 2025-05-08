@@ -1162,7 +1162,8 @@ function createNotificationCard(notification, isRead) {
       <div class="extra-small-text text-[#586A80] text-nowrap">${timeAgo(notification.Date_Added)}</div>
     </div>
   `;
- card.addEventListener("click", async function () {
+
+  card.addEventListener("click", async function () {
     const id = Number(notification.ID);
     const type = notification.Notification_Type;
     const loader = document.getElementById("loader");
