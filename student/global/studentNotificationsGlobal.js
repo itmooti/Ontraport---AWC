@@ -613,6 +613,8 @@ async function fetchClassIds() {
         query: [
           { where: { student_id: ${loggedInContactIdIntAwc} } }
         ]
+        limit: 5000 
+        offset: 0
       ) {
         Class_ID: field(arg: ["class_id"])
       }
