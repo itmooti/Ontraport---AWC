@@ -934,115 +934,224 @@ document.addEventListener("visibilitychange", () => {
 
 initializeSocket();
 
+// function createNotificationCard(notification, isRead) {
+//     const card = document.createElement("div");
+//     const notification_Type = notification.Notification_Type;
+//     const notification_course_name = notification.Course_Course_Name || notification.Course_Name_NotActive;
+//     const commentMentionID = String(notification.Contact_Contact_ID1);
+//     const postMentionID = String(notification.Contact_Contact_ID);
+//     const announcementMentionID = String(notification.Mentions_Contact_ID);
+//     const submissionMentionID = String(notification.Contact_Contact_IDSubmission);
+//     const forumPostAuthorID = String(notification.ForumPost_Author_ID);
+//     const announcementCommentMentionContactId = String(
+//         notification.AnnouncementContact_Contact_ID
+//     );
+//     const annuncementInstId = String(notification.Announcement_Instructor_ID);
+//     const postFullName =
+//         notification.Contact_Display_Name ||
+//         `${notification.Contact_First_Name || ""} ${notification.Contact_Last_Name || ""
+//             }`.trim() ||
+//         "Someone";
+//     const commentFullname =
+//         notification.CommentContact_Display_Name ||
+//         `${notification.CommentContact_First_Name || ""} ${notification.CommentContact_Last_Name || ""
+//             }`.trim() ||
+//         "Someone";
+//     const instructorDisplayName =
+//         notification.Instructor_Display_Name ||
+//         `${notification.Instructor_First_Name || ""} ${notification.Instructor_Last_Name || ""
+//             }`.trim() ||
+//         "Someone";
+//     const submissionDisplayName =
+//         notification.Contact_Display_Name5 ||
+//         `${notification.Contact_First_Name5 || ""} ${notification.Contact_Last_Name5 || ""
+//             }`.trim() ||
+//         "Someone";
+//     const submissitterDisplayName =
+//         notification.SubContact_Display_Name ||
+//         `${notification.SubContact_First_Name || ""} ${notification.SubContact_Last_Name || ""
+//             }`.trim() ||
+//         "Someone";
+//     const announcerrDisplayName =
+//         notification.AnnContact_Display_Name ||
+//         `${notification.AnnContact_First_Name1 || ""} ${notification.AnnContact_Last_Name || ""
+//             }`.trim() ||
+//         "Someone";
+//     let message = "";
+//     let messageContent = "";
+//     const usersId = String(loggedInContactIdIntAwc);
+//     if (notification_Type === "Posts") {
+//         if (postMentionID && postMentionID === usersId) {
+//             message = `${notification_course_name} - You have been mentioned in a post`;
+//             messageContent = `${postFullName} mentioned You in a post`;
+//         } else {
+//             message = `${notification_course_name} - A new post has been added`;
+//             messageContent = `${postFullName} added a new post`;
+//         }
+//     } else if (notification_Type === "Post Comments") {
+//         if (commentMentionID && commentMentionID === usersId) {
+//             message = `${notification_course_name} - You have been mentioned in a comment in a post`;
+//             messageContent = `${commentFullname} mentioned you in a comment in a post`;
+//         } else if (forumPostAuthorID && forumPostAuthorID === usersId) {
+//             message = `${notification_course_name} -  A comment has been added in your post`;
+//             messageContent = `${commentFullname} added a comment in your post`;
+//         } else {
+//             message = `${notification_course_name} - A new comment has been added in a post`;
+//             messageContent = `${postFullName} added a new comment in a post`;
+//         }
+//     } else if (notification_Type === "Announcements") {
+//         if (announcementMentionID && announcementMentionID === usersId) {
+//             message = `${notification_course_name} - You have been mentioned in an announcement`;
+//             messageContent = `${instructorDisplayName} mentioned You in an announcement`;
+//         } else {
+//             message = `${notification_course_name} - A new announcement has been added`;
+//             messageContent = `${instructorDisplayName} added a new announcement`;
+//         }
+//     } else if (notification_Type === "Announcement Comments") {
+//         if (commentMentionID && commentMentionID === usersId) {
+//             message = `${notification_course_name} - You have been mentioned in a comment in an announcement`;
+//             messageContent = `${commentFullname} mentioned you in a comment in an announcement`;
+//         } else if (annuncementInstId && annuncementInstId === usersId) {
+//             message = `${notification_course_name} -  A comment has been added in your announcement`;
+//             messageContent = `${commentFullname} added a comment in your announcement`;
+//         } else {
+//             message = `${notification_course_name} - A new comment has been added in an announcement`;
+//             messageContent = `${commentFullname} added a new comment in an announcement`;
+//         }
+//     } else if (notification_Type === "Submissions") {
+//         if (submissionMentionID && submissionMentionID === usersId) {
+//             message = `${notification_course_name} - You have been mentioned in a submission`;
+//             messageContent = `${submissionDisplayName} mentioned You in a submission`;
+//         } else {
+//             message = `${notification_course_name} - A new submission has been added`;
+//             messageContent = `${submissitterDisplayName} added a new submission`;
+//         }
+//     } else if (notification_Type === "Submission Comments") {
+//         if (commentMentionID && commentMentionID === usersId) {
+//             message = `${notification_course_name} - You have been mentioned in a comment in a submission`;
+//             messageContent = `${commentFullname} mentioned you in a comment in a submission`;
+//         } else if (forumPostAuthorID && forumPostAuthorID === usersId) {
+//             message = `${notification_course_name} -  A comment has been added in your submission`;
+//             messageContent = `${commentFullname} added a comment in your announcement`;
+//         } else {
+//             message = `${notification_course_name} - A new comment has been added in a submission`;
+//             messageContent = `${commentFullname} added a new comment in a submission`;
+//         }
+//     }
+//     card.className = "notification-card cursor-pointer";
+//     card.innerHTML = `
+//     <div data-my-id ="${notification.ID
+//         }" class="p-2 items-start gap-2 rounded justify-between notification-content w-full ${isRead ? "bg-white" : "bg-unread"
+//         } ${notification.Status === "Draft" ? "hidden" : "flex"}">
+//       <div class="flex flex-col gap-1">
+//         <div class="text-[#414042] text-xs font-semibold">
+//           ${message}
+//         </div>
+//         <div class="extra-small-text text-dark line-clamp-2">${messageContent}</div>
+//         <div class="text-[#586A80] extra-small-text">${notification_course_name}</div>
+//       </div>
+//       <div class="extra-small-text text-[#586A80] text-nowrap">${timeAgo(
+//             notification.Date_Added
+//         )}</div>
+//     </div>
+//   `;
+//     card.addEventListener("click", async function () {
+//         const id = Number(notification.ID);
+//         const type = notification.Notification_Type;
+//         const loader = document.getElementById("loader");
+//         const anouncementScrollId =
+//             String(notification.Notification_Type) !== "Announcements"
+//                 ? notification.ForumComments_Parent_Announcement_ID
+//                 : notification.ID;
+//         loader.classList.remove("fade-out");
+//         if (!readAnnouncements.has(id) && !pendingAnnouncements.has(id)) {
+//             await markAsRead(id);
+//         }
+//         if (type === "Posts" || type === "Post Comments") {
+//             const courseUid = notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive;
+//             const activeOrInactive = notification.Course_Unique_ID ? "Active_Course" : "Course";
+//             const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
+//             //  const myEidFromCourse = await getEnrolmentIdsByCourseUid( notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive);
+//             window.location.href = `https://courses.writerscentre.com.au/students/course-details/${notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive}?eid=${myEidFromCourse}&selectedTab=courseChat?current-post-id=${notification.Post_ID}`;
+//         } else if (type === "Submissions" || type === "Submission Comments") {
+//             const activeOrInactive = notification.Course_Unique_ID ? "Active_Course" : "Course";
+//             const myEidFromLesson = await getEnrolmentIdsByLessonUid(notification.Lesson_Unique_ID_For_Submission, activeOrInactive);
+//             window.location.href = `https://courses.writerscentre.com.au/course-details/content/${notification.Lesson_Unique_ID_For_Submission}?eid=${myEidFromLesson}`;
+//         } else {
+//             const courseUid = notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive;
+//             const activeOrInactive = notification.Course_Unique_ID ? "Active_Course" : "Course";
+//             const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
+//             window.location.href = `https://courses.writerscentre.com.au/students/course-details/${notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive}?eid=${myEidFromCourse}&selectedTab=anouncemnt?data-announcement-template-id=${anouncementScrollId}`;
+//         }
+//     });
+//     return card;
+// }
+// ✅ 3. Patch for createNotificationCard() to fix undefined labels
 function createNotificationCard(notification, isRead) {
-    const card = document.createElement("div");
-    const notification_Type = notification.Notification_Type;
-    const notification_course_name = notification.Course_Course_Name || notification.Course_Name_NotActive;
-    const commentMentionID = String(notification.Contact_Contact_ID1);
-    const postMentionID = String(notification.Contact_Contact_ID);
-    const announcementMentionID = String(notification.Mentions_Contact_ID);
-    const submissionMentionID = String(notification.Contact_Contact_IDSubmission);
-    const forumPostAuthorID = String(notification.ForumPost_Author_ID);
-    const announcementCommentMentionContactId = String(
-        notification.AnnouncementContact_Contact_ID
-    );
-    const annuncementInstId = String(notification.Announcement_Instructor_ID);
-    const postFullName =
-        notification.Contact_Display_Name ||
-        `${notification.Contact_First_Name || ""} ${notification.Contact_Last_Name || ""
-            }`.trim() ||
-        "Someone";
-    const commentFullname =
-        notification.CommentContact_Display_Name ||
-        `${notification.CommentContact_First_Name || ""} ${notification.CommentContact_Last_Name || ""
-            }`.trim() ||
-        "Someone";
-    const instructorDisplayName =
-        notification.Instructor_Display_Name ||
-        `${notification.Instructor_First_Name || ""} ${notification.Instructor_Last_Name || ""
-            }`.trim() ||
-        "Someone";
-    const submissionDisplayName =
-        notification.Contact_Display_Name5 ||
-        `${notification.Contact_First_Name5 || ""} ${notification.Contact_Last_Name5 || ""
-            }`.trim() ||
-        "Someone";
-    const submissitterDisplayName =
-        notification.SubContact_Display_Name ||
-        `${notification.SubContact_First_Name || ""} ${notification.SubContact_Last_Name || ""
-            }`.trim() ||
-        "Someone";
-    const announcerrDisplayName =
-        notification.AnnContact_Display_Name ||
-        `${notification.AnnContact_First_Name1 || ""} ${notification.AnnContact_Last_Name || ""
-            }`.trim() ||
-        "Someone";
-    let message = "";
-    let messageContent = "";
-    const usersId = String(loggedInContactIdIntAwc);
-    if (notification_Type === "Posts") {
-        if (postMentionID && postMentionID === usersId) {
-            message = `${notification_course_name} - You have been mentioned in a post`;
-            messageContent = `${postFullName} mentioned You in a post`;
-        } else {
-            message = `${notification_course_name} - A new post has been added`;
-            messageContent = `${postFullName} added a new post`;
-        }
-    } else if (notification_Type === "Post Comments") {
-        if (commentMentionID && commentMentionID === usersId) {
-            message = `${notification_course_name} - You have been mentioned in a comment in a post`;
-            messageContent = `${commentFullname} mentioned you in a comment in a post`;
-        } else if (forumPostAuthorID && forumPostAuthorID === usersId) {
-            message = `${notification_course_name} -  A comment has been added in your post`;
-            messageContent = `${commentFullname} added a comment in your post`;
-        } else {
-            message = `${notification_course_name} - A new comment has been added in a post`;
-            messageContent = `${postFullName} added a new comment in a post`;
-        }
-    } else if (notification_Type === "Announcements") {
-        if (announcementMentionID && announcementMentionID === usersId) {
-            message = `${notification_course_name} - You have been mentioned in an announcement`;
-            messageContent = `${instructorDisplayName} mentioned You in an announcement`;
-        } else {
-            message = `${notification_course_name} - A new announcement has been added`;
-            messageContent = `${instructorDisplayName} added a new announcement`;
-        }
-    } else if (notification_Type === "Announcement Comments") {
-        if (commentMentionID && commentMentionID === usersId) {
-            message = `${notification_course_name} - You have been mentioned in a comment in an announcement`;
-            messageContent = `${commentFullname} mentioned you in a comment in an announcement`;
-        } else if (annuncementInstId && annuncementInstId === usersId) {
-            message = `${notification_course_name} -  A comment has been added in your announcement`;
-            messageContent = `${commentFullname} added a comment in your announcement`;
-        } else {
-            message = `${notification_course_name} - A new comment has been added in an announcement`;
-            messageContent = `${commentFullname} added a new comment in an announcement`;
-        }
-    } else if (notification_Type === "Submissions") {
-        if (submissionMentionID && submissionMentionID === usersId) {
-            message = `${notification_course_name} - You have been mentioned in a submission`;
-            messageContent = `${submissionDisplayName} mentioned You in a submission`;
-        } else {
-            message = `${notification_course_name} - A new submission has been added`;
-            messageContent = `${submissitterDisplayName} added a new submission`;
-        }
-    } else if (notification_Type === "Submission Comments") {
-        if (commentMentionID && commentMentionID === usersId) {
-            message = `${notification_course_name} - You have been mentioned in a comment in a submission`;
-            messageContent = `${commentFullname} mentioned you in a comment in a submission`;
-        } else if (forumPostAuthorID && forumPostAuthorID === usersId) {
-            message = `${notification_course_name} -  A comment has been added in your submission`;
-            messageContent = `${commentFullname} added a comment in your announcement`;
-        } else {
-            message = `${notification_course_name} - A new comment has been added in a submission`;
-            messageContent = `${commentFullname} added a new comment in a submission`;
-        }
+  const card = document.createElement("div");
+  const notification_Type = notification.Notification_Type;
+  const notification_course_name = notification.Class?.Active_Course?.course_name || notification.Class?.Course?.course_name || "(No Course)";
+  const postMentionID = notification.Post?.Mentions?.[0]?.id;
+  const commentMentionID = notification.Comment?.Mentions?.[0]?.id;
+  const announcementMentionID = notification.Mentions?.[0]?.id;
+  const submissionMentionID = notification.Submissions?.Submission_Mentions?.[0]?.id;
+  const forumPostAuthorID = notification.Comment?.Forum_Post?.author_id;
+  const annInstId = notification.ForumComments?.Parent_Announcement?.instructor_id;
+  const usersId = String(loggedInContactIdIntAwc);
+
+  const postFullName = notification.Post?.Author?.display_name || `${notification.Post?.Author?.first_name || ""} ${notification.Post?.Author?.last_name || ""}`.trim() || "Someone";
+  const commentFullname = notification.Comment?.Author?.display_name || `${notification.Comment?.Author?.first_name || ""} ${notification.Comment?.Author?.last_name || ""}`.trim() || "Someone";
+  const instructorDisplayName = notification.Instructor?.display_name || `${notification.Instructor?.first_name || ""} ${notification.Instructor?.last_name || ""}`.trim() || "Someone";
+
+  let message = "";
+  let messageContent = "";
+
+  if (notification_Type === "Posts") {
+    if (postMentionID && String(postMentionID) === usersId) {
+      message = `${notification_course_name} - You have been mentioned in a post`;
+      messageContent = `${postFullName} mentioned You in a post`;
+    } else {
+      message = `${notification_course_name} - A new post has been added`;
+      messageContent = `${postFullName} added a new post`;
     }
-    card.className = "notification-card cursor-pointer";
-    card.innerHTML = `
-    <div data-my-id ="${notification.ID
-        }" class="p-2 items-start gap-2 rounded justify-between notification-content w-full ${isRead ? "bg-white" : "bg-unread"
-        } ${notification.Status === "Draft" ? "hidden" : "flex"}">
+  } else if (notification_Type === "Post Comments") {
+    if (commentMentionID && String(commentMentionID) === usersId) {
+      message = `${notification_course_name} - You have been mentioned in a comment in a post`;
+      messageContent = `${commentFullname} mentioned you in a comment in a post`;
+    } else if (forumPostAuthorID && String(forumPostAuthorID) === usersId) {
+      message = `${notification_course_name} - A comment has been added in your post`;
+      messageContent = `${commentFullname} added a comment in your post`;
+    } else {
+      message = `${notification_course_name} - A new comment has been added in a post`;
+      messageContent = `${commentFullname} added a new comment in a post`;
+    }
+  } else if (notification_Type === "Announcements") {
+    if (announcementMentionID && String(announcementMentionID) === usersId) {
+      message = `${notification_course_name} - You have been mentioned in an announcement`;
+      messageContent = `${instructorDisplayName} mentioned You in an announcement`;
+    } else {
+      message = `${notification_course_name} - A new announcement has been added`;
+      messageContent = `${instructorDisplayName} added a new announcement`;
+    }
+  } else if (notification_Type === "Announcement Comments") {
+    if (commentMentionID && String(commentMentionID) === usersId) {
+      message = `${notification_course_name} - You have been mentioned in a comment in an announcement`;
+      messageContent = `${commentFullname} mentioned you in a comment in an announcement`;
+    } else if (annInstId && String(annInstId) === usersId) {
+      message = `${notification_course_name} - A comment has been added in your announcement`;
+      messageContent = `${commentFullname} added a comment in your announcement`;
+    } else {
+      message = `${notification_course_name} - A new comment has been added in an announcement`;
+      messageContent = `${commentFullname} added a new comment in an announcement`;
+    }
+  } else {
+    message = `${notification_course_name} - A new notification has arrived`;
+    messageContent = `${notification_Type || "Someone"} added something`;
+  }
+
+  card.className = "notification-card cursor-pointer";
+  card.innerHTML = `
+    <div data-my-id="${notification.ID}" class="p-2 items-start gap-2 rounded justify-between notification-content w-full ${isRead ? "bg-white" : "bg-unread"} ${notification.Status === "Draft" ? "hidden" : "flex"}">
       <div class="flex flex-col gap-1">
         <div class="text-[#414042] text-xs font-semibold">
           ${message}
@@ -1050,41 +1159,38 @@ function createNotificationCard(notification, isRead) {
         <div class="extra-small-text text-dark line-clamp-2">${messageContent}</div>
         <div class="text-[#586A80] extra-small-text">${notification_course_name}</div>
       </div>
-      <div class="extra-small-text text-[#586A80] text-nowrap">${timeAgo(
-            notification.Date_Added
-        )}</div>
+      <div class="extra-small-text text-[#586A80] text-nowrap">${timeAgo(notification.Date_Added)}</div>
     </div>
   `;
-    card.addEventListener("click", async function () {
-        const id = Number(notification.ID);
-        const type = notification.Notification_Type;
-        const loader = document.getElementById("loader");
-        const anouncementScrollId =
-            String(notification.Notification_Type) !== "Announcements"
-                ? notification.ForumComments_Parent_Announcement_ID
-                : notification.ID;
-        loader.classList.remove("fade-out");
-        if (!readAnnouncements.has(id) && !pendingAnnouncements.has(id)) {
-            await markAsRead(id);
-        }
-        if (type === "Posts" || type === "Post Comments") {
-            const courseUid = notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive;
-            const activeOrInactive = notification.Course_Unique_ID ? "Active_Course" : "Course";
-            const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
-            //  const myEidFromCourse = await getEnrolmentIdsByCourseUid( notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive);
-            window.location.href = `https://courses.writerscentre.com.au/students/course-details/${notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive}?eid=${myEidFromCourse}&selectedTab=courseChat?current-post-id=${notification.Post_ID}`;
-        } else if (type === "Submissions" || type === "Submission Comments") {
-            const activeOrInactive = notification.Course_Unique_ID ? "Active_Course" : "Course";
-            const myEidFromLesson = await getEnrolmentIdsByLessonUid(notification.Lesson_Unique_ID_For_Submission, activeOrInactive);
-            window.location.href = `https://courses.writerscentre.com.au/course-details/content/${notification.Lesson_Unique_ID_For_Submission}?eid=${myEidFromLesson}`;
-        } else {
-            const courseUid = notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive;
-            const activeOrInactive = notification.Course_Unique_ID ? "Active_Course" : "Course";
-            const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
-            window.location.href = `https://courses.writerscentre.com.au/students/course-details/${notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive}?eid=${myEidFromCourse}&selectedTab=anouncemnt?data-announcement-template-id=${anouncementScrollId}`;
-        }
-    });
-    return card;
+
+  card.addEventListener("click", async function () {
+    const id = Number(notification.ID);
+    const type = notification.Notification_Type;
+    const loader = document.getElementById("loader");
+    loader.classList.remove("fade-out");
+    if (!readAnnouncements.has(id) && !pendingAnnouncements.has(id)) {
+      await markAsRead(id);
+    }
+    // redirection logic
+    const courseId = notification.Course_ID || notification.Class?.Course?.unique_id || notification.Class?.Active_Course?.unique_id;
+    const lessonId = notification.Submissions?.Assessment?.Lesson?.unique_id || notification.Submissions?.Announcements?.Course?.Lessons?.[0]?.unique_id;
+
+    if (type === "Posts" && notification.Post_ID) {
+      window.location.href = `/student/posts/${notification.Post_ID}`;
+    } else if (type === "Post Comments" && notification.Post_ID) {
+      window.location.href = `/student/posts/${notification.Post_ID}?comment_id=${notification.Comment_ID}`;
+    } else if (type === "Announcements" && notification.Unique_ID && courseId) {
+      window.location.href = `/student/courses/${courseId}/announcements/${notification.Unique_ID}`;
+    } else if (type === "Announcement Comments" && notification.Unique_ID && courseId) {
+      window.location.href = `/student/courses/${courseId}/announcements/${notification.Unique_ID}?comment_id=${notification.Comment_ID}`;
+    } else if (type === "Submissions" && notification.Submissions_ID && courseId && lessonId) {
+      window.location.href = `/student/courses/${courseId}/lessons/${lessonId}/submissions/${notification.Submissions_ID}`;
+    } else if (type === "Submission Comments" && notification.Submissions_ID && courseId && lessonId) {
+      window.location.href = `/student/courses/${courseId}/lessons/${lessonId}/submissions/${notification.Submissions_ID}?comment_id=${notification.Comment_ID}`;
+    } else {
+      console.log("No redirection path matched for notification:", notification);
+    }
+  return card;
 }
 
 function processNotification(notification) {
