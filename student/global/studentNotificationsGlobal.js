@@ -1174,21 +1174,22 @@ function createNotificationCard(notification, isRead) {
     // redirection logic
     const courseId = notification.Course_ID || notification.Class?.Course?.unique_id || notification.Class?.Active_Course?.unique_id;
     const lessonId = notification.Submissions?.Assessment?.Lesson?.unique_id || notification.Submissions?.Announcements?.Course?.Lessons?.[0]?.unique_id;
-
-    if (type === "Posts" && notification.Post_ID) {
-      window.location.href = `/student/posts/${notification.Post_ID}`;
-    } else if (type === "Post Comments" && notification.Post_ID) {
-      window.location.href = `/student/posts/${notification.Post_ID}?comment_id=${notification.Comment_ID}`;
-    } else if (type === "Announcements" && notification.Unique_ID && courseId) {
-      window.location.href = `/student/courses/${courseId}/announcements/${notification.Unique_ID}`;
-    } else if (type === "Announcement Comments" && notification.Unique_ID && courseId) {
-      window.location.href = `/student/courses/${courseId}/announcements/${notification.Unique_ID}?comment_id=${notification.Comment_ID}`;
-    } else if (type === "Submissions" && notification.Submissions_ID && courseId && lessonId) {
-      window.location.href = `/student/courses/${courseId}/lessons/${lessonId}/submissions/${notification.Submissions_ID}`;
-    } else if (type === "Submission Comments" && notification.Submissions_ID && courseId && lessonId) {
-      window.location.href = `/student/courses/${courseId}/lessons/${lessonId}/submissions/${notification.Submissions_ID}?comment_id=${notification.Comment_ID}`;
+    if (type === "Posts" || type === "Post Comments") {
+      const courseUid = notification.Class?.Active_Course?.unique_id || notification.Class?.Course?.unique_id;
+      const activeOrInactive = notification.Course_Unique_ID ? "Active_Course" : "Course";
+      const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
+      window.location.href = `https://courses.writerscentre.com.au/students/course-details/${courseUid}?eid=${myEidFromCourse}&selectedTab=courseChat?current-post-id=${notification.Post_ID}`;
+    } else if (type === "Submissions" || type === "Submission Comments") {
+      const activeOrInactive = notification.Course_Unique_ID ? "Active_Course" : "Course";
+      const lessonUid = notification.Submissions?.Assessment?.Lesson?.unique_id || notification.Submissions?.Announcements?.Course?.Lessons?.[0]?.unique_id;
+      const myEidFromLesson = await getEnrolmentIdsByLessonUid(lessonUid, activeOrInactive);
+      window.location.href = `https://courses.writerscentre.com.au/course-details/content/${lessonUid}?eid=${myEidFromLesson}`;
     } else {
-      console.log("No redirection path matched for notification:", notification);
+      const courseUid = notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive;
+      const activeOrInactive = notification.Course_Unique_ID ? "Active_Course" : "Course";
+      const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
+      window.location.href = `https://courses.writerscentre.com.au/students/course-details/${courseUid}?eid=${myEidFromCourse}&selectedTab=anouncemnt?data-announcement-template-id=${anouncementScrollId}`;
+    }
     }
     });
   return card;
