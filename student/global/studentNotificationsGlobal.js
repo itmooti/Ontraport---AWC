@@ -1162,8 +1162,7 @@ function createNotificationCard(notification, isRead) {
       <div class="extra-small-text text-[#586A80] text-nowrap">${timeAgo(notification.Date_Added)}</div>
     </div>
   `;
-
-  card.addEventListener("click", async function () {
+ card.addEventListener("click", async function () {
     const id = Number(notification.ID);
     const type = notification.Notification_Type;
     const loader = document.getElementById("loader");
@@ -1171,24 +1170,26 @@ function createNotificationCard(notification, isRead) {
     if (!readAnnouncements.has(id) && !pendingAnnouncements.has(id)) {
       await markAsRead(id);
     }
-    // redirection logic
-    const courseId = notification.Course_ID || notification.Class?.Course?.unique_id || notification.Class?.Active_Course?.unique_id;
-    const lessonId = notification.Submissions?.Assessment?.Lesson?.unique_id || notification.Submissions?.Announcements?.Course?.Lessons?.[0]?.unique_id;
-    if (type === "Posts" || type === "Post Comments") {
-      const courseUid = notification.Class?.Active_Course?.unique_id || notification.Class?.Course?.unique_id;
-      const activeOrInactive = notification.Course_Unique_ID ? "Active_Course" : "Course";
+    const anouncementScrollId =
+      String(notification_Type) !== "Announcements"
+        ? notification.ForumComments?.Parent_Announcement?.id || notification.ForumComments_Parent_Announcement_ID
+        : notification.ID;
+
+    const courseUid = notification.Class?.Active_Course?.unique_id || notification.Class?.Course?.unique_id;
+    const activeOrInactive = notification.Class?.Active_Course?.unique_id ? "Active_Course" : "Course";
+
+    if ((type === "Posts" || type === "Post Comments") && notification.Post_ID) {
       const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
       window.location.href = `https://courses.writerscentre.com.au/students/course-details/${courseUid}?eid=${myEidFromCourse}&selectedTab=courseChat?current-post-id=${notification.Post_ID}`;
-    } else if (type === "Submissions" || type === "Submission Comments") {
-      const activeOrInactive = notification.Course_Unique_ID ? "Active_Course" : "Course";
-      const lessonUid = notification.Submissions?.Assessment?.Lesson?.unique_id || notification.Submissions?.Announcements?.Course?.Lessons?.[0]?.unique_id;
+    } else if ((type === "Submissions" || type === "Submission Comments") && notification.Submissions?.Assessment?.Lesson?.unique_id) {
+      const lessonUid = notification.Submissions.Assessment.Lesson.unique_id;
       const myEidFromLesson = await getEnrolmentIdsByLessonUid(lessonUid, activeOrInactive);
       window.location.href = `https://courses.writerscentre.com.au/course-details/content/${lessonUid}?eid=${myEidFromLesson}`;
     } else {
-      const courseUid = notification.Course_Unique_ID || notification.Course_Unique_ID_NotActive;
-      const activeOrInactive = notification.Course_Unique_ID ? "Active_Course" : "Course";
       const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
       window.location.href = `https://courses.writerscentre.com.au/students/course-details/${courseUid}?eid=${myEidFromCourse}&selectedTab=anouncemnt?data-announcement-template-id=${anouncementScrollId}`;
+    }
+  });
     }
     }
     });
