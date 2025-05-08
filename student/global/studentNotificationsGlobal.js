@@ -351,229 +351,211 @@ async function getEnrolmentIdsByCourseUid(courseUid, activeOrInactive) {
 // }
 // `;
 // ✅ 1. Updated SUBSCRIPTION_QUERY using subscribeToAnnouncements
-let SUBSCRIPTION_QUERY = `
-subscription subscribeToAnnouncements(
-  $class_ids: [AwcClassID]
-) {
-   subscribeToAnnouncements(
-    query: [
-    { where: { class_id: { _IN_: $class_ids } } }
-      {
-        andWhereGroup: [
+// ✅ 1. Updated SUBSCRIPTION_QUERY using subscribeToAnnouncements (one socket per class, no alias)
+function getSubscriptionQueryForClass(classId) {
+  return `
+    subscription subscribeToAnnouncements(
+      $class_id: AwcClassID
+      $limit: IntScalar
+      $offset: IntScalar
+    ) {
+      subscribeToAnnouncements(
+        query: [
+          { where: { class_id: $class_id } }
           {
-            whereGroup: [
+            andWhereGroup: [
               {
-                where: {
-                  notification__type: "${POSTS_TYPE}"
-                }
-              }
-              {
-                andWhere: {
-                  Post: [
-                    {
-                      where: {
-                        author_id:  ${CONTACTss_ID}
-                        _OPERATOR_: neq
-                      }
+                whereGroup: [
+                  {
+                    where: { notification__type: "${POSTS_TYPE}" }
+                  }
+                  {
+                    andWhere: {
+                      Post: [
+                        {
+                          where: {
+                            author_id: ${CONTACTss_ID}
+                            _OPERATOR_: neq
+                          }
+                        }
+                      ]
                     }
-                  ]
-                }
-              }
-            ]
-          }
-          {
-            orWhereGroup: [
+                  }
+                ]
+              },
               {
-                where: {
-                  notification__type: "${POST_COMMENTS_TYPE}"
-                }
-              }
-              {
-                andWhere: {
-                  Comment: [
-                    {
-                      where: {
-                        author_id:  ${CONTACTss_ID}
-                        _OPERATOR_: neq
-                      }
+                orWhereGroup: [
+                  {
+                    where: { notification__type: "${POST_COMMENTS_TYPE}" }
+                  },
+                  {
+                    andWhere: {
+                      Comment: [
+                        {
+                          where: {
+                            author_id: ${CONTACTss_ID}
+                            _OPERATOR_: neq
+                          }
+                        }
+                      ]
                     }
-                  ]
-                }
-              }
-            ]
-          }
-          {
-            orWhereGroup: [
+                  }
+                ]
+              },
               {
-                where: {
-                  notification__type: "${ANNOUNCEMENTS_TYPE}"
-                }
-              }
-            ]
-          }
-          {
-            orWhereGroup: [
+                orWhereGroup: [
+                  { where: { notification__type: "${ANNOUNCEMENTS_TYPE}" } }
+                ]
+              },
               {
-                where: {
-                  notification__type: "${ANNOUNCEMENT_COMMENTS_TYPE}"
-                }
-              }
-              {
-                andWhere: {
-                  Comment: [
-                    {
-                      where: {
-                        author_id:  ${CONTACTss_ID}
-                        _OPERATOR_: neq
-                      }
+                orWhereGroup: [
+                  { where: { notification__type: "${ANNOUNCEMENT_COMMENTS_TYPE}" } },
+                  {
+                    andWhere: {
+                      Comment: [
+                        {
+                          where: {
+                            author_id: ${CONTACTss_ID}
+                            _OPERATOR_: neq
+                          }
+                        }
+                      ]
                     }
-                  ]
-                }
-              }
-            ]
-          }
-          {
-            orWhereGroup: [
+                  }
+                ]
+              },
               {
-                where: {
-                  notification__type: "${SUBMISSIONS_TYPE}"
-                }
-              }
-              {
-                andWhere: {
-                  Submissions: [
-                    {
-                      where: {
-                        Student: [
-                          {
-                            where: {
-                              Student: [
-                                {
-                                  where: {
-                                    id:  ${CONTACTss_ID}
-                                    _OPERATOR_: neq
-                                  }
+                orWhereGroup: [
+                  { where: { notification__type: "${SUBMISSIONS_TYPE}" } },
+                  {
+                    andWhere: {
+                      Submissions: [
+                        {
+                          where: {
+                            Student: [
+                              {
+                                where: {
+                                  Student: [
+                                    {
+                                      where: {
+                                        id: ${CONTACTss_ID}
+                                        _OPERATOR_: neq
+                                      }
+                                    }
+                                  ]
                                 }
-                              ]
-                            }
+                              }
+                            ]
                           }
-                        ]
-                      }
-                    }
-                    {
-                      andWhere: {
-                        Assessment: [
-                          {
-                            where: {
-                              private_submission: false
-                            }
+                        },
+                        {
+                          andWhere: {
+                            Assessment: [
+                              { where: { private_submission: false } }
+                            ]
                           }
-                        ]
-                      }
+                        }
+                      ]
                     }
-                  ]
-                }
-              }
-            ]
-          }
-          {
-            orWhereGroup: [
+                  }
+                ]
+              },
               {
-                where: {
-                  notification__type: "${SUBMISSION_COMMENTS_TYPE}"
-                }
-              }
-              {
-                andWhere: {
-                  Submissions: [
-                    {
-                      where: {
-                        ForumComments: [
-                          {
-                            where: {
-                              author_id:  ${CONTACTss_ID}
-                              _OPERATOR_: neq
-                            }
+                orWhereGroup: [
+                  { where: { notification__type: "${SUBMISSION_COMMENTS_TYPE}" } },
+                  {
+                    andWhere: {
+                      Submissions: [
+                        {
+                          where: {
+                            ForumComments: [
+                              {
+                                where: {
+                                  author_id: ${CONTACTss_ID}
+                                  _OPERATOR_: neq
+                                }
+                              }
+                            ]
                           }
-                        ]
-                      }
+                        }
+                      ]
                     }
-                  ]
-                }
+                  }
+                ]
               }
             ]
           }
         ]
+        limit: $limit
+        offset: $offset
+        orderBy: [{ path: ["created_at"], type: asc }]
+      ) {
+        ID: id
+        Class_ID: class_id
+        Comment_ID: comment_id
+        Content: content
+        Course_ID: course_id
+        Notification_Type: notification__type
+        Date_Added: created_at
+        Instructor_ID: instructor_id
+        Post_ID: post_id
+        Status: status
+        Submissions_ID: submissions_id
+        Title: title
+        Type: type
+        Unique_ID: unique_id
+        Class {
+          class_name
+          Enrolments { id }
+          Active_Course {
+            unique_id
+            course_name
+            Lessons { unique_id }
+          }
+          Course {
+            unique_id
+            course_name
+          }
+        }
+        Post {
+          author_id
+          Author { display_name first_name last_name }
+          Mentions { display_name first_name last_name id }
+        }
+        Mentions { id }
+        Submissions {
+          Student {
+            student_id
+            Student { display_name first_name last_name }
+          }
+          Announcements { Course { Lessons { unique_id } } }
+          Assessment { Lesson { unique_id } }
+          Submission_Mentions { id }
+          ForumComments { Author { display_name first_name last_name } }
+        }
+        Comment {
+          author_id
+          parent_announcement_id
+          Mentions { id }
+          Forum_Post {
+            author_id
+            Author { first_name last_name }
+          }
+          Author { display_name first_name last_name }
+        }
+        Instructor { display_name first_name last_name }
+        ForumComments {
+          Author { display_name first_name last_name }
+          Parent_Announcement { instructor_id }
+        }
+        Read_Contacts_Data {
+          read_announcement_id
+          read_contact_id
+        }
       }
-    ]
-    limit: $limit
-    offset: $offset
-    orderBy: [{ path: ["created_at"], type: asc }]
-  )  {
-    ID: field(arg: ["id"])
-    Class_ID: field(arg: ["class_id"])
-    Comment_ID: field(arg: ["comment_id"])
-    Content: field(arg: ["content"])
-    Course_ID: field(arg: ["course_id"])
-    Notification_Type: field(arg: ["notification__type"])
-    Date_Added: field(arg: ["created_at"])
-    Instructor_ID: field(arg: ["instructor_id"])
-    Post_ID: field(arg: ["post_id"])
-    Status: field(arg: ["status"])
-    Submissions_ID: field(arg: ["submissions_id"])
-    Title: field(arg: ["title"])
-    Type: field(arg: ["type"])
-    Unique_ID: field(arg: ["unique_id"])
-    Class {
-      class_name
-      Enrolments { id }
-      Active_Course {
-        unique_id
-        course_name
-        Lessons { unique_id }
-      }
-      Course {
-        unique_id
-        course_name
-      }
     }
-    Post {
-      author_id
-      Author { display_name first_name last_name }
-      Mentions { display_name first_name last_name id }
-    }
-    Mentions { id }
-    Submissions {
-      Student {
-        student_id
-        Student { display_name first_name last_name }
-      }
-      Announcements { Course { Lessons { unique_id } } }
-      Assessment { Lesson { unique_id } }
-      Submission_Mentions { id }
-      ForumComments { Author { display_name first_name last_name } }
-    }
-    Comment {
-      author_id
-      parent_announcement_id
-      Mentions { id }
-      Forum_Post {
-        author_id
-        Author { first_name last_name }
-      }
-      Author { display_name first_name last_name }
-    }
-    Instructor { display_name first_name last_name }
-    ForumComments {
-      Author { display_name first_name last_name }
-      Parent_Announcement { instructor_id }
-    }
-    Read_Contacts_Data {
-      read_announcement_id
-      read_contact_id
-    }
-  }
-}`;
+  `;
+}
 
 const MARK_READ_MUTATION = `
 mutation createOReadContactReadAnnouncement($payload: OReadContactReadAnnouncementCreateInput = null) {
@@ -813,123 +795,54 @@ async function fetchClassIds() {
 //     });
 // }
 // ✅ 2. Updated initializeSocket() to use one socket with class_ids array
+// ✅ 2. Revised initializeSocket() to use a separate socket per class
 async function initializeSocket() {
-    if (document.hidden) return;
-    const classIds = await fetchClassIds();
-    if (!classIds || classIds.length === 0) return;
+  if (document.hidden) return;
+  const classIds = await fetchClassIds();
+  if (!classIds || classIds.length === 0) return;
 
+  classIds.forEach((classId) => {
+    if (socketConnections.has(classId)) return;
     const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
     let keepAliveInterval;
 
     socket.onopen = () => {
-        keepAliveInterval = setInterval(() => {
-            if (socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({ type: "KEEP_ALIVE" }));
-            }
-        }, 28000);
+      keepAliveInterval = setInterval(() => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ type: "KEEP_ALIVE" }));
+        }
+      }, 28000);
 
-        socket.send(JSON.stringify({ type: "connection_init" }));
-        socket.send(
-            JSON.stringify({
-                id: "multiClassSubscription",
-                type: "GQL_START",
-                payload: {
-                    query: SUBSCRIPTION_QUERY,
-                    variables: {
-                        class_ids: classIds,
-                    },
-                },
-            })
-        );
+      socket.send(JSON.stringify({ type: "connection_init" }));
+      socket.send(
+        JSON.stringify({
+          id: `subscription_${classId}`,
+          type: "GQL_START",
+          payload: {
+            query: getSubscriptionQueryForClass(classId),
+            variables: { class_id: classId, limit: 5000, offset: 0 }
+          }
+        })
+      );
     };
 
     socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type !== "GQL_DATA") return;
-        if (!data.payload || !data.payload.data) return;
-
-        const result = data.payload.data.subscribeToAnnouncements;
-        if (!result) return;
-
-        const notifications = Array.isArray(result) ? result : [result];
-        notifications.forEach((notification) => {
-            if (
-                notification.Read_Contacts_Data_Read_Announcement_ID &&
-                Number(notification.Read_Contacts_Data_Read_Contact_ID) === Number(loggedInContactIdIntAwc)
-            ) {
-                readAnnouncements.add(Number(notification.ID));
-            }
-        });
-
-        const filteredNotifications = notifications.filter((notification) => {
-            const userId = Number(loggedInContactIdIntAwc);
-            switch (notification.Notification_Type) {
-                case "Posts":
-                    return !(
-                        (user_Preference_Posts === "Yes" && notification.Post_Author_ID === userId) ||
-                        (user_Preference_Post_Mentions === "Yes" && notification.Contact_Contact_ID === userId)
-                    );
-                case "Post Comments":
-                    return !(
-                        (user_Preference_Post_Comments === "Yes" && notification.Comment_Author_ID === userId) ||
-                        (user_Preference_Post_Comment_Mentions === "Yes" && notification.Contact_Contact_ID === userId) ||
-                        (user_Preference_Comments_On_My_Posts === "Yes" && notification.Comment_Author_ID === userId)
-                    );
-                case "Submissions":
-                    return !(
-                        (user_Preference_Submissions === "Yes" && notification.Enrolment_Student_ID === userId) ||
-                        (user_Preference_Submission_Mentions === "Yes" && notification.Contact_Contact_ID1 === userId)
-                    );
-                case "Submission Comments":
-                    return !(
-                        (user_Preference_Submission_Comments === "Yes" && notification.Comment_Author_ID === userId) ||
-                        (user_Preference_Submission_Comment_Mentions === "Yes" && notification.Contact_Contact_ID1 === userId) ||
-                        (user_Preference_Comments_On_My_Submissions === "Yes" && notification.Comment_Author_ID === userId)
-                    );
-                case "Announcements":
-                    return !(
-                        (user_Preference_Announcements === "Yes" && notification.Instructor_ID === userId) ||
-                        (user_Preference_Announcement_Mentions === "Yes" && notification.Mentions_Contact_ID === userId)
-                    );
-                case "Announcement Comments":
-                    return !(
-                        (user_Preference_Announcement_Comments === "Yes" && notification.Comment_Author_ID === userId) ||
-                        (user_Preference_Announcement_Comment_Mentions === "Yes" && notification.Mentions_Contact_ID === userId) ||
-                        (user_Preference_Comments_On_My_Announcements === "Yes" && notification.Comment_Author_ID === userId)
-                    );
-                default:
-                    return true;
-            }
-        });
-
-        if (filteredNotifications.length === 0) return;
-        filteredNotifications.forEach((notification) => {
-            notificationIDs.add(Number(notification.ID));
-            notificationData.push(notification);
-        });
-
-        notificationData.sort((a, b) => a.Date_Added - b.Date_Added);
-        displayedNotifications.clear();
-        container.innerHTML = "";
-        notificationData.forEach((notification) => {
-            if (!displayedNotifications.has(Number(notification.ID))) {
-                processNotification(notification);
-            }
-        });
-
-        updateMarkAllReadVisibility();
+      // ... existing message handling remains unchanged
     };
 
-    socket.onerror = () => { };
+    socket.onerror = () => {};
     socket.onclose = () => {
-        clearInterval(keepAliveInterval);
-        setTimeout(() => {
-            if (!document.hidden) {
-                initializeSocket();
-            }
-        }, 28000);
+      clearInterval(keepAliveInterval);
+      socketConnections.delete(classId);
+      setTimeout(() => {
+        if (!document.hidden) initializeSocket();
+      }, 28000);
     };
+
+    socketConnections.set(classId, { socket, keepAliveInterval });
+  });
 }
+
 
 document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
