@@ -357,7 +357,7 @@ subscription subscribeToAnnouncements(
 ) {
    subscribeToAnnouncements(
     query: [
-      { where: { class_id: { _IN_: $class_ids } } }
+    { where: { class_id: { _IN_: $class_ids } } }
       {
         andWhereGroup: [
           {
