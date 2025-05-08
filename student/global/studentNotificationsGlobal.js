@@ -795,7 +795,6 @@ async function fetchClassIds() {
 //     });
 // }
 // ✅ 2. Updated initializeSocket() to use one socket with class_ids array
-// ✅ 2. Revised initializeSocket() to use a separate socket per class
 async function initializeSocket() {
   if (document.hidden) return;
   const classIds = await fetchClassIds();
@@ -827,8 +826,86 @@ async function initializeSocket() {
     };
 
     socket.onmessage = (event) => {
-      // ... existing message handling remains unchanged
-    };
+  const data = JSON.parse(event.data);
+  if (data.type !== "GQL_DATA") return;
+  if (!data.payload || !data.payload.data) return;
+
+  const result = data.payload.data.subscribeToAnnouncements;
+  if (!result) return;
+
+  const notifications = Array.isArray(result) ? result : [result];
+
+  notifications.forEach((notification) => {
+    if (
+      notification.Read_Contacts_Data &&
+      notification.Read_Contacts_Data.some(
+        (read) => Number(read.read_contact_id) === Number(loggedInContactIdIntAwc)
+      )
+    ) {
+      readAnnouncements.add(Number(notification.ID));
+    }
+  });
+
+  const filteredNotifications = notifications.filter((notification) => {
+    const userId = Number(loggedInContactIdIntAwc);
+    switch (notification.Notification_Type) {
+      case "Posts":
+        return !(
+          (user_Preference_Posts === "Yes" && notification.Post.author_id === userId) ||
+          (user_Preference_Post_Mentions === "Yes" && notification.Post?.Mentions?.some(m => m.id === userId))
+        );
+      case "Post Comments":
+        return !(
+          (user_Preference_Post_Comments === "Yes" && notification.Comment?.author_id === userId) ||
+          (user_Preference_Post_Comment_Mentions === "Yes" && notification.Comment?.Mentions?.some(m => m.id === userId)) ||
+          (user_Preference_Comments_On_My_Posts === "Yes" && notification.Comment?.Forum_Post?.author_id === userId)
+        );
+      case "Submissions":
+        return !(
+          (user_Preference_Submissions === "Yes" && notification.Submissions?.Student?.student_id === userId) ||
+          (user_Preference_Submission_Mentions === "Yes" && notification.Submissions?.Submission_Mentions?.some(m => m.id === userId))
+        );
+      case "Submission Comments":
+        return !(
+          (user_Preference_Submission_Comments === "Yes" && notification.Comment?.author_id === userId) ||
+          (user_Preference_Submission_Comment_Mentions === "Yes" && notification.Comment?.Mentions?.some(m => m.id === userId)) ||
+          (user_Preference_Comments_On_My_Submissions === "Yes" && notification.Comment?.Forum_Post?.author_id === userId)
+        );
+      case "Announcements":
+        return !(
+          (user_Preference_Announcements === "Yes" && notification.Instructor_ID === userId) ||
+          (user_Preference_Announcement_Mentions === "Yes" && notification.Mentions?.some(m => m.id === userId))
+        );
+      case "Announcement Comments":
+        return !(
+          (user_Preference_Announcement_Comments === "Yes" && notification.Comment?.author_id === userId) ||
+          (user_Preference_Announcement_Comment_Mentions === "Yes" && notification.Comment?.Mentions?.some(m => m.id === userId)) ||
+          (user_Preference_Comments_On_My_Announcements === "Yes" && notification.ForumComments?.Parent_Announcement?.instructor_id === userId)
+        );
+      default:
+        return true;
+    }
+  });
+
+  if (filteredNotifications.length === 0) return;
+
+  filteredNotifications.forEach((notification) => {
+    notificationIDs.add(Number(notification.ID));
+    notificationData.push(notification);
+  });
+
+  notificationData.sort((a, b) => a.Date_Added - b.Date_Added);
+  displayedNotifications.clear();
+  container.innerHTML = "";
+
+  notificationData.forEach((notification) => {
+    if (!displayedNotifications.has(Number(notification.ID))) {
+      processNotification(notification);
+    }
+  });
+
+  updateMarkAllReadVisibility();
+};
 
     socket.onerror = () => {};
     socket.onclose = () => {
@@ -842,7 +919,6 @@ async function initializeSocket() {
     socketConnections.set(classId, { socket, keepAliveInterval });
   });
 }
-
 
 document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
