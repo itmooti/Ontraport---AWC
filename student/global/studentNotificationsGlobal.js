@@ -1149,20 +1149,20 @@ function createNotificationCard(notification, isRead) {
   } else if (notification_Type === "Submissions") {
     if (submissionMentionID && String(submissionMentionID) === usersId) {
       message = `${notification_course_name} - You have been mentioned in a submission`;
-      messageContent = `You were mentioned in a submission`;
+      messageContent = `${submitterFullName} mentioned you in a submission`;
     } else {
       message = `${notification_course_name} - A submission has been made`;
-      messageContent = `A submission has been made`;
+      messageContent = `${submitterFullName} added a submission`;
     }
   } else if (notification_Type === "Submission Comments") {
     if (submissionMentionID && String(submissionMentionID) === usersId) {
       message = `${notification_course_name} - You have been mentioned in a comment on a submission`;
-      messageContent = `You were mentioned in a submission comment`;
+      messageContent = `${submitterFullName} mentioned you in a submission comment`;
     } else {
       message = `${notification_course_name} - A new comment has been added on a submission`;
-      messageContent = `A new comment has been added on a submission`;
+      messageContent = `${submitterFullName} added a comment on a submission`;
     }
-  } else {
+  }  else {
     message = `${notification_course_name} - A new notification has arrived`;
     messageContent = `${notification_Type || "Someone"} added something`;
   }
