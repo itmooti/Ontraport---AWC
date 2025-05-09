@@ -593,7 +593,7 @@ document.addEventListener("visibilitychange", () => {
 
 initializeSocket();
 
-✅ 3. Patch for createNotificationCard() to fix undefined labels
+//✅ 3. Patch for createNotificationCard() to fix undefined labels
 function createNotificationCard(notification, isRead) {
   const card = document.createElement("div");
   const notification_Type = notification.Notification_Type;
