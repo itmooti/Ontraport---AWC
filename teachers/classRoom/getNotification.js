@@ -227,7 +227,6 @@ document.addEventListener("visibilitychange", () => {
 initializeSocket();
 
 
-// ✅ 3. Patch for createNotificationCard() to fix undefined labels
 function createNotificationCard(notification, isRead) {
   const card = document.createElement("div");
   const notification_Type = notification.Notification_Type;
@@ -340,24 +339,24 @@ function createNotificationCard(notification, isRead) {
         : notification.ID;
 
     const courseUid = notification.Class?.Active_Course?.unique_id || notification.Class?.Course?.unique_id;
+      const classIDForADmin=  notification?.Class?.unique_id;
     const activeOrInactive = notification.Class?.Active_Course?.unique_id ? "Active_Course" : "Course";
 
     if ((type === "Posts" || type === "Post Comments") && notification.Post_ID) {
-      const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
-      window.location.href = `https://courses.writerscentre.com.au/students/course-details/${courseUid}?eid=${myEidFromCourse}&selectedTab=courseChat?current-post-id=${notification.Post_ID}`;
+    //  const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
+      window.location.href = `https://courses.writerscentre.com.au/teacher/class/${classIDForADmin}?selectedTab=courseChat?current-post-id=${notification.Post_ID}`;
     } else if ((type === "Submissions" || type === "Submission Comments") && notification.Submissions?.Assessment?.Lesson?.unique_id) {
       const lessonUid = notification.Submissions.Assessment.Lesson.unique_id;
-      const myEidFromLesson = await getEnrolmentIdsByLessonUid(lessonUid, activeOrInactive);
-      window.location.href = `https://courses.writerscentre.com.au/course-details/content/${lessonUid}?eid=${myEidFromLesson}`;
+     // const myEidFromLesson = await getEnrolmentIdsByLessonUid(lessonUid, activeOrInactive);
+      window.location.href = `https://courses.writerscentre.com.au/course-details/content/${lessonUid}`;
     } else {
-      const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
-      window.location.href = `https://courses.writerscentre.com.au/students/course-details/${courseUid}?eid=${myEidFromCourse}&selectedTab=anouncemnt?data-announcement-template-id=${anouncementScrollId}`;
+     // const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
+      window.location.href = `https://courses.writerscentre.com.au/teacher/class/${classIDForADmin}?selectedTab=anouncemnt?data-announcement-template-id=${anouncementScrollId}`;
     }
   });
 
   return card;
 }
-
 
 
 function processNotification(notification) {
