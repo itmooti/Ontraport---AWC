@@ -31,7 +31,10 @@ async function fetchClassIds() {
     if (cachedClassIds !== null) return cachedClassIds;
     const query = `
 query calcClasses {
-  calcClasses(query: [{ where: { teacher_id: ${CONTACTss_ID} } }]) {
+  calcClasses(query: [{ where: { teacher_id: ${CONTACTss_ID} } }]
+      limit: 5000  
+        offset: 0 
+  ) {
     ID: field(arg: ["id"])
   }
 }
