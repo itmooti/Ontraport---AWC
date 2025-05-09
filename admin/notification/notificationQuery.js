@@ -356,7 +356,8 @@ function getSubscriptionQueryForClass(classId) {
         Title: title
         Type: type
         Unique_ID: unique_id
-        Class {
+        Class { 
+         unique_id 
           class_name
           Enrolments { id }
           Active_Course {
