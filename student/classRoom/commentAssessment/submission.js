@@ -66,6 +66,11 @@ window.addEventListener("message", function (event) {
             element.innerText = dueDate;
         });
 
+    }else{
+        const mainwrapperforDueIframe = document.querySelector('.mainwrapperforDueIframe');
+        if(mainwrapperforDueIframe){
+            mainwrapperforDueIframe.classList.add('hidden');
+        }
     }
 });
 
