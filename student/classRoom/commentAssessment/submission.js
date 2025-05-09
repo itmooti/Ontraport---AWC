@@ -61,20 +61,17 @@ window.addEventListener("message", function (event) {
     if (event.origin !== "https://courses.writerscentre.com.au") return;
     const dueDate = event.data.dueDate;
     if (dueDate) {
-          console.log('Due date');
         const elements = document.querySelectorAll(".dueDateClass");
         elements.forEach(element => {
-            // element.innerText = dueDate;
-             element.innerText = 'thisis due';
-            
+            element.innerText = dueDate;
         });
-    }else{
-        console.log('NoDue date');
-        const mainwrapperforDueIframe = document.querySelector('.mainwrapperforDueIframe');
-        if(mainwrapperforDueIframe){
-            mainwrapperforDueIframe.classList.add('hidden');
-        }
     }
+if (!dueDate) {
+    const mainwrapperforDueIframe = document.querySelector('.mainwrapperforDueIframe');
+    if (mainwrapperforDueIframe) {
+        mainwrapperforDueIframe.classList.add('hidden');
+    }
+}
 });
 
 // If the iframe loads late, request the Due Date from the parent
