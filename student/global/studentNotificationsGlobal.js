@@ -718,7 +718,8 @@ initializeSocket();
 // });
 
 // return card;
-// }
+// } 
+
 // ✅ 3. Patch for createNotificationCard() to fix undefined labels
 function createNotificationCard(notification, isRead) {
   const card = document.createElement("div");
@@ -879,7 +880,6 @@ function createNotificationCard(notification, isRead) {
 
   return card;
 }
-
 
 
 
