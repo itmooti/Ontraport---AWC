@@ -480,46 +480,7 @@ async function initializeSocket() {
     }
   });
 
-  // const filteredNotifications = notifications.filter((notification) => {
-  //   const userId = Number(loggedInContactIdIntAwc);
-  //   switch (notification.Notification_Type) {
-  //     case "Posts":
-  //       return !(
-  //         (user_Preference_Posts === "Yes" && notification.Post.author_id === userId) ||
-  //         (user_Preference_Post_Mentions === "Yes" && notification.Post?.Mentions?.some(m => m.id === userId))
-  //       );
-  //     case "Post Comments":
-  //       return !(
-  //         (user_Preference_Post_Comments === "Yes" && notification.Comment?.author_id === userId) ||
-  //         (user_Preference_Post_Comment_Mentions === "Yes" && notification.Comment?.Mentions?.some(m => m.id === userId)) ||
-  //         (user_Preference_Comments_On_My_Posts === "Yes" && notification.Comment?.Forum_Post?.author_id === userId)
-  //       );
-  //     case "Submissions":
-  //       return !(
-  //         (user_Preference_Submissions === "Yes" && notification.Submissions?.Student?.student_id === userId) ||
-  //         (user_Preference_Submission_Mentions === "Yes" && notification.Submissions?.Submission_Mentions?.some(m => m.id === userId))
-  //       );
-  //     case "Submission Comments":
-  //       return !(
-  //         (user_Preference_Submission_Comments === "Yes" && notification.Comment?.author_id === userId) ||
-  //         (user_Preference_Submission_Comment_Mentions === "Yes" && notification.Comment?.Mentions?.some(m => m.id === userId)) ||
-  //         (user_Preference_Comments_On_My_Submissions === "Yes" && notification.Comment?.Forum_Post?.author_id === userId)
-  //       );
-  //     case "Announcements":
-  //       return !(
-  //         (user_Preference_Announcements === "Yes" && notification.Instructor_ID === userId) ||
-  //         (user_Preference_Announcement_Mentions === "Yes" && notification.Mentions?.some(m => m.id === userId))
-  //       );
-  //     case "Announcement Comments":
-  //       return !(
-  //         (user_Preference_Announcement_Comments === "Yes" && notification.Comment?.author_id === userId) ||
-  //         (user_Preference_Announcement_Comment_Mentions === "Yes" && notification.Comment?.Mentions?.some(m => m.id === userId)) ||
-  //         (user_Preference_Comments_On_My_Announcements === "Yes" && notification.ForumComments?.Parent_Announcement?.instructor_id === userId)
-  //       );
-  //     default:
-  //       return true;
-  //   }
-  // });
+  
 const filteredNotifications = notifications.filter((notification) => {
   const userId = Number(loggedInContactIdIntAwc);
 
