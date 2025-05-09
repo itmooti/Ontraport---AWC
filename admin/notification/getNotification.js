@@ -228,7 +228,7 @@ initializeSocket();
 function createNotificationCard(notification, isRead) {
   const card = document.createElement("div");
   const notification_Type = notification.Notification_Type;
-  const usersId = String(loggedInContactIdIntAwc);
+  const usersId = String(LOGGED_IN_CONTACT_ID);
   const notification_course_name = notification.Class?.Active_Course?.course_name || notification.Class?.Course?.course_name || "(No Course)";
 
   const postMentionID = notification.Post?.Mentions?.some(m => String(m.id) === usersId);
@@ -341,11 +341,11 @@ function createNotificationCard(notification, isRead) {
     const activeOrInactive = notification.Class?.Active_Course?.unique_id ? "Active_Course" : "Course";
 
     if ((type === "Posts" || type === "Post Comments") && notification.Post_ID) {
-      const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
+      //const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
       window.location.href = `https://courses.writerscentre.com.au/admin/class/${classIDForADmin}?selectedTab=courseChat?current-post-id=${notification.Post_ID}`;
     } else if ((type === "Submissions" || type === "Submission Comments") && notification.Submissions?.Assessment?.Lesson?.unique_id) {
       const lessonUid = notification.Submissions.Assessment.Lesson.unique_id;
-      const myEidFromLesson = await getEnrolmentIdsByLessonUid(lessonUid, activeOrInactive);
+      //const myEidFromLesson = await getEnrolmentIdsByLessonUid(lessonUid, activeOrInactive);
       window.location.href = `https://courses.writerscentre.com.au/course-details/content/${lessonUid}`;
     } else {
       const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
