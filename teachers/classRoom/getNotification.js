@@ -229,7 +229,7 @@ async function initializeSocket() {
     if (
       notification.Read_Contacts_Data &&
       notification.Read_Contacts_Data.some(
-        (read) => Number(read.read_contact_id) === Number(loggedInContactIdIntAwc)
+        (read) => Number(read.read_contact_id) === Number(LOGGED_IN_CONTACT_ID)
       )
     ) {
       readAnnouncements.add(Number(notification.ID));
@@ -237,7 +237,7 @@ async function initializeSocket() {
   });
 
   const filteredNotifications = notifications.filter((notification) => {
-    const userId = Number(loggedInContactIdIntAwc);
+    const userId = Number(LOGGED_IN_CONTACT_ID);
     switch (notification.Notification_Type) {
       case "Posts":
         return !(
@@ -460,7 +460,7 @@ function createNotificationCard(notification, isRead) {
   const submissionMentionID = notification.Submissions?.Submission_Mentions?.[0]?.id;
   const forumPostAuthorID = notification.Comment?.Forum_Post?.author_id;
   const annInstId = notification.ForumComments?.Parent_Announcement?.instructor_id;
-  const usersId = String(loggedInContactIdIntAwc);
+  const usersId = String(LOGGED_IN_CONTACT_ID);
 
   const postFullName = notification.Post?.Author?.display_name || `${notification.Post?.Author?.first_name || ""} ${notification.Post?.Author?.last_name || ""}`.trim() || "Someone";
   const commentFullname = notification.Comment?.Author?.display_name || `${notification.Comment?.Author?.first_name || ""} ${notification.Comment?.Author?.last_name || ""}`.trim() || "Someone";
