@@ -192,7 +192,7 @@ async function initializeSocket() {
 
   classIds.forEach((classId) => {
     if (socketConnections.has(classId)) return;
-    const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
+    const socket = new WebSocket(WS_ENDPOINT, "vitalstats");
     let keepAliveInterval;
 
     socket.onopen = () => {
