@@ -64,7 +64,9 @@ window.addEventListener("message", function (event) {
           console.log('Due date');
         const elements = document.querySelectorAll(".dueDateClass");
         elements.forEach(element => {
-            element.innerText = dueDate;
+            // element.innerText = dueDate;
+             element.innerText = 'thisis due';
+            
         });
     }else{
         console.log('NoDue date');
