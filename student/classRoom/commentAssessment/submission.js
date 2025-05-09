@@ -61,6 +61,7 @@ window.addEventListener("message", function (event) {
     if (event.origin !== "https://courses.writerscentre.com.au") return;
     const dueDate = event.data.dueDate;
     if (dueDate) {
+          console.log('Due date');
         const elements = document.querySelectorAll(".dueDateClass");
         elements.forEach(element => {
             element.innerText = dueDate;
