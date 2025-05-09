@@ -65,8 +65,8 @@ window.addEventListener("message", function (event) {
         elements.forEach(element => {
             element.innerText = dueDate;
         });
-
     }else{
+        console.log('NoDue date');
         const mainwrapperforDueIframe = document.querySelector('.mainwrapperforDueIframe');
         if(mainwrapperforDueIframe){
             mainwrapperforDueIframe.classList.add('hidden');
