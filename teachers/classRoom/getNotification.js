@@ -230,7 +230,7 @@ initializeSocket();
 function createNotificationCard(notification, isRead) {
   const card = document.createElement("div");
   const notification_Type = notification.Notification_Type;
-  const usersId = String(loggedInContactIdIntAwc);
+  const usersId = String(LOGGED_IN_CONTACT_ID);
   const notification_course_name = notification.Class?.Active_Course?.course_name || notification.Class?.Course?.course_name || "(No Course)";
 
   const postMentionID = notification.Post?.Mentions?.some(m => String(m.id) === usersId);
