@@ -76,21 +76,6 @@ query calcContacts($class_id: AwcClassID, $id: AwcClassID) {
     if (!result?.data?.calcContacts) {
       return;
     }
-    // const finalContacts = result.data.calcContacts
-    //   .filter((contact) => contact.Display_Name)
-    //   .map((contact) => {
-    //     let userType = "(Student)";
-    //     if (contact.Is_Admin) {
-    //       userType = "(Admin)";
-    //     } else if (contact.Is_Instructor) {
-    //       userType = "(Tutor)";
-    //     }
-    //     return {
-    //       key: `${contact.Display_Name} ${userType}`,
-    //       value: String(contact.Contact_ID),
-    //       image: contact.Profile_Image || defaultImageUrl,
-    //     };
-    //   });
      const finalContacts = Array.from(
       new Map(
         result.data.calcContacts
@@ -220,6 +205,11 @@ document.addEventListener("DOMContentLoaded", function () {
       changeDate.forEach((changeDateDue) => {
         changeDateDue.innerText = storedDueDate;
       });
+    }
+  }else{
+  const mainwrapperforDueTop = document.querySelector('.mainwrapperforDueTop');
+    if(mainwrapperforDueTop){
+      mainwrapperforDueTop.classList.add('hidden');
     }
   }
   const iframes = document.querySelectorAll("iframe");
