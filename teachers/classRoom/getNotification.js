@@ -278,7 +278,7 @@ async function initializeSocket() {
   // });
 
         const filteredNotifications = notifications.filter((notification) => {
-  const userId = Number(loggedInContactIdIntAwc);
+  const userId = Number(LOGGED_IN_CONTACT_ID);
 
   switch (notification.Notification_Type) {
     case "Posts": {
