@@ -171,7 +171,7 @@ async function initializeSocket() {
     }
 
     default:
-      return true;
+      return false;
   }
 });
 
