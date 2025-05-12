@@ -835,8 +835,8 @@ function createNotificationCard(notification, isRead) {
     }
   } else if (notification_Type === "Post Comments") {
     if (commentMentionID) {
-      message = `${notification_course_name} - You have been mentioned in a comment in a post`;
-      messageContent = `${commentFullname} mentioned you in a comment in a post`;
+      message = `${notification_course_name} - You have been mentioned in a comment on a post`;
+      messageContent = `${commentFullname} mentioned you in a comment on a post`;
     } else if (forumPostAuthorID && String(forumPostAuthorID) === usersId) {
       message = `${notification_course_name} - A comment has been added in your post`;
       messageContent = `${commentFullname} added a comment in your post`;
@@ -862,8 +862,8 @@ function createNotificationCard(notification, isRead) {
     }
   } else if (notification_Type === "Announcement Comments") {
     if (commentMentionID) {
-      message = `${notification_course_name} - You have been mentioned in a comment in an announcement`;
-      messageContent = `${commentFullname} mentioned you in a comment in an announcement`;
+      message = `${notification_course_name} - You have been mentioned in a comment on an announcement`;
+      messageContent = `${commentFullname} mentioned you in a comment on an announcement`;
     } else if (annInstId && String(annInstId) === usersId) {
       message = `${notification_course_name} - A comment has been added in your announcement`;
       messageContent = `${commentFullname} added a comment in your announcement`;
