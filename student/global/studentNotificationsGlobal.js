@@ -540,7 +540,7 @@ const filteredNotifications = notifications.filter((notification) => {
     }
 
     default:
-      return true;
+      return false;
   }
 });
 
