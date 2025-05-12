@@ -891,21 +891,22 @@ function createNotificationCard(notification, isRead) {
     if (submissionMentionID) {
       message = `${notification_course_name} - You have been mentioned in a comment on a submission`;
       messageContent = `${commentAuthorFullName} mentioned you in a submission comment`;
-    } else {
-      message = `${notification_course_name} - A new comment has been added on a submission`;
-      messageContent = `${commentAuthorFullName} added a comment on a submission`;
-    }
-  // } else {
-  //   message = `${notification_course_name} - A new notification has arrived`;
-  //   messageContent = `${notification_Type || "Someone"} added something`;
-  // }
-      } else {
+    // } else {
+    //   message = `${notification_course_name} - A new comment has been added on a submission`;
+    //   messageContent = `${commentAuthorFullName} added a comment on a submission`;
+    // }
+         } else {
   const isCommentOnMySubmission = notification.Submissions?.Student?.student_id === Number(usersId);
   message = `${notification_course_name} - A new comment has been added on a submission`;
   messageContent = isCommentOnMySubmission
     ? `${commentAuthorFullName} added a comment on your submission`
     : `${commentAuthorFullName} added a comment on a submission`;
 }
+  } else {
+    message = `${notification_course_name} - A new notification has arrived`;
+    messageContent = `${notification_Type || "Someone"} added something`;
+  }
+     
 
 
   card.className = "notification-card cursor-pointer";
