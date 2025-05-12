@@ -579,15 +579,26 @@ const filteredNotifications = notifications.filter((notification) => {
         return false;
       }
 
-      case "Submission Comments": {
-        const authored = notification.Comment?.author_id === userId;
-        const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
-        const parentIsUser = notification.Comment?.Forum_Post?.author_id === userId;
-        if (user_Preference_Submission_Comments === "Yes" && authored) return false;
-        if (user_Preference_Submission_Comment_Mentions === "Yes" && mentioned) return true;
-        if (user_Preference_Comments_On_My_Submissions === "Yes" && parentIsUser) return true;
-        return false;
-      }
+      // case "Submission Comments": {
+      //   const authored = notification.Comment?.author_id === userId;
+      //   const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
+      //   const parentIsUser = notification.Comment?.Forum_Post?.author_id === userId;
+      //   if (user_Preference_Submission_Comments === "Yes" && authored) return false;
+      //   if (user_Preference_Submission_Comment_Mentions === "Yes" && mentioned) return true;
+      //   if (user_Preference_Comments_On_My_Submissions === "Yes" && parentIsUser) return true;
+      //   return false;
+      // }
+case "Submission Comments": {
+  const authored = notification.Comment?.author_id === userId;
+  const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
+  const submissionOwnerId = notification.Submissions?.Student?.student_id;
+  const isCommentOnMySubmission = submissionOwnerId === userId;
+
+  if (user_Preference_Submission_Comments === "Yes" && authored) return false;
+  if (user_Preference_Submission_Comment_Mentions === "Yes" && mentioned) return true;
+  if (user_Preference_Comments_On_My_Submissions === "Yes" && isCommentOnMySubmission) return true;
+  return false;
+}
 
       case "Announcements": {
         const authored = notification.Instructor_ID === userId;
