@@ -52,6 +52,9 @@ document.addEventListener("click", (event) => {
     }
 });
 window.onload = calculateHeight;
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(calculateHeight, 3000);
+});
 
 function requestDueDateIfNeeded() {
     window.parent.postMessage({ requestDueDate: true }, "https://courses.writerscentre.com.au");
