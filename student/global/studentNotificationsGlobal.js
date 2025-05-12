@@ -613,7 +613,7 @@ const filteredNotifications = notifications.filter((notification) => {
         return false;
     }
   });
-}
+
 
 
   if (filteredNotifications.length === 0) return;
