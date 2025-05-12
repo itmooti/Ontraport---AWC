@@ -578,16 +578,6 @@ const filteredNotifications = notifications.filter((notification) => {
         if (user_Preference_Submission_Mentions === "Yes" && mentioned) return true;
         return false;
       }
-
-      // case "Submission Comments": {
-      //   const authored = notification.Comment?.author_id === userId;
-      //   const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
-      //   const parentIsUser = notification.Comment?.Forum_Post?.author_id === userId;
-      //   if (user_Preference_Submission_Comments === "Yes" && authored) return false;
-      //   if (user_Preference_Submission_Comment_Mentions === "Yes" && mentioned) return true;
-      //   if (user_Preference_Comments_On_My_Submissions === "Yes" && parentIsUser) return true;
-      //   return false;
-      // }
 case "Submission Comments": {
   const authored = notification.Comment?.author_id === userId;
   const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
@@ -838,12 +828,8 @@ function createNotificationCard(notification, isRead) {
       message = `${notification_course_name} - You have been mentioned in a comment on a post`;
       messageContent = `${commentFullname} mentioned you in a comment on a post`;
     } else if (forumPostAuthorID && String(forumPostAuthorID) === usersId) {
-      message = `${notification_course_name} - A comment has been added in your post`;
-      messageContent = `${commentFullname} added a comment in your post`;
-    // } else {
-    //   message = `${notification_course_name} - A new comment has been added in a post`;
-    //   messageContent = `${commentFullname} added a new comment in a post`;
-    // }
+      message = `${notification_course_name} - A comment has been added on your post`;
+      messageContent = `${commentFullname} added a comment on your post`;
         } else {
   const isCommentOnMyPost = forumPostAuthorID && String(forumPostAuthorID) === usersId;
   message = `${notification_course_name} - A new comment has been added in a post`;
@@ -867,10 +853,6 @@ function createNotificationCard(notification, isRead) {
     } else if (annInstId && String(annInstId) === usersId) {
       message = `${notification_course_name} - A comment has been added in your announcement`;
       messageContent = `${commentFullname} added a comment in your announcement`;
-    // } else {
-    //   message = `${notification_course_name} - A new comment has been added in an announcement`;
-    //   messageContent = `${commentFullname} added a new comment in an announcement`;
-    // }
         } else {
   const isCommentOnMyAnnouncement = annInstId && String(annInstId) === usersId;
   message = `${notification_course_name} - A new comment has been added in an announcement`;
@@ -891,13 +873,11 @@ function createNotificationCard(notification, isRead) {
     if (submissionMentionID) {
       message = `${notification_course_name} - You have been mentioned in a comment on a submission`;
       messageContent = `${commentAuthorFullName} mentioned you in a submission comment`;
-    // } else {
-    //   message = `${notification_course_name} - A new comment has been added on a submission`;
-    //   messageContent = `${commentAuthorFullName} added a comment on a submission`;
-    // }
          } else {
   const isCommentOnMySubmission = notification.Submissions?.Student?.student_id === Number(usersId);
-  message = `${notification_course_name} - A new comment has been added on a submission`;
+  message = isCommentOnMySubmission
+  ? `${notification_course_name} - A new comment has been added on your submission`
+  : `${notification_course_name} - A new comment has been added on a submission`;
   messageContent = isCommentOnMySubmission
     ? `${commentAuthorFullName} added a comment on your submission`
     : `${commentAuthorFullName} added a comment on a submission`;
