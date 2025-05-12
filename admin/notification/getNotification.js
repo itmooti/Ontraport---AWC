@@ -121,7 +121,7 @@ async function initializeSocket() {
       const mentioned = notification.Post?.Mentions?.some(m => m.id === userId);
       if (user_Preference_Posts === "Yes" && authored) return false;
       if (user_Preference_Post_Mentions === "Yes" && mentioned) return true;
-      return true;
+      return false;
     }
 
     case "Post Comments": {
@@ -131,7 +131,7 @@ async function initializeSocket() {
       if (user_Preference_Post_Comments === "Yes" && authored) return false;
       if (user_Preference_Post_Comment_Mentions === "Yes" && mentioned) return true;
       if (user_Preference_Comments_On_My_Posts === "Yes" && parentIsUser) return true;
-      return true;
+      return false;
     }
 
     case "Submissions": {
@@ -139,7 +139,7 @@ async function initializeSocket() {
       const mentioned = notification.Submissions?.Submission_Mentions?.some(m => m.id === userId);
       if (user_Preference_Submissions === "Yes" && submitted) return false;
       if (user_Preference_Submission_Mentions === "Yes" && mentioned) return true;
-      return true;
+      return false;
     }
 
     case "Submission Comments": {
@@ -149,7 +149,7 @@ async function initializeSocket() {
       if (user_Preference_Submission_Comments === "Yes" && authored) return false;
       if (user_Preference_Submission_Comment_Mentions === "Yes" && mentioned) return true;
       if (user_Preference_Comments_On_My_Submissions === "Yes" && parentIsUser) return true;
-      return true;
+      return false;
     }
 
     case "Announcements": {
@@ -157,7 +157,7 @@ async function initializeSocket() {
       const mentioned = notification.Mentions?.some(m => m.id === userId);
       if (user_Preference_Announcements === "Yes" && authored) return false;
       if (user_Preference_Announcement_Mentions === "Yes" && mentioned) return true;
-      return true;
+      return false;
     }
 
     case "Announcement Comments": {
@@ -167,7 +167,7 @@ async function initializeSocket() {
       if (user_Preference_Announcement_Comments === "Yes" && authored) return false;
       if (user_Preference_Announcement_Comment_Mentions === "Yes" && mentioned) return true;
       if (user_Preference_Comments_On_My_Announcements === "Yes" && parentIsUser) return true;
-      return true;
+      return false;
     }
 
     default:
