@@ -7,6 +7,7 @@ query getAnnouncements {
         { andWhere: { status: "Published" } }
         
     ]
+     orderBy: [{ path: ["created_at"], type: desc }] 
   ) {
     anouncementID: id
     anouncementTitle: title
