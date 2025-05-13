@@ -373,7 +373,7 @@ function createNotificationCard(notification, isRead) {
       messageContent = `${submitterFullName} added a submission`;
     }
   } else if (notification_Type === "Submission Comments") {
-    if (submissionMentionID) {
+    if (commentMentionID) {
       message = `${notification_course_name} - You have been mentioned in a comment on a submission`;
       messageContent = `${commentAuthorFullName} mentioned you in a submission comment`;
          } else {
