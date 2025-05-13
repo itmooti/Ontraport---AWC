@@ -322,6 +322,9 @@ function getSubscriptionQueryForClass(classId) {
         Comment {
           author_id 
           reply_to_comment_id 
+          Reply_to_Comment{
+            author_id
+          } 
           parent_announcement_id
           Mentions { id }
           Forum_Post {
@@ -618,7 +621,7 @@ function createNotificationCard(notification, isRead) {
   const instructorDisplayName = notification.Instructor?.display_name || `${notification.Instructor?.first_name || ""} ${notification.Instructor?.last_name || ""}`.trim() || "Someone";
   const submitterFullName = notification.Submissions?.Student?.Student?.display_name || `${notification.Submissions?.Student?.Student?.first_name || ""} ${notification.Submissions?.Student?.Student?.last_name || ""}`.trim() || "Someone";
   const commentAuthorFullName = notification.Comment?.Author?.display_name || `${notification.Comment?.Author?.first_name || ""} ${notification.Comment?.Author?.last_name || ""}`.trim() || "Someone";
-  const commentAuthorIdForReplies = notification.Comment?.author_id;
+  const commentAuthorIdForReplies = notification.Comment?.Reply_to_Comment?.author_id;
   let message = "";
   let messageContent = "";
 
