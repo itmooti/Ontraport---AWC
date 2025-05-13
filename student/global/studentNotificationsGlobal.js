@@ -320,7 +320,8 @@ function getSubscriptionQueryForClass(classId) {
           ForumComments { Author { display_name first_name last_name } }
         }
         Comment {
-          author_id
+          author_id 
+          reply_to_comment_id 
           parent_announcement_id
           Mentions { id }
           Forum_Post {
