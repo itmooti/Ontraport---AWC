@@ -718,7 +718,7 @@ else if (notification_Type === "Post Comments" && isreply) {
       message = `${notification_course_name} - A submission has been made`;
       messageContent = `${submitterFullName} added a submission`;
     }
-  } else if (notification_Type === "Submission Comments" && isreply) {
+  } else if (notification_Type === "Submission Comments" && !isreply) {
     // if (submissionMentionID) {
        if (commentMentionID) {
       message = `${notification_course_name} - You have been mentioned in a comment on a submission`;
