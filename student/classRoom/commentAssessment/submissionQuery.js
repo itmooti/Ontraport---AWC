@@ -1,7 +1,7 @@
 const FETCH_SUBMISSIONS_COMMENTS_QUERY = `
 query calcForumComments($id: AwcSubmissionID) {
 calcForumComments(
-orderBy: [{ path: ["created_at"], type: desc }]
+orderBy: [{ path: ["created_at"], type: asc }]
 query: [{ where: { Submissions: [{ where: { id: $id } }] } }]
 ) {
 Comment: field(arg: ["comment"])  
