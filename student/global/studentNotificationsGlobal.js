@@ -503,6 +503,12 @@ const filteredNotifications = notifications.filter((notification) => {
         if (user_Preference_Post_Comment_Mentions === "Yes" && mentioned) return true;
         if (user_Preference_Comments_On_My_Posts === "Yes" && parentIsUser) return true;
         return false;
+      }
+                case "Post Comment Reply": {
+        const authored = notification.Comment?.author_id === userId;
+        const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
+        const parentIsUser = notification.Comment?.Forum_Post?.author_id === userId;
+        if (user_Preference_Post_Comments === "Yes" && !authored) return true;
         if (user_Preference_Post_Comment_Mentions === "Yes" && mentioned) return true;
         if (user_Preference_Comments_On_My_Posts === "Yes" && parentIsUser) return true;
         return false;
@@ -514,15 +520,20 @@ const filteredNotifications = notifications.filter((notification) => {
         if (user_Preference_Submissions === "Yes" && !submitted) return true;
         if (user_Preference_Submission_Mentions === "Yes" && mentioned) return true;
         return false;
-        if (user_Preference_Submission_Mentions === "Yes" && mentioned) return true;
-        return false;
       }
 case "Submission Comments": {
   const authored = notification.Comment?.author_id === userId;
   const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
-  const submissionOwnerId = notification.Submissions?.Student?.student_id;
   const isCommentOnMySubmission = submissionOwnerId === userId;
-
+  if (user_Preference_Submission_Comments === "Yes" && authored) return false;
+  if (user_Preference_Submission_Comment_Mentions === "Yes" && mentioned) return true;
+  if (user_Preference_Comments_On_My_Submissions === "Yes" && isCommentOnMySubmission) return true;
+  return false;
+}
+          case "Submission Comment Reply": {
+  const authored = notification.Comment?.author_id === userId;
+  const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
+  const isCommentOnMySubmission = submissionOwnerId === userId;
   if (user_Preference_Submission_Comments === "Yes" && authored) return false;
   if (user_Preference_Submission_Comment_Mentions === "Yes" && mentioned) return true;
   if (user_Preference_Comments_On_My_Submissions === "Yes" && isCommentOnMySubmission) return true;
@@ -535,11 +546,18 @@ case "Submission Comments": {
         if (user_Preference_Announcements === "Yes" && !authored) return true;
         if (user_Preference_Announcement_Mentions === "Yes" && mentioned) return true;
         return false;
-        if (user_Preference_Announcement_Mentions === "Yes" && mentioned) return true;
-        return false;
       }
 
       case "Announcement Comments": {
+        const authored = notification.Comment?.author_id === userId;
+        const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
+        const parentIsUser = notification.ForumComments?.Parent_Announcement?.instructor_id === userId;
+        if (user_Preference_Announcement_Comments === "Yes" && authored) return false;
+        if (user_Preference_Announcement_Comment_Mentions === "Yes" && mentioned) return true;
+        if (user_Preference_Comments_On_My_Announcements === "Yes" && parentIsUser) return true;
+        return false;
+      }
+                case "Announcement Comment Reply": {
         const authored = notification.Comment?.author_id === userId;
         const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
         const parentIsUser = notification.ForumComments?.Parent_Announcement?.instructor_id === userId;
@@ -696,7 +714,44 @@ function createNotificationCard(notification, isRead) {
     ? `${commentAuthorFullName} added a comment on your submission`
     : `${commentAuthorFullName} added a comment on a submission`;
 }
+  } 
+  else if (notification_Type === "Post Comment Reply") {
+  if (commentMentionID) {
+    message = `${notification_course_name} - You have been mentioned in a reply to a post comment`;
+    messageContent = `${commentAuthorFullName} mentioned you in a reply to a post comment`;
   } else {
+    const isCommentOnMyPost = forumPostAuthorID && String(forumPostAuthorID) === usersId;
+    message = `${notification_course_name} - A new reply has been added in a post comment`;
+    messageContent = isCommentOnMyPost
+      ? `${commentAuthorFullName} added a reply on your post comment`
+      : `${commentAuthorFullName} added a reply in a post comment`;
+  }
+
+} else if (notification_Type === "Submission Comment Reply") {
+  if (commentMentionID) {
+    message = `${notification_course_name} - You have been mentioned in a reply to a submission comment`;
+    messageContent = `${commentAuthorFullName} mentioned you in a reply to a submission comment`;
+  } else {
+    const isCommentOnMySubmission = notification.Submissions?.Student?.student_id === Number(usersId);
+    message = `${notification_course_name} - A new reply has been added in a submission comment`;
+    messageContent = isCommentOnMySubmission
+      ? `${commentAuthorFullName} added a reply on your submission comment`
+      : `${commentAuthorFullName} added a reply in a submission comment`;
+  }
+
+} else if (notification_Type === "Announcement Comment Reply") {
+  if (commentMentionID) {
+    message = `${notification_course_name} - You have been mentioned in a reply to an announcement comment`;
+    messageContent = `${commentAuthorFullName} mentioned you in a reply to an announcement comment`;
+  } else {
+    const isCommentOnMyAnnouncement = annInstId && String(annInstId) === usersId;
+    message = `${notification_course_name} - A new reply has been added in an announcement comment`;
+    messageContent = isCommentOnMyAnnouncement
+      ? `${commentAuthorFullName} added a reply on your announcement comment`
+      : `${commentAuthorFullName} added a reply in an announcement comment`;
+  }
+  
+  else {
     message = `${notification_course_name} - A new notification has arrived`;
     messageContent = `${notification_Type || "Someone"} added something`;
   }
