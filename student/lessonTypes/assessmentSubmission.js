@@ -281,7 +281,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 document.body.setAttribute(
   "x-data",
-  `{ isExpanded: true,isOverlayVisible: false, currentUrl: '${window.location.href}', assessmentOpen: false }`
+  `{ isExpanded: true,deleteSubmissionModal: false, isOverlayVisible: false, currentUrl: '${window.location.href}', assessmentOpen: false }`
 );
 
 let assessmentVideoContainer = document.querySelectorAll(
