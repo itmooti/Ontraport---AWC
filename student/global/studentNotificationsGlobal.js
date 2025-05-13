@@ -750,7 +750,7 @@ function createNotificationCard(notification, isRead) {
       ? `${commentAuthorFullName} added a reply on your announcement comment`
       : `${commentAuthorFullName} added a reply in an announcement comment`;
   }
-  
+  }
   else {
     message = `${notification_course_name} - A new notification has arrived`;
     messageContent = `${notification_Type || "Someone"} added something`;
