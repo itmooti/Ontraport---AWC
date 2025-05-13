@@ -606,6 +606,7 @@ function createNotificationCard(notification, isRead) {
   const card = document.createElement("div");
   const notification_Type = notification.Notification_Type;
   const usersId = String(loggedInContactIdIntAwc);
+  const notification_class_name = notification.Class?.class_name || notification.Class?.class_namee || "(No Class)";
   const notification_course_name = notification.Class?.Active_Course?.course_name || notification.Class?.Course?.course_name || "(No Course)";
 
   const postMentionID = notification.Post?.Mentions?.some(m => String(m.id) === usersId);
@@ -763,7 +764,7 @@ else if (notification_Type === "Post Comments" && isreply) {
           ${message}
         </div>
         <div class="extra-small-text text-dark line-clamp-2">${messageContent}</div>
-        <div class="text-[#586A80] extra-small-text">${notification_course_name}</div>
+        <div class="text-[#586A80] extra-small-text">${notification_course_name}-${notification_class_name}</div>
       </div>
       <div class="extra-small-text text-[#586A80] text-nowrap">${timeAgo(notification.Date_Added)}</div>
     </div>
