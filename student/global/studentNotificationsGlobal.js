@@ -522,7 +522,7 @@ case "Submission Comments": {
   const submissionOwnerId = notification.Submissions?.Student?.student_id;
   const isCommentOnMySubmission = submissionOwnerId === userId;
 
-  if (user_Preference_Submission_Comments === "Yes" && authored) return false;
+  if (user_Preference_Submission_Comments === "Yes" && !authored) return true;
   if (user_Preference_Submission_Comment_Mentions === "Yes" && mentioned) return true;
   if (user_Preference_Comments_On_My_Submissions === "Yes" && isCommentOnMySubmission) return true;
   return false;
@@ -540,7 +540,7 @@ case "Submission Comments": {
         const authored = notification.Comment?.author_id === userId;
         const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
         const parentIsUser = notification.ForumComments?.Parent_Announcement?.instructor_id === userId;
-        if (user_Preference_Announcement_Comments === "Yes" && authored) return false;
+        if (user_Preference_Announcement_Comments === "Yes" && !authored) return true;
         if (user_Preference_Announcement_Comment_Mentions === "Yes" && mentioned) return true;
         if (user_Preference_Comments_On_My_Announcements === "Yes" && parentIsUser) return true;
         return false;
