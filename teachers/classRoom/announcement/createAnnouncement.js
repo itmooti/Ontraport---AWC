@@ -118,6 +118,7 @@ document.getElementById("announcementForm").addEventListener("submit", async (e)
             mentionedIds.push(Number(id));
     });
 
+    console.log(mentionedIds);
     // Use Tailwind classes to disable the form
     announcementForm.classList.add("opacity-50", "pointer-events-none", "cursor-not-allowed");
 
