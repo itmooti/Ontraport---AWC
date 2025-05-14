@@ -521,7 +521,8 @@ case "Submission Comments": {
   const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
   const submissionOwnerId = notification.Submissions?.Student?.student_id;
   const isCommentOnMySubmission = submissionOwnerId === userId;
-
+  const isreply = notification.Comment?.reply_to_comment_id !== null && notification.Comment?.reply_to_comment_id !== undefined;
+ 
   if (user_Preference_Submission_Comments === "Yes" && !authored) return true;
   if (user_Preference_Submission_Comment_Mentions === "Yes" && mentioned) return true;
   if (user_Preference_Comments_On_My_Submissions === "Yes" && isCommentOnMySubmission) return true;
