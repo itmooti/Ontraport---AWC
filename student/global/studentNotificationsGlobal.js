@@ -515,19 +515,22 @@ const filteredNotifications = notifications.filter((notification) => {
         if (user_Preference_Submission_Mentions === "Yes" && mentioned) return true;
         return false;
       }
-case "Submission Comments": {
-  const authored = notification.Comment?.author_id === userId;
-  const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
-  const submissionOwnerId = notification.Submissions?.Student?.student_id;
-  const isCommentOnMySubmission = submissionOwnerId === userId;
-  const isreply = notification.Comment?.reply_to_comment_id !== null && notification.Comment?.reply_to_comment_id !== undefined;
- 
-  if (user_Preference_Submission_Comments === "Yes" && !authored) return true;
-  if (user_Preference_Submission_Comment_Mentions === "Yes" && mentioned) return true;
-  if (user_Preference_Comments_On_My_Submissions === "Yes" && isCommentOnMySubmission) return true;
-  //if (user_Preference_Comments_On_My_Submissions === "Yes" && notification.Comment?.Reply_to_Comment?.author_id ===userId) return true;
-  return false;
-}
+          
+        case "Submission Comments": {
+          const authored = notification.Comment?.author_id === userId;
+          const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
+          const submissionOwnerId = notification.Submissions?.Student?.student_id;
+          const isCommentOnMySubmission = submissionOwnerId === userId;
+          const commentOwnerId = notification.Comment?.Reply_to_Comment?.author_id; 
+          const isReplyOnMyComment = commentOwnerId === userId;
+          const isreply = notification.Comment?.reply_to_comment_id !== null && notification.Comment?.reply_to_comment_id !== undefined;
+         
+          if (user_Preference_Submission_Comments === "Yes" && !authored) return true;
+          if (user_Preference_Submission_Comment_Mentions === "Yes" && mentioned) return true;
+          if (user_Preference_Comments_On_My_Submissions === "Yes" && isReplyOnMyComment) return true;  
+          if (user_Preference_Comments_On_My_Submissions === "Yes" && isCommentOnMySubmission) return true;
+          return false;
+        }
 
       case "Announcements": {
         const authored = notification.Instructor_ID === userId;
