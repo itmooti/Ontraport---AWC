@@ -249,7 +249,7 @@ query getForumComments($id: AwcForumCommentID) {
   return jsonData.data.getForumComments[0];
 }
 
-async function createForumComment(parentAnnouncementId, parentCommentID, mentionIds, comments) {
+async function createForumComment(parentAnnouncementId, parentCommentID, mentionedIds, comments) {
   const textAreas = document.querySelectorAll('.formTextArea');
   textAreas.forEach(el => {
     el.setAttribute('data-prev-contenteditable', el.getAttribute('contenteditable'));
