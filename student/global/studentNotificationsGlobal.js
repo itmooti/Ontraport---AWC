@@ -142,8 +142,6 @@ function getSubscriptionQueryForClass(classId) {
   return `
     subscription subscribeToAnnouncements(
       $class_id: AwcClassID
-      $limit: IntScalar
-      $offset: IntScalar
     ) {
       subscribeToAnnouncements(
         query: [
@@ -272,8 +270,8 @@ function getSubscriptionQueryForClass(classId) {
             ]
           }
         ]
-        limit: $limit
-        offset: $offset
+        limit: 5000000
+        offset: 0
         orderBy: [{ path: ["created_at"], type: asc }]
       ) {
         ID: id
