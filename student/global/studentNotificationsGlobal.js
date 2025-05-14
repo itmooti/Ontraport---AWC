@@ -504,7 +504,7 @@ const filteredNotifications = notifications.filter((notification) => {
         if (user_Preference_Post_Comments === "Yes" && !authored) return true;
         if (user_Preference_Post_Comment_Mentions === "Yes" && mentioned) return true;
         if (user_Preference_Comments_On_My_Posts === "Yes" && parentIsUser) return true;
-        if (user_Preference_Comments_On_My_Posts === "Yes" && notification.Comment?.Reply_to_Comment?.author_id ===userId) return true;
+        //if (user_Preference_Comments_On_My_Posts === "Yes" && notification.Comment?.Reply_to_Comment?.author_id ===userId) return true;
         return false;
       }
 
@@ -525,7 +525,7 @@ case "Submission Comments": {
   if (user_Preference_Submission_Comments === "Yes" && !authored) return true;
   if (user_Preference_Submission_Comment_Mentions === "Yes" && mentioned) return true;
   if (user_Preference_Comments_On_My_Submissions === "Yes" && isCommentOnMySubmission) return true;
-  if (user_Preference_Comments_On_My_Submissions === "Yes" && notification.Comment?.Reply_to_Comment?.author_id ===userId) return true;
+  //if (user_Preference_Comments_On_My_Submissions === "Yes" && notification.Comment?.Reply_to_Comment?.author_id ===userId) return true;
   return false;
 }
 
@@ -544,7 +544,7 @@ case "Submission Comments": {
         if (user_Preference_Announcement_Comments === "Yes" && !authored) return true;
         if (user_Preference_Announcement_Comment_Mentions === "Yes" && mentioned) return true;
         if (user_Preference_Comments_On_My_Announcements === "Yes" && parentIsUser) return true;
-        if (user_Preference_Comments_On_My_Announcements === "Yes" && notification.Comment?.Reply_to_Comment?.author_id ===userId) return true;
+       // if (user_Preference_Comments_On_My_Announcements === "Yes" && notification.Comment?.Reply_to_Comment?.author_id ===userId) return true;
         return false;
       }
 
