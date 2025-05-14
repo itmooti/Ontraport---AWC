@@ -760,7 +760,7 @@ initializeSocket();
 //     message = `${notification_course_name} - A new notification has arrived`;
 //     messageContent = `${notification_Type || "Someone"} added something`;
 //   }
-     function createNotificationCard(notification, isRead) {
+  function createNotificationCard(notification, isRead) {
   const card = document.createElement("div");
   const notification_Type = notification.Notification_Type;
   const usersId = String(loggedInContactIdIntAwc);
@@ -782,6 +782,7 @@ initializeSocket();
   const submitterFullName = notification.Submissions?.Student?.Student?.display_name || `${notification.Submissions?.Student?.Student?.first_name || ""} ${notification.Submissions?.Student?.Student?.last_name || ""}`.trim() || "Someone";
   const commentAuthorFullName = notification.Comment?.Author?.display_name || `${notification.Comment?.Author?.first_name || ""} ${notification.Comment?.Author?.last_name || ""}`.trim() || "Someone";
   const commentReplyAuthorId = notification.Comment?.Reply_to_Comment?.author_id;
+  const commentAuthorId = notification.Comment?.author_id;
 
   let message = "";
   let messageContent = "";
@@ -806,7 +807,7 @@ initializeSocket();
         message = `${notification_course_name} - A new comment has been added in a post`;
         messageContent = `${commentFullname} added a new comment in a post`;
       }
-    } else {
+    } else if (String(commentAuthorId) !== usersId) {
       if (commentMentionID) {
         message = `${notification_course_name} - You have been mentioned in a reply on a post comment`;
         messageContent = `${commentFullname} mentioned you in a reply on a post comment`;
@@ -838,7 +839,7 @@ initializeSocket();
         message = `${notification_course_name} - A new comment has been added in an announcement`;
         messageContent = `${commentFullname} added a new comment in an announcement`;
       }
-    } else {
+    } else if (String(commentAuthorId) !== usersId) {
       if (commentMentionID) {
         message = `${notification_course_name} - You have been mentioned in a reply on an announcement comment`;
         messageContent = `${commentFullname} mentioned you in a reply on an announcement comment`;
@@ -872,7 +873,7 @@ initializeSocket();
           ? `${commentAuthorFullName} added a comment on your submission`
           : `${commentAuthorFullName} added a comment on a submission`;
       }
-    } else {
+    } else if (String(commentAuthorId) !== usersId) {
       if (commentMentionID) {
         message = `${notification_course_name} - You have been mentioned in a reply on a submission comment`;
         messageContent = `${commentAuthorFullName} mentioned you in a submission reply`;
@@ -891,6 +892,7 @@ initializeSocket();
     message = `${notification_course_name} - A new notification has arrived`;
     messageContent = `${notification_Type || "Someone"} added something`;
   }
+
 
 
   card.className = "notification-card cursor-pointer";
