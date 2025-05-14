@@ -506,6 +506,7 @@ const filteredNotifications = notifications.filter((notification) => {
         if (user_Preference_Post_Comments === "Yes" && !authored) return true;
         if (user_Preference_Post_Comment_Mentions === "Yes" && mentioned) return true;
         if (user_Preference_Comments_On_My_Posts === "Yes" && parentIsUser) return true;
+        if (user_Preference_Comments_On_My_Posts === "Yes" && notification.Comment?.Reply_to_Comment?.author_id ===userId) return true;
         return false;
       }
 
