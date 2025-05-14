@@ -18,7 +18,6 @@ ID: field(arg: ["id"])
 AssessmentsType: field(arg: ["Assessments", "type"]) 
 AssessmentsName: field(arg: ["Assessments", "name"])
 Module_Module_Name: field(arg: ["Module", "module_name"])
-Assessment_Due_End_of_Week: field(arg: ["assessment_due_end_of_week"])
 Lesson_Name: field(arg: ["lesson_name"])
 Assessments_AWC_Teacher_s_Portal_Class_Assignment_Details_Page_URL: field(arg: ["Assessments", "awc_teacher_s_portal_class_assignment_details_page_url"]) 
 Assessments_Total_Primary_Submissions: field(arg: ["Assessments", "total_primary_submissions"]) 
@@ -193,7 +192,7 @@ async function loadAssignments() {
                     dueDate = computeDueDateFromCustomization(startDate, latestCustomization.Days_to_Offset);
                 }
             } else {
-                const assessmentDueValue = lesson.Assessment_Due_End_of_Week ? parseInt(lesson.Assessment_Due_End_of_Week, 10) : 0;
+                const assessmentDueValue = 0;
                 dueDate = computeDueDateFromAssessment(startDate, assessmentDueValue);
             }
             dueDates.push({
