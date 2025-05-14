@@ -190,7 +190,7 @@ LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
       Assessments {
         name
       }
-      assessment_due_end_of_week
+      due_days_after_module_open_date
       assessment__due__date
       Lesson_Enrolment_in_Progresses{
         id
@@ -281,7 +281,7 @@ async function fetchLmsUnifiedData() {
           customButtonText: les.custom__button__text,
           lessonProgressNotTracked: les.lesson__progress__not__tracked,
           assessments: les.Assessments,
-          assessmentDueEndOfWeek: les.assessment_due_end_of_week,
+          assessmentDueEndOfWeek: les.due_days_after_module_open_date,
           assessmentDueDate: les.assessment__due__date,
           lessonEnrolmentInProgresses: les.Lesson_Enrolment_in_Progresses,
           enrolmentLessonCompletions: les.Enrolment_Lesson_Completions,
