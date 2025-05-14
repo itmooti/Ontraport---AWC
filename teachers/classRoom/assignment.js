@@ -239,7 +239,7 @@ async function loadAssignments() {
 
             // Left side container.
             const leftDiv = document.createElement("div");
-            leftDiv.className = "flex-col justify-start items-start gap-2 flex";
+            leftDiv.className = "flex-col justify-start items-start gap-2 flex flex-1";
 
             // First line: module and assessment names.
             const nameDiv = document.createElement("div");
