@@ -875,19 +875,17 @@ function createNotificationCard(notification, isRead) {
           : `${commentAuthorFullName} added a comment on a submission`;
       }
     } else {
-      if (commentMentionID) {
-        message = `${notification_course_name} - You have been mentioned in a reply on a submission comment`;
-        messageContent = `${commentAuthorFullName} mentioned you in a submission reply`;
-      } else {
-        const isReplyToMyComment = commentAuthorId && String(commentAuthorId) === Number(usersId);;
-        message = isReplyToMyComment
-          ? `${notification_course_name} - A new reply has been added on your submission comment`
-          : `${notification_course_name} - A new reply has been added on a submission comment`;
-        messageContent = isReplyToMyComment
-          ? `${commentAuthorFullName} added a reply on your submission comment`
-          : `${commentAuthorFullName} added a reply on a submission comment`;
+        if (commentMentionID) {
+          message = `${notification_course_name} - You have been mentioned in a reply on a submission comment`;
+          messageContent = `${commentFullname} mentioned you in a reply on a submission comment`;
+        } else if (commentReplyAuthorId && String(commentReplyAuthorId) === usersId) {
+          message = `${notification_course_name} - A reply has been added on your submission comment`;
+          messageContent = `${commentFullname} added a reply on your submission comment`;
+        } else {
+          message = `${notification_course_name} - A new reply has been added in a submission comment`;
+          messageContent = `${commentFullname} added a new reply in a submission comment`;
+        }
       }
-    }
   } else {
     message = `${notification_course_name} - A new notification has arrived`;
     messageContent = `${notification_Type || "Someone"} added something`;
