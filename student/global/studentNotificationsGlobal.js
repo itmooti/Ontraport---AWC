@@ -879,7 +879,7 @@ function createNotificationCard(notification, isRead) {
         message = `${notification_course_name} - You have been mentioned in a reply on a submission comment`;
         messageContent = `${commentAuthorFullName} mentioned you in a submission reply`;
       } else {
-        const isReplyToMyComment = commentReplyAuthorId && String(commentReplyAuthorId) === usersId;
+        const isReplyToMyComment = commentReplyAuthorId && String(commentReplyAuthorId) === Number(usersId);;
         message = isReplyToMyComment
           ? `${notification_course_name} - A new reply has been added on your submission comment`
           : `${notification_course_name} - A new reply has been added on a submission comment`;
