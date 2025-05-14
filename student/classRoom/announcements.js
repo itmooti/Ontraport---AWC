@@ -248,7 +248,7 @@ query getForumComments($id: AwcForumCommentID) {
   const jsonData = await response.json();
   return jsonData.data.getForumComments[0];
 }
-const mentionedIds = [];
+
 async function createForumComment(parentAnnouncementId, parentCommentID, mentionIds, comments) {
   const textAreas = document.querySelectorAll('.formTextArea');
   textAreas.forEach(el => {
@@ -256,6 +256,13 @@ async function createForumComment(parentAnnouncementId, parentCommentID, mention
     el.setAttribute('data-prev-contenteditable', el.getAttribute('contenteditable'));
     el.removeAttribute('contenteditable');
     el.style.opacity = '0.5';
+  });
+  const tempContainer = document.createElement("div");
+  tempContainer.innerHTML = htmlContent;
+  const mentionedIds = [];
+  tempContainer.querySelectorAll(".mention").forEach((mention) => {
+      const id = mention.dataset.contactId;
+      if (id && !mentionedIds.includes(Number(id))) mentionedIds.push(Number(id));
   });
   const payload = {
     parent_announcement_id: parentAnnouncementId,
