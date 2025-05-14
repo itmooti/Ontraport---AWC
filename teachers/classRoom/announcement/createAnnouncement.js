@@ -9,10 +9,10 @@ const announcementWrapper = document.querySelector("#announcementWrapper");
 //==========FORMAT TIME FUNCTIONS=======================//
 
 //=========GATHER MENTIONS FR0M MENTIONABLE =======//
-function gatherMentionsFromElementt(el) {
-    const mentionEls = el.querySelectorAll(".mention-handle[data-mention-id]");
-    return [...mentionEls].map(m => ({ id: Number(m.getAttribute("data-mention-id")) }));
-}
+//function gatherMentionsFromElementt(el) {
+  //  const mentionEls = el.querySelectorAll(".mention-handle[data-mention-id]");
+    //return [...mentionEls].map(m => ({ id: Number(m.getAttribute("data-mention-id")) }));
+//}
 ///===============================================//
 
 
@@ -104,13 +104,14 @@ document.getElementById("announcementForm").addEventListener("submit", async (e)
 
     const title = document.getElementById("announcementTitle").value.trim();
     const content = document.getElementById("announcementContent").innerHTML.trim();
-    const mentionedUsers = gatherMentionsFromElementt(announcementForm.querySelector(".mentionable"));
+    //const mentionedUsers = gatherMentionsFromElementt(announcementForm.querySelector(".mentionable"));
     const disableComments = document.getElementById("postCheck").checked;
     document.querySelector(".attachBtn").style.display = "flex";
     document.querySelector(".refreshBtn").classList.add("hidden");
     document.querySelector(".deleteBtn").classList.add("hidden");
     document.querySelector(".filePreviewWrapper").classList.add("hidden");
     const tempContainer = document.createElement("div");
+    tempContainer.innerHTML=content; 
     let mentionedIds = [];
     tempContainer.querySelectorAll(".mention").forEach((mention) => {
         const id = mention.dataset.contactId;
