@@ -748,7 +748,7 @@ else if (notification_Type === "Post Comments" && isreply) {
   message = isReplyOnMYSubmissionComment
   ? `${notification_course_name} - A new reply has been added on your submission comment`
   : `${notification_course_name} - A new reply has been added on a submission comment`;
-  messageContent = isCommentOnMySubmission
+  messageContent = isReplyOnMYSubmissionComment
     ? `${commentAuthorFullName} added a reply on your submission comment`
     : `${commentAuthorFullName} added a reply on a submission comment`;
 }
