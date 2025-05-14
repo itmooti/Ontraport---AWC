@@ -739,8 +739,8 @@ else if (notification_Type === "Post Comments" && isreply) {
   else if (notification_Type === "Submission Comments" && isreply )  {
     // if (submissionMentionID) {
       
-      const isReplyOnMYSubmissionComment = notification.Comment?.Reply_to_Comment?.author_id = usersId;
-      const isReplyDoneByMe = notification.Comment?.Reply_to_Comment?.author_id
+      const isReplyOnMYSubmissionComment = notification.Comment?.Reply_to_Comment?.author_id == usersId;
+      //const isReplyDoneByMe = notification.Comment?.Reply_to_Comment?.author_id
        if (commentMentionID) {
       message = `${notification_course_name} - You have been mentioned in a reply on a submission comment`;
       messageContent = `${commentAuthorFullName} mentioned you in a submission reply`;
