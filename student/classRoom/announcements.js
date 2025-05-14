@@ -248,7 +248,7 @@ query getForumComments($id: AwcForumCommentID) {
   const jsonData = await response.json();
   return jsonData.data.getForumComments[0];
 }
-
+const mentionedIds = [];
 async function createForumComment(parentAnnouncementId, parentCommentID, mentionIds, comments) {
   const textAreas = document.querySelectorAll('.formTextArea');
   textAreas.forEach(el => {
@@ -262,7 +262,7 @@ async function createForumComment(parentAnnouncementId, parentCommentID, mention
     reply_to_comment_id: parentCommentID, 
     comment: comments,
     author_id:  currentPageUserID,
-    Mentions: [{ id: null }],
+    Mentions: mentionedIds.map((id) => ({ id: id })),
   };
   const mutation = `
 mutation createForumComment($payload: ForumCommentCreateInput) {
