@@ -606,7 +606,163 @@ initializeSocket();
 
 
 // ✅ Cleaned and corrected createNotificationCard()
-function createNotificationCard(notification, isRead) {
+// function createNotificationCard(notification, isRead) {
+//   const card = document.createElement("div");
+//   const notification_Type = notification.Notification_Type;
+//   const usersId = String(loggedInContactIdIntAwc);
+//   const notification_class_name = notification.Class?.class_name || notification.Class?.class_namee || "(No Class)";
+//   const notification_course_name = notification.Class?.Active_Course?.course_name || notification.Class?.Course?.course_name || "(No Course)";
+
+//   const postMentionID = notification.Post?.Mentions?.some(m => String(m.id) === usersId);
+//   const commentMentionID = notification.Comment?.Mentions?.some(m => String(m.id) === usersId);
+//   const announcementMentionID = notification.Mentions?.some(m => String(m.id) === usersId);
+//   const submissionMentionID = notification.Submissions?.Submission_Mentions?.some(m => String(m.id) === usersId);
+
+//   const forumPostAuthorID = notification.Comment?.Forum_Post?.author_id;
+//   const annInstId = notification.ForumComments?.Parent_Announcement?.instructor_id;
+//   const isreply = notification.Comment?.reply_to_comment_id !== null && notification.Comment?.reply_to_comment_id !== undefined;
+//   const postFullName = notification.Post?.Author?.display_name || `${notification.Post?.Author?.first_name || ""} ${notification.Post?.Author?.last_name || ""}`.trim() || "Someone";
+//   const commentFullname = notification.Comment?.Author?.display_name || `${notification.Comment?.Author?.first_name || ""} ${notification.Comment?.Author?.last_name || ""}`.trim() || "Someone";
+//   const instructorDisplayName = notification.Instructor?.display_name || `${notification.Instructor?.first_name || ""} ${notification.Instructor?.last_name || ""}`.trim() || "Someone";
+//   const submitterFullName = notification.Submissions?.Student?.Student?.display_name || `${notification.Submissions?.Student?.Student?.first_name || ""} ${notification.Submissions?.Student?.Student?.last_name || ""}`.trim() || "Someone";
+//   const commentAuthorFullName = notification.Comment?.Author?.display_name || `${notification.Comment?.Author?.first_name || ""} ${notification.Comment?.Author?.last_name || ""}`.trim() || "Someone";
+//   const commentAuthorIdForReplies = notification.Comment?.Reply_to_Comment?.author_id;
+//   let message = "";
+//   let messageContent = "";
+
+//   if (notification_Type === "Posts") {
+//     if (postMentionID) {
+//       message = `${notification_course_name} - You have been mentioned in a post`;
+//       messageContent = `${postFullName} mentioned you in a post`;
+//     } else {
+//       message = `${notification_course_name} - A new post has been added`;
+//       messageContent = `${postFullName} added a new post`;
+//     }
+//   } else if (notification_Type === "Post Comments" && !isreply) {
+//     if (commentMentionID) {
+//       message = `${notification_course_name} - You have been mentioned in a comment on a post`;
+//       messageContent = `${commentFullname} mentioned you in a comment on a post`;
+//     } else if (forumPostAuthorID && String(forumPostAuthorID) === usersId) {
+//       message = `${notification_course_name} - A comment has been added on your post`;
+//       messageContent = `${commentFullname} added a comment on your post`;
+//         } else {
+//   const isCommentOnMyPost = forumPostAuthorID && String(forumPostAuthorID) === usersId;
+//   message = `${notification_course_name} - A new comment has been added in a post`;
+//   messageContent = isCommentOnMyPost
+//     ? `${commentFullname} added a comment on your post`
+//     : `${commentFullname} added a new comment in a post`;
+// } 
+//   } 
+
+
+// else if (notification_Type === "Post Comments" && isreply) {
+//     if (commentMentionID) {
+//       message = `${notification_course_name} - You have been mentioned in a reply on a post comment`;
+//       messageContent = `${commentFullname} mentioned you in a reply on a post comment`;
+//     } else if (commentAuthorIdForReplies && String(commentAuthorIdForReplies) === usersId) {
+//       message = `${notification_course_name} - A reply has been added on your post comment`;
+//       messageContent = `${commentFullname} added a reply on your post comment`;
+//         } else {
+//   const isCommentOnMyPost = commentAuthorIdForReplies && String(commentAuthorIdForReplies) === usersId;
+//   message = `${notification_course_name} - A new reply has been added in a post comment`;
+//   messageContent = isCommentOnMyPost
+//     ? `${commentFullname} added a reply on your post comment`
+//     : `${commentFullname} added a new reply in a post comment`;
+// } 
+//   } 
+
+      
+//   else if (notification_Type === "Announcements") {
+//     if (announcementMentionID) {
+//       message = `${notification_course_name} - You have been mentioned in an announcement`;
+//       messageContent = `${instructorDisplayName} mentioned you in an announcement`;
+//     } else {
+//       message = `${notification_course_name} - A new announcement has been added`;
+//       messageContent = `${instructorDisplayName} added a new announcement`;
+//     }
+//   } else if (notification_Type === "Announcement Comments" && !isreply) {
+//     if (commentMentionID) {
+//       message = `${notification_course_name} - You have been mentioned in a comment on an announcement`;
+//       messageContent = `${commentFullname} mentioned you in a comment on an announcement`;
+//     } else if (annInstId && String(annInstId) === usersId) {
+//       message = `${notification_course_name} - A comment has been added in your announcement`;
+//       messageContent = `${commentFullname} added a comment in your announcement`;
+//         } else {
+//   const isCommentOnMyAnnouncement = annInstId && String(annInstId) === usersId;
+//   message = `${notification_course_name} - A new comment has been added in an announcement`;
+//   messageContent = isCommentOnMyAnnouncement
+//     ? `${commentFullname} added a comment on your announcement`
+//     : `${commentFullname} added a new comment in an announcement`;
+// }
+
+//   } 
+  
+//    else if (notification_Type === "Announcement Comments" && isreply) {
+//     if (commentMentionID) {
+//       message = `${notification_course_name} - You have been mentioned in a reply on an announcement comment`;
+//       messageContent = `${commentFullname} mentioned you in a reply on an announcement comment`;
+//     } else if (commentAuthorIdForReplies && String(commentAuthorIdForReplies) === usersId) {
+//       message = `${notification_course_name} - A reply has been added in your announcement comment`;
+//       messageContent = `${commentFullname} added a reply in your announcement comment`;
+//         } else {
+//   const isCommentOnMyAnnouncement = commentAuthorIdForReplies && String(commentAuthorIdForReplies) === usersId;
+//   message = `${notification_course_name} - A new reply has been added in an announcement comment`;
+//   messageContent = isCommentOnMyAnnouncement
+//     ? `${commentFullname} added a reply on your announcement comment`
+//     : `${commentFullname} added a new reply in an announcement comment`;
+// }
+
+//   } 
+  
+//   else if (notification_Type === "Submissions") {
+//     if (submissionMentionID) {
+//       message = `${notification_course_name} - You have been mentioned in a submission`;
+//       messageContent = `${submitterFullName} mentioned you in a submission`;
+//     } else {
+//       message = `${notification_course_name} - A submission has been made`;
+//       messageContent = `${submitterFullName} added a submission`;
+//     }
+//   } else if (notification_Type === "Submission Comments" && !isreply) {
+//     // if (submissionMentionID) {
+//        if (commentMentionID) {
+//       message = `${notification_course_name} - You have been mentioned in a comment on a submission`;
+//       messageContent = `${commentAuthorFullName} mentioned you in a submission comment`;
+//          } else {
+//   const isCommentOnMySubmission = notification.Submissions?.Student?.student_id === Number(usersId);
+//   message = isCommentOnMySubmission
+//   ? `${notification_course_name} - A new comment has been added on your submission`
+//   : `${notification_course_name} - A new comment has been added on a submission`;
+//   messageContent = isCommentOnMySubmission
+//     ? `${commentAuthorFullName} added a comment on your submission`
+//     : `${commentAuthorFullName} added a comment on a submission`;
+// }
+//   } 
+  
+//   else if (notification_Type === "Submission Comments" && isreply )  {
+//     // if (submissionMentionID) {
+      
+//       const isReplyOnMYSubmissionComment = notification.Comment?.Reply_to_Comment?.author_id = usersId;
+//       const isReplyDoneByMe = notification.Comment?.Reply_to_Comment?.author_id
+//        if (commentMentionID) {
+//       message = `${notification_course_name} - You have been mentioned in a reply on a submission comment`;
+//       messageContent = `${commentAuthorFullName} mentioned you in a submission reply`;
+//          } else {
+//   message = isReplyOnMYSubmissionComment
+//   ? `${notification_course_name} - A new reply has been added on your submission comment`
+//   : `${notification_course_name} - A new reply has been added on a submission comment`;
+//   messageContent = isCommentOnMySubmission
+//     ? `${commentAuthorFullName} added a reply on your submission comment`
+//     : `${commentAuthorFullName} added a reply on a submission comment`;
+// }
+//   }
+
+
+          
+//   else {
+//     message = `${notification_course_name} - A new notification has arrived`;
+//     messageContent = `${notification_Type || "Someone"} added something`;
+//   }
+     function createNotificationCard(notification, isRead) {
   const card = document.createElement("div");
   const notification_Type = notification.Notification_Type;
   const usersId = String(loggedInContactIdIntAwc);
@@ -621,12 +777,14 @@ function createNotificationCard(notification, isRead) {
   const forumPostAuthorID = notification.Comment?.Forum_Post?.author_id;
   const annInstId = notification.ForumComments?.Parent_Announcement?.instructor_id;
   const isreply = notification.Comment?.reply_to_comment_id !== null && notification.Comment?.reply_to_comment_id !== undefined;
+
   const postFullName = notification.Post?.Author?.display_name || `${notification.Post?.Author?.first_name || ""} ${notification.Post?.Author?.last_name || ""}`.trim() || "Someone";
   const commentFullname = notification.Comment?.Author?.display_name || `${notification.Comment?.Author?.first_name || ""} ${notification.Comment?.Author?.last_name || ""}`.trim() || "Someone";
   const instructorDisplayName = notification.Instructor?.display_name || `${notification.Instructor?.first_name || ""} ${notification.Instructor?.last_name || ""}`.trim() || "Someone";
   const submitterFullName = notification.Submissions?.Student?.Student?.display_name || `${notification.Submissions?.Student?.Student?.first_name || ""} ${notification.Submissions?.Student?.Student?.last_name || ""}`.trim() || "Someone";
   const commentAuthorFullName = notification.Comment?.Author?.display_name || `${notification.Comment?.Author?.first_name || ""} ${notification.Comment?.Author?.last_name || ""}`.trim() || "Someone";
-  const commentAuthorIdForReplies = notification.Comment?.Reply_to_Comment?.author_id;
+  const commentReplyAuthorId = notification.Comment?.Reply_to_Comment?.author_id;
+
   let message = "";
   let messageContent = "";
 
@@ -638,41 +796,31 @@ function createNotificationCard(notification, isRead) {
       message = `${notification_course_name} - A new post has been added`;
       messageContent = `${postFullName} added a new post`;
     }
-  } else if (notification_Type === "Post Comments" && !isreply) {
-    if (commentMentionID) {
-      message = `${notification_course_name} - You have been mentioned in a comment on a post`;
-      messageContent = `${commentFullname} mentioned you in a comment on a post`;
-    } else if (forumPostAuthorID && String(forumPostAuthorID) === usersId) {
-      message = `${notification_course_name} - A comment has been added on your post`;
-      messageContent = `${commentFullname} added a comment on your post`;
-        } else {
-  const isCommentOnMyPost = forumPostAuthorID && String(forumPostAuthorID) === usersId;
-  message = `${notification_course_name} - A new comment has been added in a post`;
-  messageContent = isCommentOnMyPost
-    ? `${commentFullname} added a comment on your post`
-    : `${commentFullname} added a new comment in a post`;
-} 
-  } 
-
-
-else if (notification_Type === "Post Comments" && isreply) {
-    if (commentMentionID) {
-      message = `${notification_course_name} - You have been mentioned in a reply on a post comment`;
-      messageContent = `${commentFullname} mentioned you in a reply on a post comment`;
-    } else if (commentAuthorIdForReplies && String(commentAuthorIdForReplies) === usersId) {
-      message = `${notification_course_name} - A reply has been added on your post comment`;
-      messageContent = `${commentFullname} added a reply on your post comment`;
-        } else {
-  const isCommentOnMyPost = commentAuthorIdForReplies && String(commentAuthorIdForReplies) === usersId;
-  message = `${notification_course_name} - A new reply has been added in a post comment`;
-  messageContent = isCommentOnMyPost
-    ? `${commentFullname} added a reply on your post comment`
-    : `${commentFullname} added a new reply in a post comment`;
-} 
-  } 
-
-      
-  else if (notification_Type === "Announcements") {
+  } else if (notification_Type === "Post Comments") {
+    if (!isreply) {
+      if (commentMentionID) {
+        message = `${notification_course_name} - You have been mentioned in a comment on a post`;
+        messageContent = `${commentFullname} mentioned you in a comment on a post`;
+      } else if (forumPostAuthorID && String(forumPostAuthorID) === usersId) {
+        message = `${notification_course_name} - A comment has been added on your post`;
+        messageContent = `${commentFullname} added a comment on your post`;
+      } else {
+        message = `${notification_course_name} - A new comment has been added in a post`;
+        messageContent = `${commentFullname} added a new comment in a post`;
+      }
+    } else {
+      if (commentMentionID) {
+        message = `${notification_course_name} - You have been mentioned in a reply on a post comment`;
+        messageContent = `${commentFullname} mentioned you in a reply on a post comment`;
+      } else if (commentReplyAuthorId && String(commentReplyAuthorId) === usersId) {
+        message = `${notification_course_name} - A reply has been added on your post comment`;
+        messageContent = `${commentFullname} added a reply on your post comment`;
+      } else {
+        message = `${notification_course_name} - A new reply has been added in a post comment`;
+        messageContent = `${commentFullname} added a new reply in a post comment`;
+      }
+    }
+  } else if (notification_Type === "Announcements") {
     if (announcementMentionID) {
       message = `${notification_course_name} - You have been mentioned in an announcement`;
       messageContent = `${instructorDisplayName} mentioned you in an announcement`;
@@ -680,41 +828,31 @@ else if (notification_Type === "Post Comments" && isreply) {
       message = `${notification_course_name} - A new announcement has been added`;
       messageContent = `${instructorDisplayName} added a new announcement`;
     }
-  } else if (notification_Type === "Announcement Comments" && !isreply) {
-    if (commentMentionID) {
-      message = `${notification_course_name} - You have been mentioned in a comment on an announcement`;
-      messageContent = `${commentFullname} mentioned you in a comment on an announcement`;
-    } else if (annInstId && String(annInstId) === usersId) {
-      message = `${notification_course_name} - A comment has been added in your announcement`;
-      messageContent = `${commentFullname} added a comment in your announcement`;
-        } else {
-  const isCommentOnMyAnnouncement = annInstId && String(annInstId) === usersId;
-  message = `${notification_course_name} - A new comment has been added in an announcement`;
-  messageContent = isCommentOnMyAnnouncement
-    ? `${commentFullname} added a comment on your announcement`
-    : `${commentFullname} added a new comment in an announcement`;
-}
-
-  } 
-  
-   else if (notification_Type === "Announcement Comments" && isreply) {
-    if (commentMentionID) {
-      message = `${notification_course_name} - You have been mentioned in a reply on an announcement comment`;
-      messageContent = `${commentFullname} mentioned you in a reply on an announcement comment`;
-    } else if (commentAuthorIdForReplies && String(commentAuthorIdForReplies) === usersId) {
-      message = `${notification_course_name} - A reply has been added in your announcement comment`;
-      messageContent = `${commentFullname} added a reply in your announcement comment`;
-        } else {
-  const isCommentOnMyAnnouncement = commentAuthorIdForReplies && String(commentAuthorIdForReplies) === usersId;
-  message = `${notification_course_name} - A new reply has been added in an announcement comment`;
-  messageContent = isCommentOnMyAnnouncement
-    ? `${commentFullname} added a reply on your announcement comment`
-    : `${commentFullname} added a new reply in an announcement comment`;
-}
-
-  } 
-  
-  else if (notification_Type === "Submissions") {
+  } else if (notification_Type === "Announcement Comments") {
+    if (!isreply) {
+      if (commentMentionID) {
+        message = `${notification_course_name} - You have been mentioned in a comment on an announcement`;
+        messageContent = `${commentFullname} mentioned you in a comment on an announcement`;
+      } else if (annInstId && String(annInstId) === usersId) {
+        message = `${notification_course_name} - A comment has been added in your announcement`;
+        messageContent = `${commentFullname} added a comment in your announcement`;
+      } else {
+        message = `${notification_course_name} - A new comment has been added in an announcement`;
+        messageContent = `${commentFullname} added a new comment in an announcement`;
+      }
+    } else {
+      if (commentMentionID) {
+        message = `${notification_course_name} - You have been mentioned in a reply on an announcement comment`;
+        messageContent = `${commentFullname} mentioned you in a reply on an announcement comment`;
+      } else if (commentReplyAuthorId && String(commentReplyAuthorId) === usersId) {
+        message = `${notification_course_name} - A reply has been added in your announcement comment`;
+        messageContent = `${commentFullname} added a reply in your announcement comment`;
+      } else {
+        message = `${notification_course_name} - A new reply has been added in an announcement comment`;
+        messageContent = `${commentFullname} added a new reply in an announcement comment`;
+      }
+    }
+  } else if (notification_Type === "Submissions") {
     if (submissionMentionID) {
       message = `${notification_course_name} - You have been mentioned in a submission`;
       messageContent = `${submitterFullName} mentioned you in a submission`;
@@ -722,61 +860,39 @@ else if (notification_Type === "Post Comments" && isreply) {
       message = `${notification_course_name} - A submission has been made`;
       messageContent = `${submitterFullName} added a submission`;
     }
-  } else if (notification_Type === "Submission Comments" && !isreply) {
-    // if (submissionMentionID) {
-       if (commentMentionID) {
-      message = `${notification_course_name} - You have been mentioned in a comment on a submission`;
-      messageContent = `${commentAuthorFullName} mentioned you in a submission comment`;
-         } else {
-  const isCommentOnMySubmission = notification.Submissions?.Student?.student_id === Number(usersId);
-  message = isCommentOnMySubmission
-  ? `${notification_course_name} - A new comment has been added on your submission`
-  : `${notification_course_name} - A new comment has been added on a submission`;
-  messageContent = isCommentOnMySubmission
-    ? `${commentAuthorFullName} added a comment on your submission`
-    : `${commentAuthorFullName} added a comment on a submission`;
-}
-  } 
-  
-//   else if (notification_Type === "Submission Comments" && isreply )  {
-//     // if (submissionMentionID) {
-//       const replierIDForReply = notification.Comment?.author_id;
-//        if (commentMentionID) {
-//       message = `${notification_course_name} - You have been mentioned in a reply on a submission comment`;
-//       messageContent = `${commentAuthorFullName} mentioned you in a submission reply`;
-//          } else {
-//   const isCommentOnMySubmission = replierIDForReply === Number(usersId);
-//   message = isCommentOnMySubmission
-//   ? `${notification_course_name} - A new reply has been added on your submission comment`
-//   : `${notification_course_name} - A new reply has been added on a submission comment`;
-//   messageContent = isCommentOnMySubmission
-//     ? `${commentAuthorFullName} added a reply on your submission comment`
-//     : `${commentAuthorFullName} added a reply on a submission comment`;
-// }
-//   }
-
-   else if (notification_Type === "Submission Comments" && isreply )  {
-    if (commentMentionID) {
-      message = `${notification_course_name} - You have been mentioned in a reply on a Submission comment`;
-      messageContent = `${commentFullname} mentioned you in a reply on a Submission comment`;
-    } else if (commentAuthorIdForReplies && String(commentAuthorIdForReplies) === usersId) {
-      message = `${notification_course_name} - A reply has been added on your Submission comment`;
-      messageContent = `${commentFullname} added a reply on your Submission comment`;
-        } else {
-  const isCommentOnMyPost = commentAuthorIdForReplies && String(commentAuthorIdForReplies) === usersId;
-  message = `${notification_course_name} - A new reply has been added in a Submission comment`;
-  messageContent = isCommentOnMyPost
-    ? `${commentFullname} added a reply on your Submission comment`
-    : `${commentFullname} added a new reply in a Submission comment`;
-} 
-  } 
-
-          
-  else {
+  } else if (notification_Type === "Submission Comments") {
+    if (!isreply) {
+      if (commentMentionID) {
+        message = `${notification_course_name} - You have been mentioned in a comment on a submission`;
+        messageContent = `${commentAuthorFullName} mentioned you in a submission comment`;
+      } else {
+        const isCommentOnMySubmission = notification.Submissions?.Student?.student_id === Number(usersId);
+        message = isCommentOnMySubmission
+          ? `${notification_course_name} - A new comment has been added on your submission`
+          : `${notification_course_name} - A new comment has been added on a submission`;
+        messageContent = isCommentOnMySubmission
+          ? `${commentAuthorFullName} added a comment on your submission`
+          : `${commentAuthorFullName} added a comment on a submission`;
+      }
+    } else {
+      if (commentMentionID) {
+        message = `${notification_course_name} - You have been mentioned in a reply on a submission comment`;
+        messageContent = `${commentAuthorFullName} mentioned you in a submission reply`;
+      } else {
+        const isCommentOnMySubmission = notification.Submissions?.Student?.student_id === Number(usersId);
+        const isReplyToMyComment = commentReplyAuthorId && String(commentReplyAuthorId) === usersId;
+        message = isReplyToMyComment
+          ? `${notification_course_name} - A new reply has been added on your submission comment`
+          : `${notification_course_name} - A new reply has been added on a submission comment`;
+        messageContent = isReplyToMyComment
+          ? `${commentAuthorFullName} added a reply on your submission comment`
+          : `${commentAuthorFullName} added a reply on a submission comment`;
+      }
+    }
+  } else {
     message = `${notification_course_name} - A new notification has arrived`;
     messageContent = `${notification_Type || "Someone"} added something`;
   }
-     
 
 
   card.className = "notification-card cursor-pointer";
