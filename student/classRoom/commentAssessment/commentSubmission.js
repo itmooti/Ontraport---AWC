@@ -574,6 +574,20 @@
   }
 }
 `;
+  function highlightAndScrollSubmission() {
+  const match = window.location.href.match(/[?&]submissionPostIs=(\d+)/);
+  if (match) {
+    const submissionId = match[1];
+    const iframe = document.getElementById(`mainsubmision_${submissionId}`);
+
+    if (iframe) {
+      iframe.click();
+      iframe.classList.add('highlightedSubmission');
+      const topPos = iframe.getBoundingClientRect().top + window.pageYOffset - 200;
+      window.scrollTo({ top: topPos, behavior: 'smooth' });
+    }
+  }
+}
     async function fetchSubmissions() {
       const res = await fetch(endpointForComment, {
         method: "POST",
@@ -602,6 +616,7 @@
 
       $("#submissionList").html(html);
       initializeTribute();
+        highlightAndScrollSubmission();
     });
     // Create submission vote
     async function voteOnSubmission(voted_submission_id, element) {
