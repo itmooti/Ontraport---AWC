@@ -513,6 +513,8 @@
     Submission_Date_Time: submission_date_time
     submission_Id: id 
     File_Upload: file_upload
+    file_upload_name
+    file_upload_type
     submission_note
     Student {
       Student {
