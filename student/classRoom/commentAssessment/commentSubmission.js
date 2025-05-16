@@ -1,19 +1,3 @@
-
-    const currentUserId = 13328;
-    const currentUserDisplayName = "Tom";
-    const currentUserLastName = "Student";
-    const currentUserFirstName = "Tom";
-    const currentUserProfileImage =
-      "https://i.ontraport.com/265848.8c85aed8c12cc667374788748dca3a13.JPEG";
-    const endpointForComment = "https://awc.vitalstats.app/api/v1/graphql";
-    const apiKeyForComment = "mMzQezxyIwbtSc85rFPs3";
-    const defaultImgComment =
-      "https://files.ontraport.com/media/b0456fe87439430680b173369cc54cea.php03bzcx?Expires=4895186056&Signature=fw-mkSjms67rj5eIsiDF9QfHb4EAe29jfz~yn3XT0--8jLdK4OGkxWBZR9YHSh26ZAp5EHj~6g5CUUncgjztHHKU9c9ymvZYfSbPO9JGht~ZJnr2Gwmp6vsvIpYvE1pEywTeoigeyClFm1dHrS7VakQk9uYac4Sw0suU4MpRGYQPFB6w3HUw-eO5TvaOLabtuSlgdyGRie6Ve0R7kzU76uXDvlhhWGMZ7alNCTdS7txSgUOT8oL9pJP832UsasK4~M~Na0ku1oY-8a7GcvvVv6j7yE0V0COB9OP0FbC8z7eSdZ8r7avFK~f9Wl0SEfS6MkPQR2YwWjr55bbJJhZnZA__&Key-Pair-Id=APKAJVAAMVW6XQYWSTNA";
-    // Get members of the class (get students and teachers)
-    const classIdForComment = 9; // update dynamically if needed
-    let mentionArraysForComment = [];
-    let toDeletSubmission = "";
-    let toDeleteCommentReply = "";
     // create commenrts
     async function createForumCommentRequest(
       file,
