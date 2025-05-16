@@ -578,7 +578,7 @@
   const match = window.location.href.match(/[?&]submissionPostIs=(\d+)/);
   if (match) {
     const submissionId = match[1];
-    const iframe = document.getElementById(`mainFileSubmissionList${submissionId}`);
+    const iframe = document.getElementById(`mainFileSubmissionList_${submissionId}`);
 
     if (iframe) {
       iframe.click();
