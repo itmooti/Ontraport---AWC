@@ -498,7 +498,7 @@
             {
               andWhere: {
                 Lesson: [
-                  { where: { unique_id: "29SQ7PT" } }
+                  { where: { unique_id: "${currentUsersLessonId}" } }
                 ]
               }
             }
