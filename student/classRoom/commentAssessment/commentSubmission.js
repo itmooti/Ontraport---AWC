@@ -578,7 +578,7 @@
   const match = window.location.href.match(/[?&]submissionPostIs=(\d+)/);
   if (match) {
     const submissionId = match[1];
-    const iframe = document.getElementById(`mainsubmision_${submissionId}`);
+    const iframe = document.getElementById(`mainFileSubmissionList${submissionId}`);
 
     if (iframe) {
       iframe.click();
@@ -616,7 +616,10 @@
 
       $("#submissionList").html(html);
       initializeTribute();
-        highlightAndScrollSubmission();
+      requestAnimationFrame(() => {
+          console.log("requestAnimationFrame");
+    highlightAndScrollSubmission();
+  });
     });
     // Create submission vote
     async function voteOnSubmission(voted_submission_id, element) {
