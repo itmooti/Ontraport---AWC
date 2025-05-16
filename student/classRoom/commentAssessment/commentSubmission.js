@@ -441,7 +441,7 @@
 
             activeEditor._mentionIds.push(item.original.value);
 
-            return `<span class="mention-handle label bg-[#ebf6f6] text-[#007c8a] py-[1px] px-[2px] rounded" data-contact-id="${item.original.value}">@${item.original.key}</span>`;
+            return `<span class="mention-handle label bg-[#ebf6f6] text-[#007c8a] py-[1px] px-[2px] rounded" data-mention-id="${item.original.value}">@${item.original.key}</span>`;
           },
         });
 
