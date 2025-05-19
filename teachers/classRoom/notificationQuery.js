@@ -147,7 +147,7 @@ function getSubscriptionQueryForClass(classId) {
         offset: $offset
         orderBy: [{ path: ["created_at"], type: asc }]
       ) {
-        ID: id
+          ID: id
         Class_ID: class_id
         Comment_ID: comment_id
         Content: content
@@ -181,21 +181,23 @@ function getSubscriptionQueryForClass(classId) {
         }
         Mentions { id }
         Submissions {
+        unique_id 
           Student {
             student_id
             Student { display_name first_name last_name }
           }
           Announcements { Course { Lessons { unique_id } } }
-          Assessment { Lesson { unique_id } }
+          Assessment {type  Lesson { unique_id } }
           Submission_Mentions { id }
           ForumComments { Author { display_name first_name last_name } }
         }
-        Comment {
+        Comment { 
+          id  
           author_id 
-           reply_to_comment_id 
+          reply_to_comment_id 
           Reply_to_Comment{
             author_id
-          }  
+          } 
           parent_announcement_id
           Mentions { id }
           Forum_Post {
