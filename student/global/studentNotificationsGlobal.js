@@ -606,7 +606,7 @@ document.addEventListener("visibilitychange", () => {
 initializeSocket();
 
 function createNotificationCard(notification, isRead) {
-    const assessmentType = notification.Assessment?.type;
+    const assessmentType = notification.Submissions?.Assessment?.type;
     console.log('assessmentType',assessmentType);
   const card = document.createElement("div");
   const notification_Type = notification.Notification_Type;
