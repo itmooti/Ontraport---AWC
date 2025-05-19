@@ -244,7 +244,7 @@ function createNotificationCard(notification, isRead) {
     console.log('assessmentType',assessmentType);
   const card = document.createElement("div");
   const notification_Type = notification.Notification_Type;
-  const usersId = String(loggedInContactIdIntAwc);
+  const usersId = String(LOGGED_IN_CONTACT_ID);
   const notification_class_name = notification.Class?.class_name || notification.Class?.class_namee || "(No Class)";
   const notification_course_name = notification.Class?.Active_Course?.course_name || notification.Class?.Course?.course_name || "(No Course)";
 
