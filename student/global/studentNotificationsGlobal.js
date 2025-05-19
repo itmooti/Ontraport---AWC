@@ -308,6 +308,7 @@ function getSubscriptionQueryForClass(classId) {
         }
         Mentions { id }
         Submissions {
+        unique_id 
           Student {
             student_id
             Student { display_name first_name last_name }
@@ -768,14 +769,14 @@ function createNotificationCard(notification, isRead) {
 
     const courseUid = notification.Class?.Active_Course?.unique_id || notification.Class?.Course?.unique_id;
     const activeOrInactive = notification.Class?.Active_Course?.unique_id ? "Active_Course" : "Course";
-
+    const subUID =notification.Submissions?.unique_id;
     if ((type === "Posts" || type === "Post Comments") && notification.Post_ID) {
       const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
       window.location.href = `https://courses.writerscentre.com.au/students/course-details/${courseUid}?eid=${myEidFromCourse}&selectedTab=courseChat?current-post-id=${notification.Post_ID}`;
     } else if ((type === "Submissions" || type === "Submission Comments") && notification.Submissions?.Assessment?.Lesson?.unique_id) {
       const lessonUid = notification.Submissions.Assessment.Lesson.unique_id;
       const myEidFromLesson = await getEnrolmentIdsByLessonUid(lessonUid, activeOrInactive);
-      window.location.href = `https://courses.writerscentre.com.au/course-details/content/${lessonUid}?eid=${myEidFromLesson}&submissionPostIs=${notification.Submissions_ID}`;
+      window.location.href = `https://courses.writerscentre.com.au/course-details/content/${lessonUid}?eid=${myEidFromLesson}&submissionPostIs=${notification.Submissions_ID}${assessmentType === "File Submission" ? `&subUID=${subUID}` : ""}`;
     } else {
       const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
       window.location.href = `https://courses.writerscentre.com.au/students/course-details/${courseUid}?eid=${myEidFromCourse}&selectedTab=anouncemnt?data-announcement-template-id=${anouncementScrollId}`;
