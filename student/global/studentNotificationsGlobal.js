@@ -546,8 +546,11 @@ const filteredNotifications = notifications.filter((notification) => {
         const authored = notification.Comment?.author_id === userId;
         const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
         const parentIsUser = notification.ForumComments?.Parent_Announcement?.instructor_id === userId;
+        const commentOwnerId = notification.Comment?.Reply_to_Comment?.author_id; 
+        const isReplyOnMyComment = commentOwnerId === userId;
         if (user_Preference_Announcement_Comments === "Yes" && !authored) return true;
         if (user_Preference_Announcement_Comment_Mentions === "Yes" && mentioned) return true;
+        if (user_Preference_Comments_On_My_Announcements === "Yes" && isReplyOnMyComment) return true;  
         if (user_Preference_Comments_On_My_Announcements === "Yes" && parentIsUser) return true;
        // if (user_Preference_Comments_On_My_Announcements === "Yes" && notification.Comment?.Reply_to_Comment?.author_id ===userId) return true;
         return false;
