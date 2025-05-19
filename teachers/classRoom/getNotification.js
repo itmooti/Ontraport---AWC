@@ -414,7 +414,7 @@ function createNotificationCard(notification, isRead) {
       const lessonUid = notification.Submissions.Assessment.Lesson.unique_id;
      // const myEidFromLesson = await getEnrolmentIdsByLessonUid(lessonUid, activeOrInactive);
       //window.location.href = `https://courses.writerscentre.com.au/course-details/content/${lessonUid}`;
-          window.location.href = `https://courses.writerscentre.com.au/course-details/content/${lessonUid}?eid=${myEidFromLesson}&submissionPostIs=${notification.Submissions_ID}${assessmentType === "File Submission" ? `&subUID=${subUID}&commentScrollId=${commentScrollID}` : ""}`
+          window.location.href = `https://courses.writerscentre.com.au/course-details/content/${lessonUid}&submissionPostIs=${notification.Submissions_ID}${assessmentType === "File Submission" ? `&subUID=${subUID}&commentScrollId=${commentScrollID}` : ""}`
     } else {
      // const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
       window.location.href = `https://courses.writerscentre.com.au/teacher/class/${classIDForADmin}?selectedTab=anouncemnt?data-announcement-template-id=${anouncementScrollId}`;
