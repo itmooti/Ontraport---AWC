@@ -491,6 +491,7 @@
   getSubmissions(
    query: [
       { where: { submission_hidden: false } }
+      ${isPrivate}
       {
         andWhere: {
           Assessment: [
