@@ -616,6 +616,10 @@
           getUserVoteId: getUserVoteId,
         }
       );
+const skeletonLoader = document.querySelector('.loaderSkeletonSubmission');
+if (skeletonLoader) {
+  skeletonLoader.classList.add('hidden');
+}
 
       $("#submissionList").html(html);
       initializeTribute();
