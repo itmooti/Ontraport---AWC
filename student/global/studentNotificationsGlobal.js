@@ -318,7 +318,8 @@ function getSubscriptionQueryForClass(classId) {
           Submission_Mentions { id }
           ForumComments { Author { display_name first_name last_name } }
         }
-        Comment {
+        Comment { 
+          id  
           author_id 
           reply_to_comment_id 
           Reply_to_Comment{
@@ -631,7 +632,8 @@ function createNotificationCard(notification, isRead) {
   const commentAuthorFullName = notification.Comment?.Author?.display_name || `${notification.Comment?.Author?.first_name || ""} ${notification.Comment?.Author?.last_name || ""}`.trim() || "Someone";
   const commentReplyAuthorId = notification.Comment?.Reply_to_Comment?.author_id;
   const commentAuthorId = notification.Comment?.author_id;
-
+  let isSubmissionAReply = false;
+  let SubmissionAComment = false;
   let message = "";
   let messageContent = "";
 
@@ -677,6 +679,8 @@ function createNotificationCard(notification, isRead) {
     }
   } else if (notification_Type === "Announcement Comments") {
     if (!isreply) {
+        SubmissionAComment = true;
+        isSubmissionAReply = false;
       if (commentMentionID) {
         message = `${notification_course_name} - You have been mentioned in a comment on an announcement`;
         messageContent = `${commentFullname} mentioned you in a comment on an announcement`;
@@ -688,6 +692,8 @@ function createNotificationCard(notification, isRead) {
         messageContent = `${commentFullname} added a new comment in an announcement`;
       }
     } else {
+        SubmissionAComment = false;
+        isSubmissionAReply = true;
       if (commentMentionID) {
         message = `${notification_course_name} - You have been mentioned in a reply on an announcement comment`;
         messageContent = `${commentFullname} mentioned you in a reply on an announcement comment`;
@@ -770,13 +776,14 @@ function createNotificationCard(notification, isRead) {
     const courseUid = notification.Class?.Active_Course?.unique_id || notification.Class?.Course?.unique_id;
     const activeOrInactive = notification.Class?.Active_Course?.unique_id ? "Active_Course" : "Course";
     const subUID =notification.Submissions?.unique_id;
+      const commentScrollID = notification.Comment?.id;
     if ((type === "Posts" || type === "Post Comments") && notification.Post_ID) {
       const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
       window.location.href = `https://courses.writerscentre.com.au/students/course-details/${courseUid}?eid=${myEidFromCourse}&selectedTab=courseChat?current-post-id=${notification.Post_ID}`;
     } else if ((type === "Submissions" || type === "Submission Comments") && notification.Submissions?.Assessment?.Lesson?.unique_id) {
       const lessonUid = notification.Submissions.Assessment.Lesson.unique_id;
       const myEidFromLesson = await getEnrolmentIdsByLessonUid(lessonUid, activeOrInactive);
-      window.location.href = `https://courses.writerscentre.com.au/course-details/content/${lessonUid}?eid=${myEidFromLesson}&submissionPostIs=${notification.Submissions_ID}${assessmentType === "File Submission" ? `&subUID=${subUID}` : ""}`;
+      window.location.href = `https://courses.writerscentre.com.au/course-details/content/${lessonUid}?eid=${myEidFromLesson}&submissionPostIs=${notification.Submissions_ID}${assessmentType === "File Submission" ? `&subUID=${subUID}` : ""}${SubmissionAComment = true || isSubmissionAReply = true ? `&commentScrollId=${commentScrollID}` : ""}`;
     } else {
       const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
       window.location.href = `https://courses.writerscentre.com.au/students/course-details/${courseUid}?eid=${myEidFromCourse}&selectedTab=anouncemnt?data-announcement-template-id=${anouncementScrollId}`;
