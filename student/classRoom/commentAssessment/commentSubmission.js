@@ -491,11 +491,11 @@
   getSubmissions(
    query: [
       { where: { submission_hidden: false } }
-      ${isPrivate}
       {
         andWhere: {
           Assessment: [
             { where: { type: "Comment Submission" } }
+            ${isPrivate}
             {
               andWhere: {
                 Lesson: [
