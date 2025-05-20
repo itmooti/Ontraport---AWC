@@ -498,6 +498,11 @@ console.log('totalSockets',totalSockets);
     };
 
     socket.onmessage = (event) => {
+    completedSockets++;
+    console.log(' completedSockets', completedSockets);
+  if (completedSockets === totalSockets) {
+    removeSpinnerOnce();
+  }
   const data = JSON.parse(event.data);
   if (data.type !== "GQL_DATA") return;
   if (!data.payload || !data.payload.data) return;
@@ -518,11 +523,6 @@ console.log('totalSockets',totalSockets);
         
       readAnnouncements.add(Number(notification.ID));
     }
-       completedSockets++;
-    console.log(' completedSockets', completedSockets);
-  if (completedSockets === totalSockets) {
-    removeSpinnerOnce();
-  }
   });
 
   
