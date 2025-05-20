@@ -585,7 +585,8 @@ const filteredNotifications = notifications.filter((notification) => {
       processNotification(notification);
     }
   });
-
+         completedSockets++;
+console.log(' completedSockets', completedSockets);
  updateMarkAllReadVisibility();
 };
 
