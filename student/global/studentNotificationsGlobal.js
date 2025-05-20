@@ -442,6 +442,8 @@ async function initializeSocket() {
 console.log('totalSockets',totalSockets);
 
   classIds.forEach((classId) => {
+           completedSockets++;
+console.log(' completedSockets', completedSockets);
     if (socketConnections.has(classId)) return;
     const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
    
@@ -807,8 +809,6 @@ function createNotificationCard(notification, isRead) {
 
 
 function processNotification(notification) {
-     completedSockets++;
-console.log(' completedSockets', completedSockets);
     const container1 = document.getElementById(
         "parentNotificationTemplatesInBody"
     );
