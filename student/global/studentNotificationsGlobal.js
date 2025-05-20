@@ -431,8 +431,8 @@ async function fetchClassIds() {
         return [];
     }
 }
-const classIdsWithData = new Set();
-const expectedClassIds = new Set(classIds);
+let totalSockets = 0;
+let socketsCompleted = 0;
 // ✅ 2. Updated initializeSocket() to use one socket with class_ids array
 async function initializeSocket() {
   if (document.hidden) return;
@@ -477,8 +477,8 @@ async function initializeSocket() {
   if (!result) return;
         
 //added
-         classIdsWithData.add(classId);
-        console.log("Total classIds with data:", classIdsWithData.size);
+        totalSockets++;
+        console.log("Total classIds with data:", totalSockets);
   const notifications = Array.isArray(result) ? result : [result];
 
   notifications.forEach((notification) => {
