@@ -447,7 +447,12 @@ console.log('totalSockets',totalSockets);
     const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
    completedSockets++;
     console.log(' completedSockets', completedSockets);
+   if (completedSockets === totalSockets || Date.now() - startTime >= 4000) {
+    const spinner = document.querySelector('#spinnerForNavNotification');
+    if (spinner) spinner.remove();
     
+    document.querySelector('.mainBodyOfNotification')?.classList.remove('hidden');
+  }
     let keepAliveInterval;
 
     socket.onopen = () => {
