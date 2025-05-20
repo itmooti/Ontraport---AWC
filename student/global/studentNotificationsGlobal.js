@@ -435,6 +435,22 @@ let totalSockets = 0;
 let completedSockets = 0;
 const startTime = Date.now();
 
+function removeSpinnerOnce() {
+  if (spinnerRemoved) return;
+  spinnerRemoved = true;
+
+  const spinner = document.querySelector('#spinnerForNavNotification');
+  if (spinner) spinner.remove();
+
+  document.querySelector('.mainBodyOfNotification')?.classList.remove('hidden');
+}
+
+// Timer fallback (runs after 4s if not already removed)
+setTimeout(() => {
+  if (!spinnerRemoved) {
+    removeSpinnerOnce();
+  }
+}, 4000);
 // Fallback after 4 seconds
 setTimeout(() => {
   if (completedSockets !== totalSockets) {
@@ -460,12 +476,8 @@ console.log('totalSockets',totalSockets);
     const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
    completedSockets++;
     console.log(' completedSockets', completedSockets);
-
-  if (completedSockets === totalSockets || Date.now() - startTime >= 4000) {
-    const spinner = document.querySelector('#spinnerForNavNotification');
-    if (spinner) spinner.remove();
-
-    document.querySelector('.mainBodyOfNotification')?.classList.remove('hidden');
+  if (completedSockets === totalSockets) {
+    removeSpinnerOnce();
   }
     let keepAliveInterval;
 
