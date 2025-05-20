@@ -431,7 +431,8 @@ async function fetchClassIds() {
         return [];
     }
 }
-
+const classIdsWithData = new Set();
+const expectedClassIds = new Set(classIds);
 // ✅ 2. Updated initializeSocket() to use one socket with class_ids array
 async function initializeSocket() {
   if (document.hidden) return;
@@ -439,13 +440,12 @@ async function initializeSocket() {
   if (!classIds || classIds.length === 0) return;
 
 
-    //Added
-let completedSockets = 0;
-let totalSockets = classIds.length;
-    console.log('totalSockets',totalSockets);
+
   classIds.forEach((classId) => {
     if (socketConnections.has(classId)) return;
     const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
+    totalSockets = classIds.length;
+    console.log('totalSockets',totalSockets);
     let keepAliveInterval;
 
     socket.onopen = () => {
@@ -475,7 +475,10 @@ let totalSockets = classIds.length;
 
   const result = data.payload.data.subscribeToAnnouncements;
   if (!result) return;
-
+        
+//added
+         classIdsWithData.add(classId);
+        console.log("Total classIds with data:", classIdsWithData.size);
   const notifications = Array.isArray(result) ? result : [result];
 
   notifications.forEach((notification) => {
