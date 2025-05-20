@@ -432,7 +432,7 @@ async function fetchClassIds() {
     }
 }
 let totalSockets = 0;
-let socketsCompleted = 0;
+let completedSockets = 0;
 // ✅ 2. Updated initializeSocket() to use one socket with class_ids array
 async function initializeSocket() {
   if (document.hidden) return;
@@ -588,8 +588,7 @@ const filteredNotifications = notifications.filter((notification) => {
       processNotification(notification);
     }
   });
-         completedSockets++;
-console.log(' completedSockets', completedSockets);
+        
  updateMarkAllReadVisibility();
 };
 
@@ -648,6 +647,8 @@ function createNotificationCard(notification, isRead) {
   let SubmissionAComment = false;
   let message = "";
   let messageContent = "";
+     completedSockets++;
+console.log(' completedSockets', completedSockets);
 
   if (notification_Type === "Posts") {
     if (postMentionID) {
