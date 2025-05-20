@@ -436,33 +436,6 @@ let completedSockets = 0;
 const startTime = Date.now();
 let spinnerRemoved = false;
 
-function removeSpinnerOnce() {
-  if (spinnerRemoved) return;
-  spinnerRemoved = true;
-
-  const spinner = document.querySelector('#spinnerForNavNotification');
-  if (spinner) spinner.remove();
-
-  document.querySelector('.mainBodyOfNotification')?.classList.remove('hidden');
-}
-
-// Timer fallback (runs after 4s if not already removed)
-setTimeout(() => {
-  if (!spinnerRemoved) {
-    removeSpinnerOnce();
-  }
-}, 4000);
-// Fallback after 4 seconds
-setTimeout(() => {
-  if (completedSockets !== totalSockets) {
-    if (Date.now() - startTime >= 4000) {
-      const spinner = document.querySelector('#spinnerForNavNotification');
-      if (spinner) spinner.remove();
-
-      document.querySelector('.mainBodyOfNotification')?.classList.remove('hidden');
-    }
-  }
-}, 4000);
 // ✅ 2. Updated initializeSocket() to use one socket with class_ids array
 async function initializeSocket() {
   if (document.hidden) return;
@@ -475,6 +448,15 @@ console.log('totalSockets',totalSockets);
            
     if (socketConnections.has(classId)) return;
     const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
+    completedSockets++;
+    console.log(' completedSockets', completedSockets);
+  if (completedSockets === totalSockets) {
+    console.log('COMPLETED');
+     const spinner = document.querySelector('#spinnerForNavNotification');
+  if (spinner) spinner.remove();
+    document.querySelector('.mainBodyOfNotification')?.classList.remove('hidden');
+    spinnerRemoved=true;
+  }
     let keepAliveInterval;
 
     socket.onopen = () => {
@@ -498,11 +480,6 @@ console.log('totalSockets',totalSockets);
     };
 
     socket.onmessage = (event) => {
-    completedSockets++;
-    console.log(' completedSockets', completedSockets);
-  if (completedSockets === totalSockets) {
-    removeSpinnerOnce();
-  }
   const data = JSON.parse(event.data);
   if (data.type !== "GQL_DATA") return;
   if (!data.payload || !data.payload.data) return;
