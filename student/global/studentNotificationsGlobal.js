@@ -442,7 +442,7 @@ async function initializeSocket() {
     //Added
 let completedSockets = 0;
 let totalSockets = classIds.length;
-    
+    console.log('totalSockets',totalSockets);
   classIds.forEach((classId) => {
     if (socketConnections.has(classId)) return;
     const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
@@ -585,12 +585,8 @@ const filteredNotifications = notifications.filter((notification) => {
       processNotification(notification);
     }
   });
-//added
-        completedSockets++;
-        if (completedSockets === totalSockets) {
-          finishNotificationRender();
-        }
- // updateMarkAllReadVisibility();
+
+ updateMarkAllReadVisibility();
 };
 
     socket.onerror = () => {};
@@ -844,38 +840,7 @@ function updateNotificationReadStatus() {
         }
     });
 }
-//Added
-const spinner = document.createElement("div");
-spinner.id = "notification-loading-spinner";
-spinner.className = "flex justify-center items-center py-10 w-full";
-spinner.innerHTML = `
-  <div class="relative flex h-10 w-10">
-    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75"></span>
-    <span class="relative inline-flex rounded-full h-10 w-10 bg-blue-600"></span>
-  </div>
-`;
 
-const notificationContainer = document.getElementById("parentNotificationTemplatesInBody");
-if (notificationContainer) {
-  notificationContainer.appendChild(spinner);
-}
-
-function hideNotificationSpinner() {
-  const spinnerEl = document.getElementById("notification-loading-spinner");
-  if (spinnerEl) spinnerEl.classList.add("hidden");
-}
-
-function showNotificationSpinner() {
-  const spinnerEl = document.getElementById("notification-loading-spinner");
-  if (spinnerEl) spinnerEl.classList.remove("hidden");
-}
-
-// 🧠 Show spinner initially
-showNotificationSpinner();
-
-// ✅ Call this after notifications are fully processed
-
-//added end
 function updateMarkAllReadVisibility() {
     let hasUnread = false;
     cardMap.forEach(({ original }) => {
@@ -982,12 +947,6 @@ function updateNoNotificationMessagesSec() {
     );
     noAllMessageSec.classList.toggle("hidden", hasVisible);
     noAnnouncementsMessageSec.classList.add("hidden");
-}
-function finishNotificationRender() {
-  hideNotificationSpinner();
-  updateMarkAllReadVisibility();
-  updateNoNotificationMessages();
-  updateNoNotificationMessagesSec();
 }
 document.addEventListener("DOMContentLoaded", function () {
     const onlySeeBtn = document.getElementById("OnlyseeAnnouncements");
