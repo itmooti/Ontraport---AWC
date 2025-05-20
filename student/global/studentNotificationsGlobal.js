@@ -442,11 +442,11 @@ async function initializeSocket() {
 console.log('totalSockets',totalSockets);
 
   classIds.forEach((classId) => {
-           completedSockets++;
-console.log(' completedSockets', completedSockets);
+           
     if (socketConnections.has(classId)) return;
     const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
-   
+   completedSockets++;
+    console.log(' completedSockets', completedSockets);
     
     let keepAliveInterval;
 
