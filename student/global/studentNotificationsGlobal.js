@@ -475,11 +475,6 @@ console.log('totalSockets',totalSockets);
            
     if (socketConnections.has(classId)) return;
     const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
-   completedSockets++;
-    console.log(' completedSockets', completedSockets);
-  if (completedSockets === totalSockets) {
-    removeSpinnerOnce();
-  }
     let keepAliveInterval;
 
     socket.onopen = () => {
@@ -523,6 +518,11 @@ console.log('totalSockets',totalSockets);
         
       readAnnouncements.add(Number(notification.ID));
     }
+       completedSockets++;
+    console.log(' completedSockets', completedSockets);
+  if (completedSockets === totalSockets) {
+    removeSpinnerOnce();
+  }
   });
 
   
