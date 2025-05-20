@@ -438,14 +438,14 @@ async function initializeSocket() {
   if (document.hidden) return;
   const classIds = await fetchClassIds();
   if (!classIds || classIds.length === 0) return;
-
-
+ totalSockets = classIds.length;
+console.log('totalSockets',totalSockets);
 
   classIds.forEach((classId) => {
     if (socketConnections.has(classId)) return;
     const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
-    totalSockets = classIds.length;
-    console.log('totalSockets',totalSockets);
+   
+    
     let keepAliveInterval;
 
     socket.onopen = () => {
@@ -476,9 +476,7 @@ async function initializeSocket() {
   const result = data.payload.data.subscribeToAnnouncements;
   if (!result) return;
         
-//added
-        totalSockets++;
-        console.log("Total classIds with data:", totalSockets);
+       
   const notifications = Array.isArray(result) ? result : [result];
 
   notifications.forEach((notification) => {
@@ -647,8 +645,6 @@ function createNotificationCard(notification, isRead) {
   let SubmissionAComment = false;
   let message = "";
   let messageContent = "";
-     completedSockets++;
-console.log(' completedSockets', completedSockets);
 
   if (notification_Type === "Posts") {
     if (postMentionID) {
@@ -811,6 +807,8 @@ console.log(' completedSockets', completedSockets);
 
 
 function processNotification(notification) {
+     completedSockets++;
+console.log(' completedSockets', completedSockets);
     const container1 = document.getElementById(
         "parentNotificationTemplatesInBody"
     );
