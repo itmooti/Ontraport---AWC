@@ -438,6 +438,11 @@ async function initializeSocket() {
   const classIds = await fetchClassIds();
   if (!classIds || classIds.length === 0) return;
 
+
+    //Added
+let completedSockets = 0;
+let totalSockets = classIds.length;
+    
   classIds.forEach((classId) => {
     if (socketConnections.has(classId)) return;
     const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
@@ -480,6 +485,7 @@ async function initializeSocket() {
         (read) => Number(read.read_contact_id) === Number(loggedInContactIdIntAwc)
       )
     ) {
+        
       readAnnouncements.add(Number(notification.ID));
     }
   });
@@ -579,7 +585,11 @@ const filteredNotifications = notifications.filter((notification) => {
       processNotification(notification);
     }
   });
-finishNotificationRender();
+//added
+        completedSockets++;
+        if (completedSockets === totalSockets) {
+          finishNotificationRender();
+        }
  // updateMarkAllReadVisibility();
 };
 
