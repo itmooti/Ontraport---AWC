@@ -433,6 +433,19 @@ async function fetchClassIds() {
 }
 let totalSockets = 0;
 let completedSockets = 0;
+const startTime = Date.now();
+
+// Fallback after 4 seconds
+setTimeout(() => {
+  if (completedSockets !== totalSockets) {
+    if (Date.now() - startTime >= 4000) {
+      const spinner = document.querySelector('#spinnerForNavNotification');
+      if (spinner) spinner.remove();
+
+      document.querySelector('.mainBodyOfNotification')?.classList.remove('hidden');
+    }
+  }
+}, 4000);
 // ✅ 2. Updated initializeSocket() to use one socket with class_ids array
 async function initializeSocket() {
   if (document.hidden) return;
@@ -447,10 +460,11 @@ console.log('totalSockets',totalSockets);
     const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
    completedSockets++;
     console.log(' completedSockets', completedSockets);
-   if (completedSockets === totalSockets || Date.now() - startTime >= 4000) {
+
+  if (completedSockets === totalSockets || Date.now() - startTime >= 4000) {
     const spinner = document.querySelector('#spinnerForNavNotification');
     if (spinner) spinner.remove();
-    
+
     document.querySelector('.mainBodyOfNotification')?.classList.remove('hidden');
   }
     let keepAliveInterval;
