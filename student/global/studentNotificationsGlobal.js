@@ -434,6 +434,7 @@ async function fetchClassIds() {
 let totalSockets = 0;
 let completedSockets = 0;
 const startTime = Date.now();
+let spinnerRemoved = false;
 
 function removeSpinnerOnce() {
   if (spinnerRemoved) return;
