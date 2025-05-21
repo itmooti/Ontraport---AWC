@@ -551,6 +551,7 @@
       ForumComments(
         orderBy: [{ path: ["created_at"], type: asc }]
       ) {
+      reply_to_comment_id 
         id
         comment
         created_at
