@@ -136,16 +136,20 @@ async function getEnrolmentIdsByCourseUid(courseUid, activeOrInactive) {
     const result = await response.json();
     return result?.data?.getEnrolment?.ID ? [result.data.getEnrolment.ID] : [];
 }
-
+    // subscription subscribeToAnnouncements(
+    //   $class_id: AwcClassID
+    // ) {
+    //   subscribeToAnnouncements(
+    //     query: [
+    //       { where: { class_id: $class_id } }
 // ✅ 1. Updated SUBSCRIPTION_QUERY using subscribeToAnnouncements (one socket per class, no alias)
-function getSubscriptionQueryForClass(classId) {
+//function getSubscriptionQueryForClass(classId) {
+function getSubscriptionQueryForAllClasses() {
   return `
-    subscription subscribeToAnnouncements(
-      $class_id: AwcClassID
-    ) {
+
+    subscription subscribeToAnnouncements($class_id: [AwcClassID]) {
       subscribeToAnnouncements(
-        query: [
-          { where: { class_id: $class_id } }
+        query: [{ whereIn: { class_id: $class_id } }]
           {
             andWhereGroup: [
               {
@@ -437,72 +441,123 @@ const startTime = Date.now();
 let spinnerRemoved = false;
 
 // ✅ 2. Updated initializeSocket() to use one socket with class_ids array
-async function initializeSocket() {
-  if (document.hidden) return;
-  const classIds = await fetchClassIds();
-  if (!classIds || classIds.length === 0) return;
- totalSockets = classIds.length;
-console.log('totalSockets',totalSockets);
+// async function initializeSocket() {
+//   if (document.hidden) return;
+//   const classIds = await fetchClassIds();
+//   if (!classIds || classIds.length === 0) return;
+//  totalSockets = classIds.length;
+// console.log('totalSockets',totalSockets);
 
-  classIds.forEach((classId) => {
+//   classIds.forEach((classId) => {
            
-    if (socketConnections.has(classId)) return;
-    const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
-    completedSockets++;
-    console.log(' completedSockets', completedSockets);
-  if (completedSockets === totalSockets) {
-    console.log('COMPLETED');
-     const spinner = document.querySelector('#spinnerForNavNotification');
-  if (spinner) spinner.remove();
-    document.querySelector('.mainBodyOfNotification')?.classList.remove('hidden');
-    spinnerRemoved=true;
-  }
-    let keepAliveInterval;
+//     if (socketConnections.has(classId)) return;
+//     const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
+//     completedSockets++;
+//    // console.log(' completedSockets', completedSockets);
+//   if (completedSockets === totalSockets) {
+//    // console.log('COMPLETED');
+//      const spinner = document.querySelector('#spinnerForNavNotification');
+//   if (spinner) spinner.remove();
+//     document.querySelector('.mainBodyOfNotification')?.classList.remove('hidden');
+//     spinnerRemoved=true;
+//   }
+//     let keepAliveInterval;
 
-    socket.onopen = () => {
-      keepAliveInterval = setInterval(() => {
-        if (socket.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({ type: "KEEP_ALIVE" }));
-        }
-      }, 28000);
+//     socket.onopen = () => {
+//       keepAliveInterval = setInterval(() => {
+//         if (socket.readyState === WebSocket.OPEN) {
+//           socket.send(JSON.stringify({ type: "KEEP_ALIVE" }));
+//         }
+//       }, 28000);
 
-      socket.send(JSON.stringify({ type: "connection_init" }));
-      socket.send(
-        JSON.stringify({
-          id: `subscription_${classId}`,
-          type: "GQL_START",
-          payload: {
-            query: getSubscriptionQueryForClass(classId),
-            variables: { class_id: classId, limit: 5000, offset: 0 }
-          }
-        })
-      );
-    };
+//       socket.send(JSON.stringify({ type: "connection_init" }));
+//       socket.send(
+//         JSON.stringify({
+//           //id: `subscription_${classId}`,
+//           id: "subscription_all_classes",
+//           type: "GQL_START",
+//           payload: {
+//             query: getSubscriptionQueryForClass(classId),
+//             variables: { class_id: classId, limit: 5000, offset: 0 }
+//           }
+//         })
+//       );
+//     };
 
-    socket.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  if (data.type !== "GQL_DATA") return;
-  if (!data.payload || !data.payload.data) return;
+//     socket.onmessage = (event) => {
+//   const data = JSON.parse(event.data);
+//   if (data.type !== "GQL_DATA") return;
+//   if (!data.payload || !data.payload.data) return;
 
-  const result = data.payload.data.subscribeToAnnouncements;
-  if (!result) return;
+//   const result = data.payload.data.subscribeToAnnouncements;
+//   if (!result) return;
         
        
-  const notifications = Array.isArray(result) ? result : [result];
+//   const notifications = Array.isArray(result) ? result : [result];
 
-  notifications.forEach((notification) => {
-    if (
-      notification.Read_Contacts_Data &&
-      notification.Read_Contacts_Data.some(
-        (read) => Number(read.read_contact_id) === Number(loggedInContactIdIntAwc)
-      )
-    ) {
+//   notifications.forEach((notification) => {
+//     if (
+//       notification.Read_Contacts_Data &&
+//       notification.Read_Contacts_Data.some(
+//         (read) => Number(read.read_contact_id) === Number(loggedInContactIdIntAwc)
+//       )
+//     ) {
         
-      readAnnouncements.add(Number(notification.ID));
-    }
-  });
+//       readAnnouncements.add(Number(notification.ID));
+//     }
+//   });
 
-  
+  async function initializeSocket() {
+  if (document.hidden) return;
+
+  const classIds = await fetchClassIds(); // fetches all student’s class IDs
+  if (!classIds || classIds.length === 0) return;
+
+  const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
+  let keepAliveInterval;
+
+  socket.onopen = () => {
+    keepAliveInterval = setInterval(() => {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "KEEP_ALIVE" }));
+      }
+    }, 28000);
+
+    socket.send(JSON.stringify({ type: "connection_init" }));
+
+    socket.send(
+      JSON.stringify({
+        id: "subscription_all_classes",
+        type: "GQL_START",
+        payload: {
+          query: getSubscriptionQueryForAllClasses(), // this function should return your new query
+          variables: { class_id: classIds }
+        }
+      })
+    );
+  };
+
+  socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type !== "GQL_DATA") return;
+    if (!data.payload || !data.payload.data) return;
+
+    const result = data.payload.data.subscribeToAnnouncements;
+    if (!result) return;
+
+    const notifications = Array.isArray(result) ? result : [result];
+
+    // Existing logic for read status
+    notifications.forEach((notification) => {
+      if (
+        notification.Read_Contacts_Data &&
+        notification.Read_Contacts_Data.some(
+          (read) => Number(read.read_contact_id) === Number(loggedInContactIdIntAwc)
+        )
+      ) {
+        readAnnouncements.add(Number(notification.ID));
+      }
+    });
 const filteredNotifications = notifications.filter((notification) => {
   const userId = Number(loggedInContactIdIntAwc);
   switch (notification.Notification_Type) {
