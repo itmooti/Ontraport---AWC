@@ -1,61 +1,200 @@
+// class MentionManager {
+//   static allContacts = [];
+//   static initContacts() {
+//     const query = `
+//         query calcContacts {
+//         calcContacts(
+//             query: [
+//             { where: { email: "courses@writerscentre.com.au" } }
+//             {
+//                 orWhere: {
+//                 Enrolments: [
+//                     { where: { Class: [{ where: { id: ${classId} } }] } }
+//                 ]
+//             }
+//             }
+//             ]
+//         ) {
+//                 Display_Name: field(arg: ["display_name"]) 
+//                 FirstName:field(arg:["first_name"]) 
+//                 LastName:field(arg:["last_name"]) 
+//                 Contact_ID: field(arg: ["id"])
+//                 Profile_Image: field(arg: ["profile_image"])  
+//                 Is_Instructor: field(arg: ["is_instructor"]) 
+//                 Is_Admin: field(arg: ["is_admin"]) 
+//                 Email: field(arg: ["email"]) 
+//           }
+//         }
+// `;
+//     fetch(graphqlApiEndpoint, {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//         "Api-Key": apiAccessKey,
+//       },
+//       body: JSON.stringify({
+//         query,
+//       }),
+//     })
+//       .then((response) => {
+//         if (!response.ok) throw new Error("Network response not ok");
+//         return response.json();
+//       })
+//       .then((data) => {
+//         const contacts = data.data.calcContacts || [];
+//         const validContacts = contacts.filter(
+//           (contact) =>
+//             contact.Display_Name && contact.Display_Name.trim() !== ""
+//         );
+
+//         MentionManager.allContacts = validContacts.map((contact) => ({
+//           key: contact.Display_Name,
+//           value: contact.Display_Name,
+//           name: contact.Display_Name,
+//           id: contact.Contact_ID,
+//           profileImage: contact.Profile_Image,
+//           isAdmin: contact.Is_Admin, // add admin flag
+//           isInstructor: contact.Is_Instructor, // add instructor flag
+//         }));
+//       })
+//       .catch((error) =>
+//         console.error("Error fetching contacts for mentions:", error)
+//       );
+//   }
+
+//   static initEditor(editor) {
+//     new Tribute({
+//       trigger: "@",
+//       allowSpaces: true,
+//       lookup: "name",
+//       values: MentionManager.fetchMentionContacts.bind(MentionManager),
+//       menuItemTemplate: MentionManager.mentionTemplate,
+//       selectTemplate: MentionManager.selectTemplate,
+//       menuContainer: document.body,
+//     }).attach(editor);
+//   }
+
+//   static fetchMentionContacts(text, cb) {
+//     const searchText = text.toLowerCase();
+//     const filtered = MentionManager.allContacts.filter((contact) =>
+//       contact.value.toLowerCase().includes(searchText)
+//     );
+//     cb(filtered);
+//   }
+
+//   static mentionTemplate(item) {
+//     return `<div class="flex items-center gap-3 px-3 py-2">
+//             <img class="w-6 h-6 rounded-full border border-[#d3d3d3]" 
+//               src="${
+//                 item.original.profileImage &&
+//                 item.original.profileImage !== "https://i.ontraport.com/abc.jpg"
+//                   ? item.original.profileImage
+//                   : "https://files.ontraport.com/media/b0456fe87439430680b173369cc54cea.php03bzcx?Expires=4895186056&Signature=fw-mkSjms67rj5eIsiDF9QfHb4EAe29jfz~yn3XT0--8jLdK4OGkxWBZR9YHSh26ZAp5EHj~6g5CUUncgjztHHKU9c9ymvZYfSbPO9JGht~ZJnr2Gwmp6vsvIpYvE1pEywTeoigeyClFm1dHrS7VakQk9uYac4Sw0suU4MpRGYQPFB6w3HUw-eO5TvaOLabtuSlgdyGRie6Ve0R7kzU76uXDvlhhWGMZ7alNCTdS7txSgUOT8oL9pJP832UsasK4~M~Na0ku1oY-8a7GcvvVv6j7yE0V0COB9OP0FbC8z7eSdZ8r7avFK~f9Wl0SEfS6MkPQR2YwWjr55bbJJhZnZA__&Key-Pair-Id=APKAJVAAMVW6XQYWSTNA"
+//               }" 
+//               alt="${item.original.name}'s Profile Image" />
+//         <div class="text-primary">
+//           ${item.original.name}
+//           ${
+//             item.original.isAdmin
+//               ? " (Admin)"
+//               : item.original.isInstructor
+//               ? " (Teacher)"
+//               : ""
+//           }
+//         </div>
+//       </div>`;
+//   }
+
+//   static selectTemplate(item) {
+//     return `<span class="mention" data-contact-id="${item.original.id}">@${item.original.value}</span>`;
+//   }
+// }
+
+// $(".comment-editor").each(function () {
+//   MentionManager.initEditor(this);
+// });
+
+// if ($("#announcementContent").length > 0) {
+//   $("#announcementContent").each(function () {
+//     MentionManager.initEditor(this);
+//   });
+// }
 class MentionManager {
   static allContacts = [];
+
   static initContacts() {
     const query = `
-        query calcContacts {
-        calcContacts(
-            query: [
-            { where: { email: "courses@writerscentre.com.au" } }
-            {
-                orWhere: {
-                Enrolments: [
-                    { where: { Class: [{ where: { id: ${classId} } }] } }
-                ]
+      query {
+        getClasses(query: [{ where: { id: ${classId} } }]) {
+          Teacher {
+            first_name
+            last_name
+            display_name
+            profile_image
+            unique_id
+            id
+          }
+          Enrolments {
+            Student {
+              first_name
+              last_name
+              display_name
+              profile_image
+              unique_id
+              id
             }
-            }
-            ]
-        ) {
-                Display_Name: field(arg: ["display_name"]) 
-                FirstName:field(arg:["first_name"]) 
-                LastName:field(arg:["last_name"]) 
-                Contact_ID: field(arg: ["id"])
-                Profile_Image: field(arg: ["profile_image"])  
-                Is_Instructor: field(arg: ["is_instructor"]) 
-                Is_Admin: field(arg: ["is_admin"]) 
-                Email: field(arg: ["email"]) 
           }
         }
-`;
+      }
+    `;
+
     fetch(graphqlApiEndpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Api-Key": apiAccessKey,
       },
-      body: JSON.stringify({
-        query,
-      }),
+      body: JSON.stringify({ query }),
     })
       .then((response) => {
         if (!response.ok) throw new Error("Network response not ok");
         return response.json();
       })
       .then((data) => {
-        const contacts = data.data.calcContacts || [];
-        const validContacts = contacts.filter(
-          (contact) =>
-            contact.Display_Name && contact.Display_Name.trim() !== ""
-        );
+        const result = data.data.getClasses?.[0];
+        if (!result) return;
 
-        MentionManager.allContacts = validContacts.map((contact) => ({
-          key: contact.Display_Name,
-          value: contact.Display_Name,
-          name: contact.Display_Name,
-          id: contact.Contact_ID,
-          profileImage: contact.Profile_Image,
-          isAdmin: contact.Is_Admin, // add admin flag
-          isInstructor: contact.Is_Instructor, // add instructor flag
-        }));
+        const contacts = [];
+
+        const teacher = result.Teacher;
+        if (teacher && teacher.display_name?.trim()) {
+          contacts.push({
+            key: teacher.display_name,
+            value: teacher.display_name,
+            name: teacher.display_name,
+            id: teacher.id,
+            profileImage: teacher.profile_image,
+            isAdmin: false,
+            isInstructor: true,
+          });
+        }
+
+        const students = result.Enrolments.map((e) => e.Student);
+        students.forEach((student) => {
+          if (student && student.display_name?.trim()) {
+            contacts.push({
+              key: student.display_name,
+              value: student.display_name,
+              name: student.display_name,
+              id: student.id,
+              profileImage: student.profile_image,
+              isAdmin: false,
+              isInstructor: false,
+            });
+          }
+        });
+
+        MentionManager.allContacts = contacts;
       })
       .catch((error) =>
         console.error("Error fetching contacts for mentions:", error)
@@ -84,25 +223,25 @@ class MentionManager {
 
   static mentionTemplate(item) {
     return `<div class="flex items-center gap-3 px-3 py-2">
-            <img class="w-6 h-6 rounded-full border border-[#d3d3d3]" 
-              src="${
-                item.original.profileImage &&
-                item.original.profileImage !== "https://i.ontraport.com/abc.jpg"
-                  ? item.original.profileImage
-                  : "https://files.ontraport.com/media/b0456fe87439430680b173369cc54cea.php03bzcx?Expires=4895186056&Signature=fw-mkSjms67rj5eIsiDF9QfHb4EAe29jfz~yn3XT0--8jLdK4OGkxWBZR9YHSh26ZAp5EHj~6g5CUUncgjztHHKU9c9ymvZYfSbPO9JGht~ZJnr2Gwmp6vsvIpYvE1pEywTeoigeyClFm1dHrS7VakQk9uYac4Sw0suU4MpRGYQPFB6w3HUw-eO5TvaOLabtuSlgdyGRie6Ve0R7kzU76uXDvlhhWGMZ7alNCTdS7txSgUOT8oL9pJP832UsasK4~M~Na0ku1oY-8a7GcvvVv6j7yE0V0COB9OP0FbC8z7eSdZ8r7avFK~f9Wl0SEfS6MkPQR2YwWjr55bbJJhZnZA__&Key-Pair-Id=APKAJVAAMVW6XQYWSTNA"
-              }" 
-              alt="${item.original.name}'s Profile Image" />
-        <div class="text-primary">
-          ${item.original.name}
-          ${
-            item.original.isAdmin
-              ? " (Admin)"
-              : item.original.isInstructor
-              ? " (Teacher)"
-              : ""
-          }
-        </div>
-      </div>`;
+      <img class="w-6 h-6 rounded-full border border-[#d3d3d3]"
+        src="${
+          item.original.profileImage &&
+          item.original.profileImage !== "https://i.ontraport.com/abc.jpg"
+            ? item.original.profileImage
+            : "https://files.ontraport.com/media/b0456fe87439430680b173369cc54cea.php03bzcx?Expires=4895186056&Signature=fw-mkSjms67rj5eIsiDF9QfHb4EAe29jfz~yn3XT0--8jLdK4OGkxWBZR9YHSh26ZAp5EHj~6g5CUUncgjztHHKU9c9ymvZYfSbPO9JGht~ZJnr2Gwmp6vsvIpYvE1pEywTeoigeyClFm1dHrS7VakQk9uYac4Sw0suU4MpRGYQPFB6w3HUw-eO5TvaOLabtuSlgdyGRie6Ve0R7kzU76uXDvlhhWGMZ7alNCTdS7txSgUOT8oL9pJP832UsasK4~M~Na0ku1oY-8a7GcvvVv6j7yE0V0COB9OP0FbC8z7eSdZ8r7avFK~f9Wl0SEfS6MkPQR2YwWjr55bbJJhZnZA__&Key-Pair-Id=APKAJVAAMVW6XQYWSTNA"
+        }"
+        alt="${item.original.name}'s Profile Image" />
+      <div class="text-primary">
+        ${item.original.name}
+        ${
+          item.original.isAdmin
+            ? " (Admin)"
+            : item.original.isInstructor
+            ? " (Teacher)"
+            : ""
+        }
+      </div>
+    </div>`;
   }
 
   static selectTemplate(item) {
@@ -119,7 +258,6 @@ if ($("#announcementContent").length > 0) {
     MentionManager.initEditor(this);
   });
 }
-
 
 function renderAudioPlayer(link) {
   return `
