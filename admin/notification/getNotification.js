@@ -59,183 +59,156 @@ query calcClasses {
 }
 
 
-// ✅ 2. Updated initializeSocket() to use one socket with class_ids array
 async function initializeSocket() {
   if (document.hidden) return;
-  const classIds = await fetchClassIds();
+
+  const classIds = await fetchClassIds(); // fetches all student’s class IDs
   if (!classIds || classIds.length === 0) return;
 
-  classIds.forEach((classId) => {
-    if (socketConnections.has(classId)) return;
-    const socket = new WebSocket(WS_ENDPOINT, "vitalstats");
-    let keepAliveInterval;
+  const socket = new WebSocket(WS_ENDPOINT, "vitalstats");
+  let keepAliveInterval;
 
-    socket.onopen = () => {
-      keepAliveInterval = setInterval(() => {
-        if (socket.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({ type: "KEEP_ALIVE" }));
+  socket.onopen = () => {
+    keepAliveInterval = setInterval(() => {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "KEEP_ALIVE" }));
+      }
+    }, 28000);
+
+    socket.send(JSON.stringify({ type: "connection_init" }));
+
+    socket.send(
+      JSON.stringify({
+        id: "subscription_all_classes",
+        type: "GQL_START",
+        payload: {
+          query: getSubscriptionQueryForAllClasses(), // this function should return your new query
+          variables: { class_id: classIds }
         }
-      }, 28000);
+      })
+    );
+  };
 
-      socket.send(JSON.stringify({ type: "connection_init" }));
-      socket.send(
-        JSON.stringify({
-          id: `subscription_${classId}`,
-          type: "GQL_START",
-          payload: {
-            query: getSubscriptionQueryForClass(classId),
-            variables: { class_id: classId, limit: 5000, offset: 0 }
-          }
-        })
-      );
-    };
+  socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type !== "GQL_DATA") return;
+    if (!data.payload || !data.payload.data) return;
 
-    socket.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  if (data.type !== "GQL_DATA") return;
-  if (!data.payload || !data.payload.data) return;
+    const result = data.payload.data.subscribeToAnnouncements;
+    if (!result) return;
 
-  const result = data.payload.data.subscribeToAnnouncements;
-  if (!result) return;
+    const notifications = Array.isArray(result) ? result : [result];
 
-  const notifications = Array.isArray(result) ? result : [result];
-
-  notifications.forEach((notification) => {
-    if (
-      notification.Read_Contacts_Data &&
-      notification.Read_Contacts_Data.some(
-        (read) => Number(read.read_contact_id) === Number(LOGGED_IN_CONTACT_ID)
-      )
-    ) {
-      readAnnouncements.add(Number(notification.ID));
-    }
-  });
-
- 
-        const filteredNotifications = notifications.filter((notification) => {
-  const userId = Number(LOGGED_IN_CONTACT_ID);
-            
-switch (notification.Notification_Type) {
-      case "Posts": {
-        const authored = notification.Post?.author_id === userId;
-        const mentioned = notification.Post?.Mentions?.some(m => m.id === userId);
-
-        if (user_Preference_Posts === "Yes" && !authored) return true;
-        if (user_Preference_Post_Mentions === "Yes" && mentioned) return true;
-        return false;
-        if (user_Preference_Post_Mentions === "Yes" && mentioned) return true;
-        return false;
+    // Existing logic for read status
+    notifications.forEach((notification) => {
+      if (
+        notification.Read_Contacts_Data &&
+        notification.Read_Contacts_Data.some(
+          (read) => Number(read.read_contact_id) === Number(LOGGED_IN_CONTACT_ID)
+        )
+      ) {
+        readAnnouncements.add(Number(notification.ID));
       }
+    });
 
-      case "Post Comments": {
-        const authored = notification.Comment?.author_id === userId;
-        const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
-        const parentIsUser = notification.Comment?.Forum_Post?.author_id === userId;
-        if (user_Preference_Post_Comments === "Yes" && !authored) return true;
-        if (user_Preference_Post_Comment_Mentions === "Yes" && mentioned) return true;
-        if (user_Preference_Comments_On_My_Posts === "Yes" && parentIsUser) return true;
-        //if (user_Preference_Comments_On_My_Posts === "Yes" && notification.Comment?.Reply_to_Comment?.author_id ===userId) return true;
-        return false;
-      }
-
-      case "Submissions": {
-        const submitted = notification.Submissions?.Student?.student_id === userId;
-        const mentioned = notification.Submissions?.Submission_Mentions?.some(m => m.id === userId);
-        if (user_Preference_Submissions === "Yes" && !submitted) return true;
-        if (user_Preference_Submission_Mentions === "Yes" && mentioned) return true;
-        return false;
-      }
-          
+    // Filter notifications based on type and user preferences
+    const filteredNotifications = notifications.filter((notification) => {
+      const userId = Number(LOGGED_IN_CONTACT_ID);
+      switch (notification.Notification_Type) {
+        case "Posts": {
+          const authored = notification.Post?.author_id === userId;
+          const mentioned = notification.Post?.Mentions?.some(m => m.id === userId);
+          if (user_Preference_Posts === "Yes" && !authored) return true;
+          if (user_Preference_Post_Mentions === "Yes" && mentioned) return true;
+          return false;
+        }
+        case "Post Comments": {
+          const authored = notification.Comment?.author_id === userId;
+          const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
+          const parentIsUser = notification.Comment?.Forum_Post?.author_id === userId;
+          if (user_Preference_Post_Comments === "Yes" && !authored) return true;
+          if (user_Preference_Post_Comment_Mentions === "Yes" && mentioned) return true;
+          if (user_Preference_Comments_On_My_Posts === "Yes" && parentIsUser) return true;
+          return false;
+        }
+        case "Submissions": {
+          const submitted = notification.Submissions?.Student?.student_id === userId;
+          const mentioned = notification.Submissions?.Submission_Mentions?.some(m => m.id === userId);
+          if (user_Preference_Submissions === "Yes" && !submitted) return true;
+          if (user_Preference_Submission_Mentions === "Yes" && mentioned) return true;
+          return false;
+        }
         case "Submission Comments": {
           const authored = notification.Comment?.author_id === userId;
           const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
-          const submissionOwnerId = notification.Submissions?.Student?.student_id;
-          const isCommentOnMySubmission = submissionOwnerId === userId;
+          const isCommentOnMySubmission = notification.Submissions?.Student?.student_id === userId;
           const commentOwnerId = notification.Comment?.Reply_to_Comment?.author_id; 
           const isReplyOnMyComment = commentOwnerId === userId;
-          const isreply = notification.Comment?.reply_to_comment_id !== null && notification.Comment?.reply_to_comment_id !== undefined;
-         
           if (user_Preference_Submission_Comments === "Yes" && !authored) return true;
           if (user_Preference_Submission_Comment_Mentions === "Yes" && mentioned) return true;
           if (user_Preference_Comments_On_My_Submissions === "Yes" && isReplyOnMyComment) return true;  
           if (user_Preference_Comments_On_My_Submissions === "Yes" && isCommentOnMySubmission) return true;
           return false;
         }
-
-      case "Announcements": {
-        const authored = notification.Instructor_ID === userId;
-        const mentioned = notification.Mentions?.some(m => m.id === userId);
-        if (user_Preference_Announcements === "Yes" && !authored) return true;
-        if (user_Preference_Announcement_Mentions === "Yes" && mentioned) return true;
-        return false;
+        case "Announcements": {
+          const authored = notification.Instructor_ID === userId;
+          const mentioned = notification.Mentions?.some(m => m.id === userId);
+          if (user_Preference_Announcements === "Yes" && !authored) return true;
+          if (user_Preference_Announcement_Mentions === "Yes" && mentioned) return true;
+          return false;
+        }
+        case "Announcement Comments": {
+          const authored = notification.Comment?.author_id === userId;
+          const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
+          const parentIsUser = notification.ForumComments?.Parent_Announcement?.instructor_id === userId;
+          const commentOwnerId = notification.Comment?.Reply_to_Comment?.author_id; 
+          const isReplyOnMyComment = commentOwnerId === userId;
+          if (user_Preference_Announcement_Comments === "Yes" && !authored) return true;
+          if (user_Preference_Announcement_Comment_Mentions === "Yes" && mentioned) return true;
+          if (user_Preference_Comments_On_My_Announcements === "Yes" && isReplyOnMyComment) return true;  
+          if (user_Preference_Comments_On_My_Announcements === "Yes" && parentIsUser) return true;
+          return false;
+        }
+        default:
+          return false;
       }
+    });
 
-      case "Announcement Comments": {
-        const authored = notification.Comment?.author_id === userId;
-        const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
-        const parentIsUser = notification.ForumComments?.Parent_Announcement?.instructor_id === userId;
-        if (user_Preference_Announcement_Comments === "Yes" && !authored) return true;
-        if (user_Preference_Announcement_Comment_Mentions === "Yes" && mentioned) return true;
-        if (user_Preference_Comments_On_My_Announcements === "Yes" && parentIsUser) return true;
-       // if (user_Preference_Comments_On_My_Announcements === "Yes" && notification.Comment?.Reply_to_Comment?.author_id ===userId) return true;
-        return false;
+    if (filteredNotifications.length === 0) return;
+
+    filteredNotifications.forEach((notification) => {
+      notificationIDs.add(Number(notification.ID));
+      notificationData.push(notification);
+    });
+
+    notificationData.sort((a, b) => a.Date_Added - b.Date_Added);
+    displayedNotifications.clear();
+    const container = document.getElementById("parentNotificationTemplatesInBody");
+    container.innerHTML = "";
+
+    notificationData.forEach((notification) => {
+      if (!displayedNotifications.has(Number(notification.ID))) {
+        processNotification(notification);
       }
+    });
 
-      default:
-        return false;
-    }
-  });
+    updateMarkAllReadVisibility();
+  };
 
+  socket.onerror = () => {
+    // Optional: log errors
+  };
 
-
-
-  if (filteredNotifications.length === 0) return;
-
-  filteredNotifications.forEach((notification) => {
-    notificationIDs.add(Number(notification.ID));
-    notificationData.push(notification);
-  });
-
-  notificationData.sort((a, b) => a.Date_Added - b.Date_Added);
-  displayedNotifications.clear();
-  document.getElementById("parentNotificationTemplatesInBody").innerHTML = "";
-
-  notificationData.forEach((notification) => {
-    if (!displayedNotifications.has(Number(notification.ID))) {
-      processNotification(notification);
-    }
-  });
-
-  updateMarkAllReadVisibility();
-};
-
-    socket.onerror = () => {};
-    socket.onclose = () => {
-      clearInterval(keepAliveInterval);
-      socketConnections.delete(classId);
-      setTimeout(() => {
-        if (!document.hidden) initializeSocket();
-      }, 28000);
-    };
-
-    socketConnections.set(classId, { socket, keepAliveInterval });
-  });
+  socket.onclose = () => {
+    clearInterval(keepAliveInterval);
+    setTimeout(() => {
+      if (!document.hidden) initializeSocket(); // retry on disconnect
+    }, 28000);
+  };
 }
 
-
-document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-        socketConnections.forEach((conn) => {
-            conn.socket.close();
-            clearInterval(conn.keepAliveInterval);
-        });
-        socketConnections.clear();
-    } else {
-        initializeSocket();
-    }
-});
-
 initializeSocket();
+
 function createNotificationCard(notification, isRead) {
     const assessmentType = notification.Submissions?.Assessment?.type;
   const card = document.createElement("div");
