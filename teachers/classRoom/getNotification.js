@@ -183,6 +183,7 @@ async function initializeSocket() {
 
     notificationData.sort((a, b) => a.Date_Added - b.Date_Added);
     displayedNotifications.clear();
+    const container = document.getElementById("parentNotificationTemplatesInBody");
     container.innerHTML = "";
 
     notificationData.forEach((notification) => {
