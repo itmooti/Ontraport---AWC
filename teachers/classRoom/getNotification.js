@@ -65,7 +65,7 @@ async function initializeSocket() {
   const classIds = await fetchClassIds(); // fetches all student’s class IDs
   if (!classIds || classIds.length === 0) return;
 
-  const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
+  const socket = new WebSocket(WS_ENDPOINT, "vitalstats");
   let keepAliveInterval;
 
   socket.onopen = () => {
