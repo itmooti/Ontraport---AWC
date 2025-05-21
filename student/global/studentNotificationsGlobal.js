@@ -607,6 +607,32 @@ let spinnerRemoved = false;
 // };
 
 
+
+//     socket.onerror = () => {};
+//     socket.onclose = () => {
+//       clearInterval(keepAliveInterval);
+//       socketConnections.delete(classId);
+//       setTimeout(() => {
+//         if (!document.hidden) initializeSocket();
+//       }, 28000);
+//     };
+
+//     socketConnections.set(classId, { socket, keepAliveInterval });
+//   });
+// }
+
+// document.addEventListener("visibilitychange", () => {
+//     if (document.hidden) {
+//         socketConnections.forEach((conn) => {
+//             conn.socket.close();
+//             clearInterval(conn.keepAliveInterval);
+//         });
+//         socketConnections.clear();
+//     } else {
+//         initializeSocket();
+//     }
+// });
+
 async function initializeSocket() {
   if (document.hidden) return;
 
@@ -742,30 +768,17 @@ async function initializeSocket() {
     updateMarkAllReadVisibility();
   };
 
-    socket.onerror = () => {};
-    socket.onclose = () => {
-      clearInterval(keepAliveInterval);
-      socketConnections.delete(classId);
-      setTimeout(() => {
-        if (!document.hidden) initializeSocket();
-      }, 28000);
-    };
+  socket.onerror = () => {
+    // Optional: log errors
+  };
 
-    socketConnections.set(classId, { socket, keepAliveInterval });
-  });
+  socket.onclose = () => {
+    clearInterval(keepAliveInterval);
+    setTimeout(() => {
+      if (!document.hidden) initializeSocket(); // retry on disconnect
+    }, 28000);
+  };
 }
-
-document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-        socketConnections.forEach((conn) => {
-            conn.socket.close();
-            clearInterval(conn.keepAliveInterval);
-        });
-        socketConnections.clear();
-    } else {
-        initializeSocket();
-    }
-});
 
 initializeSocket();
 
