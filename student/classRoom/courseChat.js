@@ -119,6 +119,7 @@
 //     MentionManager.initEditor(this);
 //   });
 // }
+
 class MentionManager {
   static allContacts = [];
 
@@ -287,7 +288,8 @@ if ($("#announcementContent").length > 0) {
   $("#announcementContent").each(function () {
     MentionManager.initEditor(this);
   });
-});
+}
+
 
 
 function renderAudioPlayer(link) {
