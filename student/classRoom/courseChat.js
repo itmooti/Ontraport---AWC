@@ -123,7 +123,7 @@ class MentionManager {
   static allContacts = [];
 
   static initContacts() {
-    const query = `
+    const classQuery = `
       query {
         getClasses(query: [{ where: { id: ${classId} } }]) {
           Teacher {
@@ -148,57 +148,88 @@ class MentionManager {
       }
     `;
 
-    fetch(graphqlApiEndpoint, {
+    const adminQuery = `
+      query {
+        getContact(query: [{ where: { email: "courses@writerscentre.com.au" } }]) {
+          Display_Name: display_name
+          FirstName: first_name
+          LastName: last_name
+          Contact_ID: id
+          Profile_Image: profile_image
+          Is_Instructor: is_instructor
+          Is_Admin: is_admin
+          Email: email
+        }
+      }
+    `;
+
+    const classFetch = fetch(graphqlApiEndpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Api-Key": apiAccessKey,
       },
-      body: JSON.stringify({ query }),
-    })
-      .then((response) => {
-        if (!response.ok) throw new Error("Network response not ok");
-        return response.json();
-      })
-      .then((data) => {
-        const result = data.data.getClasses?.[0];
-        if (!result) return;
+      body: JSON.stringify({ query: classQuery }),
+    }).then((res) => res.ok ? res.json() : Promise.reject("Class query failed"));
 
+    const adminFetch = fetch(graphqlApiEndpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Api-Key": apiAccessKey,
+      },
+      body: JSON.stringify({ query: adminQuery }),
+    }).then((res) => res.ok ? res.json() : Promise.reject("Admin query failed"));
+
+    Promise.all([classFetch, adminFetch])
+      .then(([classData, adminData]) => {
+        const result = classData.data.getClasses?.[0];
         const contacts = [];
 
-        const teacher = result.Teacher;
-        if (teacher && teacher.display_name?.trim()) {
+        if (result?.Teacher?.display_name?.trim()) {
           contacts.push({
-            key: teacher.display_name,
-            value: teacher.display_name,
-            name: teacher.display_name,
-            id: teacher.id,
-            profileImage: teacher.profile_image,
+            key: result.Teacher.display_name,
+            value: result.Teacher.display_name,
+            name: result.Teacher.display_name,
+            id: result.Teacher.id,
+            profileImage: result.Teacher.profile_image,
             isAdmin: false,
             isInstructor: true,
           });
         }
 
-        const students = result.Enrolments.map((e) => e.Student);
-        students.forEach((student) => {
-          if (student && student.display_name?.trim()) {
+        (result?.Enrolments || []).forEach(({ Student }) => {
+          if (Student?.display_name?.trim()) {
             contacts.push({
-              key: student.display_name,
-              value: student.display_name,
-              name: student.display_name,
-              id: student.id,
-              profileImage: student.profile_image,
+              key: Student.display_name,
+              value: Student.display_name,
+              name: Student.display_name,
+              id: Student.id,
+              profileImage: Student.profile_image,
               isAdmin: false,
               isInstructor: false,
             });
           }
         });
 
+        const admin = adminData.data.getContact;
+        if (admin?.Display_Name?.trim()) {
+          contacts.push({
+            key: admin.Display_Name,
+            value: admin.Display_Name,
+            name: admin.Display_Name,
+            id: admin.Contact_ID,
+            profileImage: admin.Profile_Image,
+            isAdmin: true,
+            isInstructor: admin.Is_Instructor,
+          });
+        }
+
         MentionManager.allContacts = contacts;
       })
-      .catch((error) =>
-        console.error("Error fetching contacts for mentions:", error)
-      );
+      .catch((error) => {
+        console.error("Error fetching mention contacts:", error);
+      });
   }
 
   static initEditor(editor) {
@@ -248,7 +279,6 @@ class MentionManager {
     return `<span class="mention" data-contact-id="${item.original.id}">@${item.original.value}</span>`;
   }
 }
-
 $(".comment-editor").each(function () {
   MentionManager.initEditor(this);
 });
@@ -257,7 +287,8 @@ if ($("#announcementContent").length > 0) {
   $("#announcementContent").each(function () {
     MentionManager.initEditor(this);
   });
-}
+});
+
 
 function renderAudioPlayer(link) {
   return `
