@@ -9,16 +9,11 @@ const SUBMISSION_COMMENTS_TYPE = (user_Preference_Comments_On_My_Submissions ===
 const fetchUserDate = user_Preference_Turn_Off_All_Notifications === 'Yes' ? `
 { andWhere: { created_at: "${Turn_Off_All_Notifications_Time_Unix}" } }` : '';
 
-function getSubscriptionQueryForClass(classId) {
+function getSubscriptionQueryForAllClasses() {
   return `
-    subscription subscribeToAnnouncements(
-      $class_id: AwcClassID
-      $limit: IntScalar
-      $offset: IntScalar
-    ) {
+    subscription subscribeToAnnouncements($class_id: [AwcClassID]) {
       subscribeToAnnouncements(
-        query: [
-          { where: { class_id: $class_id } }
+        query: [{ whereIn: { class_id: $class_id } }
           {
             andWhereGroup: [
               {
@@ -143,8 +138,8 @@ function getSubscriptionQueryForClass(classId) {
             ]
           }
         ]
-        limit: $limit
-        offset: $offset
+        limit: 50000
+        offset: 0
         orderBy: [{ path: ["created_at"], type: asc }]
       ) {
          ID: id
