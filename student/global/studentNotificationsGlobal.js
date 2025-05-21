@@ -507,7 +507,107 @@ let spinnerRemoved = false;
 //     }
 //   });
 
-  async function initializeSocket() {
+
+// const filteredNotifications = notifications.filter((notification) => {
+//   const userId = Number(loggedInContactIdIntAwc);
+//   switch (notification.Notification_Type) {
+//       case "Posts": {
+//         const authored = notification.Post?.author_id === userId;
+//         const mentioned = notification.Post?.Mentions?.some(m => m.id === userId);
+
+//         if (user_Preference_Posts === "Yes" && !authored) return true;
+//         if (user_Preference_Post_Mentions === "Yes" && mentioned) return true;
+//         return false;
+//         if (user_Preference_Post_Mentions === "Yes" && mentioned) return true;
+//         return false;
+//       }
+
+//       case "Post Comments": {
+//         const authored = notification.Comment?.author_id === userId;
+//         const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
+//         const parentIsUser = notification.Comment?.Forum_Post?.author_id === userId;
+//         if (user_Preference_Post_Comments === "Yes" && !authored) return true;
+//         if (user_Preference_Post_Comment_Mentions === "Yes" && mentioned) return true;
+//         if (user_Preference_Comments_On_My_Posts === "Yes" && parentIsUser) return true;
+//         //if (user_Preference_Comments_On_My_Posts === "Yes" && notification.Comment?.Reply_to_Comment?.author_id ===userId) return true;
+//         return false;
+//       }
+
+//       case "Submissions": {
+//         const submitted = notification.Submissions?.Student?.student_id === userId;
+//         const mentioned = notification.Submissions?.Submission_Mentions?.some(m => m.id === userId);
+//         if (user_Preference_Submissions === "Yes" && !submitted) return true;
+//         if (user_Preference_Submission_Mentions === "Yes" && mentioned) return true;
+//         return false;
+//       }
+          
+//         case "Submission Comments": {
+//           const authored = notification.Comment?.author_id === userId;
+//           const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
+//           const submissionOwnerId = notification.Submissions?.Student?.student_id;
+//           const isCommentOnMySubmission = submissionOwnerId === userId;
+//           const commentOwnerId = notification.Comment?.Reply_to_Comment?.author_id; 
+//           const isReplyOnMyComment = commentOwnerId === userId;
+//           const isreply = notification.Comment?.reply_to_comment_id !== null && notification.Comment?.reply_to_comment_id !== undefined;
+         
+//           if (user_Preference_Submission_Comments === "Yes" && !authored) return true;
+//           if (user_Preference_Submission_Comment_Mentions === "Yes" && mentioned) return true;
+//           if (user_Preference_Comments_On_My_Submissions === "Yes" && isReplyOnMyComment) return true;  
+//           if (user_Preference_Comments_On_My_Submissions === "Yes" && isCommentOnMySubmission) return true;
+//           return false;
+//         }
+
+//       case "Announcements": {
+//         const authored = notification.Instructor_ID === userId;
+//         const mentioned = notification.Mentions?.some(m => m.id === userId);
+//         if (user_Preference_Announcements === "Yes" && !authored) return true;
+//         if (user_Preference_Announcement_Mentions === "Yes" && mentioned) return true;
+//         return false;
+//       }
+
+//       case "Announcement Comments": {
+//         const authored = notification.Comment?.author_id === userId;
+//         const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
+//         const parentIsUser = notification.ForumComments?.Parent_Announcement?.instructor_id === userId;
+//         const commentOwnerId = notification.Comment?.Reply_to_Comment?.author_id; 
+//         const isReplyOnMyComment = commentOwnerId === userId;
+//         if (user_Preference_Announcement_Comments === "Yes" && !authored) return true;
+//         if (user_Preference_Announcement_Comment_Mentions === "Yes" && mentioned) return true;
+//         if (user_Preference_Comments_On_My_Announcements === "Yes" && isReplyOnMyComment) return true;  
+//         if (user_Preference_Comments_On_My_Announcements === "Yes" && parentIsUser) return true;
+//        // if (user_Preference_Comments_On_My_Announcements === "Yes" && notification.Comment?.Reply_to_Comment?.author_id ===userId) return true;
+//         return false;
+//       }
+
+//       default:
+//         return false;
+//     }
+//   });
+
+
+
+//   if (filteredNotifications.length === 0) return;
+
+//   filteredNotifications.forEach((notification) => {
+//     notificationIDs.add(Number(notification.ID));
+//     notificationData.push(notification);
+//   });
+
+//   notificationData.sort((a, b) => a.Date_Added - b.Date_Added);
+//   displayedNotifications.clear();
+//   container.innerHTML = "";
+
+//   notificationData.forEach((notification) => {
+//     if (!displayedNotifications.has(Number(notification.ID))) {
+//       processNotification(notification);
+//     }
+//   });
+        
+//  updateMarkAllReadVisibility();
+// };
+
+
+async function initializeSocket() {
   if (document.hidden) return;
 
   const classIds = await fetchClassIds(); // fetches all student’s class IDs
@@ -558,103 +658,89 @@ let spinnerRemoved = false;
         readAnnouncements.add(Number(notification.ID));
       }
     });
-const filteredNotifications = notifications.filter((notification) => {
-  const userId = Number(loggedInContactIdIntAwc);
-  switch (notification.Notification_Type) {
-      case "Posts": {
-        const authored = notification.Post?.author_id === userId;
-        const mentioned = notification.Post?.Mentions?.some(m => m.id === userId);
 
-        if (user_Preference_Posts === "Yes" && !authored) return true;
-        if (user_Preference_Post_Mentions === "Yes" && mentioned) return true;
-        return false;
-        if (user_Preference_Post_Mentions === "Yes" && mentioned) return true;
-        return false;
-      }
-
-      case "Post Comments": {
-        const authored = notification.Comment?.author_id === userId;
-        const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
-        const parentIsUser = notification.Comment?.Forum_Post?.author_id === userId;
-        if (user_Preference_Post_Comments === "Yes" && !authored) return true;
-        if (user_Preference_Post_Comment_Mentions === "Yes" && mentioned) return true;
-        if (user_Preference_Comments_On_My_Posts === "Yes" && parentIsUser) return true;
-        //if (user_Preference_Comments_On_My_Posts === "Yes" && notification.Comment?.Reply_to_Comment?.author_id ===userId) return true;
-        return false;
-      }
-
-      case "Submissions": {
-        const submitted = notification.Submissions?.Student?.student_id === userId;
-        const mentioned = notification.Submissions?.Submission_Mentions?.some(m => m.id === userId);
-        if (user_Preference_Submissions === "Yes" && !submitted) return true;
-        if (user_Preference_Submission_Mentions === "Yes" && mentioned) return true;
-        return false;
-      }
-          
+    // Filter notifications based on type and user preferences
+    const filteredNotifications = notifications.filter((notification) => {
+      const userId = Number(loggedInContactIdIntAwc);
+      switch (notification.Notification_Type) {
+        case "Posts": {
+          const authored = notification.Post?.author_id === userId;
+          const mentioned = notification.Post?.Mentions?.some(m => m.id === userId);
+          if (user_Preference_Posts === "Yes" && !authored) return true;
+          if (user_Preference_Post_Mentions === "Yes" && mentioned) return true;
+          return false;
+        }
+        case "Post Comments": {
+          const authored = notification.Comment?.author_id === userId;
+          const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
+          const parentIsUser = notification.Comment?.Forum_Post?.author_id === userId;
+          if (user_Preference_Post_Comments === "Yes" && !authored) return true;
+          if (user_Preference_Post_Comment_Mentions === "Yes" && mentioned) return true;
+          if (user_Preference_Comments_On_My_Posts === "Yes" && parentIsUser) return true;
+          return false;
+        }
+        case "Submissions": {
+          const submitted = notification.Submissions?.Student?.student_id === userId;
+          const mentioned = notification.Submissions?.Submission_Mentions?.some(m => m.id === userId);
+          if (user_Preference_Submissions === "Yes" && !submitted) return true;
+          if (user_Preference_Submission_Mentions === "Yes" && mentioned) return true;
+          return false;
+        }
         case "Submission Comments": {
           const authored = notification.Comment?.author_id === userId;
           const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
-          const submissionOwnerId = notification.Submissions?.Student?.student_id;
-          const isCommentOnMySubmission = submissionOwnerId === userId;
+          const isCommentOnMySubmission = notification.Submissions?.Student?.student_id === userId;
           const commentOwnerId = notification.Comment?.Reply_to_Comment?.author_id; 
           const isReplyOnMyComment = commentOwnerId === userId;
-          const isreply = notification.Comment?.reply_to_comment_id !== null && notification.Comment?.reply_to_comment_id !== undefined;
-         
           if (user_Preference_Submission_Comments === "Yes" && !authored) return true;
           if (user_Preference_Submission_Comment_Mentions === "Yes" && mentioned) return true;
           if (user_Preference_Comments_On_My_Submissions === "Yes" && isReplyOnMyComment) return true;  
           if (user_Preference_Comments_On_My_Submissions === "Yes" && isCommentOnMySubmission) return true;
           return false;
         }
-
-      case "Announcements": {
-        const authored = notification.Instructor_ID === userId;
-        const mentioned = notification.Mentions?.some(m => m.id === userId);
-        if (user_Preference_Announcements === "Yes" && !authored) return true;
-        if (user_Preference_Announcement_Mentions === "Yes" && mentioned) return true;
-        return false;
+        case "Announcements": {
+          const authored = notification.Instructor_ID === userId;
+          const mentioned = notification.Mentions?.some(m => m.id === userId);
+          if (user_Preference_Announcements === "Yes" && !authored) return true;
+          if (user_Preference_Announcement_Mentions === "Yes" && mentioned) return true;
+          return false;
+        }
+        case "Announcement Comments": {
+          const authored = notification.Comment?.author_id === userId;
+          const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
+          const parentIsUser = notification.ForumComments?.Parent_Announcement?.instructor_id === userId;
+          const commentOwnerId = notification.Comment?.Reply_to_Comment?.author_id; 
+          const isReplyOnMyComment = commentOwnerId === userId;
+          if (user_Preference_Announcement_Comments === "Yes" && !authored) return true;
+          if (user_Preference_Announcement_Comment_Mentions === "Yes" && mentioned) return true;
+          if (user_Preference_Comments_On_My_Announcements === "Yes" && isReplyOnMyComment) return true;  
+          if (user_Preference_Comments_On_My_Announcements === "Yes" && parentIsUser) return true;
+          return false;
+        }
+        default:
+          return false;
       }
+    });
 
-      case "Announcement Comments": {
-        const authored = notification.Comment?.author_id === userId;
-        const mentioned = notification.Comment?.Mentions?.some(m => m.id === userId);
-        const parentIsUser = notification.ForumComments?.Parent_Announcement?.instructor_id === userId;
-        const commentOwnerId = notification.Comment?.Reply_to_Comment?.author_id; 
-        const isReplyOnMyComment = commentOwnerId === userId;
-        if (user_Preference_Announcement_Comments === "Yes" && !authored) return true;
-        if (user_Preference_Announcement_Comment_Mentions === "Yes" && mentioned) return true;
-        if (user_Preference_Comments_On_My_Announcements === "Yes" && isReplyOnMyComment) return true;  
-        if (user_Preference_Comments_On_My_Announcements === "Yes" && parentIsUser) return true;
-       // if (user_Preference_Comments_On_My_Announcements === "Yes" && notification.Comment?.Reply_to_Comment?.author_id ===userId) return true;
-        return false;
+    if (filteredNotifications.length === 0) return;
+
+    filteredNotifications.forEach((notification) => {
+      notificationIDs.add(Number(notification.ID));
+      notificationData.push(notification);
+    });
+
+    notificationData.sort((a, b) => a.Date_Added - b.Date_Added);
+    displayedNotifications.clear();
+    container.innerHTML = "";
+
+    notificationData.forEach((notification) => {
+      if (!displayedNotifications.has(Number(notification.ID))) {
+        processNotification(notification);
       }
+    });
 
-      default:
-        return false;
-    }
-  });
-
-
-
-  if (filteredNotifications.length === 0) return;
-
-  filteredNotifications.forEach((notification) => {
-    notificationIDs.add(Number(notification.ID));
-    notificationData.push(notification);
-  });
-
-  notificationData.sort((a, b) => a.Date_Added - b.Date_Added);
-  displayedNotifications.clear();
-  container.innerHTML = "";
-
-  notificationData.forEach((notification) => {
-    if (!displayedNotifications.has(Number(notification.ID))) {
-      processNotification(notification);
-    }
-  });
-        
- updateMarkAllReadVisibility();
-};
+    updateMarkAllReadVisibility();
+  };
 
     socket.onerror = () => {};
     socket.onclose = () => {
