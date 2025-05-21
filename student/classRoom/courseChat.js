@@ -13,7 +13,6 @@ class MentionManager {
                 ]
             }
             }
-            { orWhere: { Classes: [{ where: { id: ${classId}  } }] } }
             ]
         ) {
                 Display_Name: field(arg: ["display_name"]) 
