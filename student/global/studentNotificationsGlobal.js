@@ -146,10 +146,9 @@ async function getEnrolmentIdsByCourseUid(courseUid, activeOrInactive) {
 //function getSubscriptionQueryForClass(classId) {
 function getSubscriptionQueryForAllClasses() {
   return `
-
     subscription subscribeToAnnouncements($class_id: [AwcClassID]) {
       subscribeToAnnouncements(
-        query: [{ whereIn: { class_id: $class_id } }]
+        query: [{ whereIn: { class_id: $class_id } }
           {
             andWhereGroup: [
               {
