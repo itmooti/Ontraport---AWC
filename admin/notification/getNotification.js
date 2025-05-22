@@ -198,6 +198,7 @@ async function initializeSocket() {
     });
 
        document.getElementById("socketLoader")?.classList.add("hidden");
+       document.getElementById("socketLoadersec")?.classList.add("hidden");
 if (notificationData.length === 0) {
     document.getElementById("noAllMessage")?.classList.remove("hidden");
     document.getElementById("noAnnouncementsMessage")?.classList.remove("hidden");
@@ -515,6 +516,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function updateNoNotificationMessages() {
+      document.getElementById("socketLoader")?.classList.add("hidden");
     const noAllMessage = document.getElementById("noAllMessage");
     const noAnnouncementsMessage = document.getElementById("noAnnouncementsMessage");
     if (!noAllMessage || !noAnnouncementsMessage) return;
@@ -525,6 +527,7 @@ function updateNoNotificationMessages() {
 }
 
 function updateNoNotificationMessagesSec() {
+     document.getElementById("socketLoadersec")?.classList.add("hidden");
     const noAllMessageSec = document.getElementById("noAllMessageSec");
     const noAnnouncementsMessageSec = document.getElementById("noAnnouncementsMessageSec");
     if (!noAllMessageSec || !noAnnouncementsMessageSec) return;
