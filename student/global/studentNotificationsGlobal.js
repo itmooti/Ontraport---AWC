@@ -51,13 +51,13 @@ const fetchUserDate =
     user_Preference_Turn_Off_All_Notifications === "Yes"
         ? ` { andWhere: { created_at: "${Turn_Off_All_Notifications_Time_Unix}" } }`
         : "";
-//Het eid from lesson UIs ${CONTACTss_ID}
+//Het eid from lesson UIs 
 async function getEnrolmentIdsByLessonUid(lessonUid, activeOrInactive) {
     const query = `
     query getEnrolment {
       getEnrolment(
         query: [
-          { where: { student_id: 789825245895 } }
+          { where: { student_id: ${CONTACTss_ID} } }
           {
             andWhere: {
               Class: [
@@ -397,14 +397,14 @@ function timeAgo(unixTimestamp) {
 
 let cachedClassIds = null;
 let socketConnections = new Map();
-
+//${loggedInContactIdIntAwc}
 async function fetchClassIds() {
     if (cachedClassIds !== null) return cachedClassIds;
         const query = `
     query calcEnrolments {
       calcEnrolments(
         query: [
-          { where: { student_id: ${loggedInContactIdIntAwc} } }
+          { where: { student_id: 473545453543453453 } }
         ]
         limit: 5000 
         offset: 0
