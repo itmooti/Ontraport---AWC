@@ -1150,6 +1150,6 @@ document.addEventListener("DOMContentLoaded", function () {
     updateNoNotificationMessages();
     updateNoNotificationMessagesSec();
          }
-  }, 2000);
+  }, 5000);
 });
 
