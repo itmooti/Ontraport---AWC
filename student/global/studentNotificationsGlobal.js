@@ -1335,7 +1335,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
 document.addEventListener("DOMContentLoaded", function () {
     updateMarkAllReadVisibility();
+    setTimeout(() => {
+    if (notificationData.length === 0) {
     updateNoNotificationMessages();
     updateNoNotificationMessagesSec();
+         }
+  }, 2000);
 });
 
