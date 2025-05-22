@@ -51,13 +51,13 @@ const fetchUserDate =
     user_Preference_Turn_Off_All_Notifications === "Yes"
         ? ` { andWhere: { created_at: "${Turn_Off_All_Notifications_Time_Unix}" } }`
         : "";
-//Het eid from lesson UIs
+//Het eid from lesson UIs ${CONTACTss_ID}
 async function getEnrolmentIdsByLessonUid(lessonUid, activeOrInactive) {
     const query = `
     query getEnrolment {
       getEnrolment(
         query: [
-          { where: { student_id: ${CONTACTss_ID} } }
+          { where: { student_id: 789825245895 } }
           {
             andWhere: {
               Class: [
