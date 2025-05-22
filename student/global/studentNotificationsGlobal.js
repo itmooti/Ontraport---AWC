@@ -633,6 +633,9 @@ let spinnerRemoved = false;
 // });
 
 async function initializeSocket() {
+    document.getElementById("socketLoader")?.classList.remove("hidden");
+document.getElementById("parentNotificationTemplatesInBody")?.classList.add("hidden");
+
   if (document.hidden) return;
 
   const classIds = await fetchClassIds(); // fetches all student’s class IDs
@@ -669,6 +672,9 @@ async function initializeSocket() {
 
     const result = data.payload.data.subscribeToAnnouncements;
     if (!result) return;
+      document.getElementById("socketLoader")?.classList.add("hidden");
+document.getElementById("parentNotificationTemplatesInBody")?.classList.remove("hidden");
+
 
     const notifications = Array.isArray(result) ? result : [result];
 
