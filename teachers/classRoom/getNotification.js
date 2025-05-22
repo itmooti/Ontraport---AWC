@@ -60,6 +60,10 @@ query calcClasses {
 
 
 async function initializeSocket() {
+    document.getElementById("socketLoader")?.classList.remove("hidden");
+    document.getElementById("parentNotificationTemplatesInBody")?.classList.add("hidden");
+    document.getElementById("noAllMessage")?.classList.add("hidden");
+    document.getElementById("noAnnouncementsMessage")?.classList.add("hidden");
   if (document.hidden) return;
 
   const classIds = await fetchClassIds(); // fetches all student’s class IDs
@@ -191,7 +195,15 @@ async function initializeSocket() {
         processNotification(notification);
       }
     });
-
+document.getElementById("socketLoader")?.classList.add("hidden");
+if (notificationData.length === 0) {
+    document.getElementById("noAllMessage")?.classList.remove("hidden");
+    document.getElementById("noAnnouncementsMessage")?.classList.remove("hidden");
+} else {
+  document.getElementById("noAllMessage")?.classList.add("hidden");
+  document.getElementById("noAnnouncementsMessage")?.classList.add("hidden");
+  document.getElementById("parentNotificationTemplatesInBody")?.classList.remove("hidden");
+}
     updateMarkAllReadVisibility();
   };
 
@@ -691,6 +703,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
 document.addEventListener("DOMContentLoaded", function () {
     updateMarkAllReadVisibility();
+    setTimeout(() => {
+    if (notificationData.length === 0) {
     updateNoNotificationMessages();
     updateNoNotificationMessagesSec();
+         }
+  }, 5000);
+
 });
