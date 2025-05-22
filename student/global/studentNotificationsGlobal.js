@@ -136,14 +136,7 @@ async function getEnrolmentIdsByCourseUid(courseUid, activeOrInactive) {
     const result = await response.json();
     return result?.data?.getEnrolment?.ID ? [result.data.getEnrolment.ID] : [];
 }
-    // subscription subscribeToAnnouncements(
-    //   $class_id: AwcClassID
-    // ) {
-    //   subscribeToAnnouncements(
-    //     query: [
-    //       { where: { class_id: $class_id } }
-// ✅ 1. Updated SUBSCRIPTION_QUERY using subscribeToAnnouncements (one socket per class, no alias)
-//function getSubscriptionQueryForClass(classId) {
+   
 function getSubscriptionQueryForAllClasses() {
   return `
     subscription subscribeToAnnouncements($class_id: [AwcClassID]) {
@@ -448,7 +441,7 @@ async function initializeSocket() {
 
   if (document.hidden) return;
 
-  const classIds = await fetchClassIds(); // fetches all student’s class IDs
+  const classIds = await fetchClassIds(); 
   if (!classIds || classIds.length === 0) return;
 
   const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
@@ -468,7 +461,7 @@ async function initializeSocket() {
         id: "subscription_all_classes",
         type: "GQL_START",
         payload: {
-          query: getSubscriptionQueryForAllClasses(), // this function should return your new query
+          query: getSubscriptionQueryForAllClasses(), 
           variables: { class_id: classIds }
         }
       })
@@ -579,11 +572,11 @@ async function initializeSocket() {
 
  document.getElementById("socketLoader")?.classList.add("hidden");
 if (notificationData.length === 0) {
-     document.getElementById("noAllMessage")?.classList.remove("hidden");
+    document.getElementById("noAllMessage")?.classList.remove("hidden");
     document.getElementById("noAnnouncementsMessage")?.classList.remove("hidden");
 } else {
   document.getElementById("noAllMessage")?.classList.add("hidden");
-    document.getElementById("noAnnouncementsMessage")?.classList.add("hidden");
+  document.getElementById("noAnnouncementsMessage")?.classList.add("hidden");
   document.getElementById("parentNotificationTemplatesInBody")?.classList.remove("hidden");
 }
 
