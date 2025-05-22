@@ -1107,6 +1107,7 @@ function updateNoNotificationMessages() {
     const noAnnouncementsMessage = document.getElementById(
         "noAnnouncementsMessage"
     );
+          document.getElementById("socketLoader")?.classList.add("hidden");
     if (!noAllMessage || !noAnnouncementsMessage) return;
     const visibleCards = [...cardMap.values()].filter(
         ({ original }) => original && !original.classList.contains("hidden")
@@ -1121,6 +1122,7 @@ function updateNoNotificationMessagesSec() {
     const noAnnouncementsMessageSec = document.getElementById(
         "noAnnouncementsMessageSec"
     );
+     document.getElementById("socketLoader")?.classList.add("hidden");
     if (!noAllMessageSec || !noAnnouncementsMessageSec) return;
     const hasVisible = [...cardMap.values()].some(
         ({ clone }) => clone && !clone.classList.contains("hidden")
