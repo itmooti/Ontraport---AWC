@@ -634,7 +634,9 @@ let spinnerRemoved = false;
 
 async function initializeSocket() {
     document.getElementById("socketLoader")?.classList.remove("hidden");
-document.getElementById("parentNotificationTemplatesInBody")?.classList.add("hidden");
+    document.getElementById("parentNotificationTemplatesInBody")?.classList.add("hidden");
+    document.getElementById("noAllMessage")?.classList.add("hidden");
+    document.getElementById("noAnnouncementsMessage")?.classList.add("hidden");
 
   if (document.hidden) return;
 
@@ -672,10 +674,6 @@ document.getElementById("parentNotificationTemplatesInBody")?.classList.add("hid
 
     const result = data.payload.data.subscribeToAnnouncements;
     if (!result) return;
-      document.getElementById("socketLoader")?.classList.add("hidden");
-document.getElementById("parentNotificationTemplatesInBody")?.classList.remove("hidden");
-
-
     const notifications = Array.isArray(result) ? result : [result];
 
     // Existing logic for read status
@@ -753,6 +751,7 @@ document.getElementById("parentNotificationTemplatesInBody")?.classList.remove("
       }
     });
 
+      
     if (filteredNotifications.length === 0) return;
 
     filteredNotifications.forEach((notification) => {
@@ -769,6 +768,16 @@ document.getElementById("parentNotificationTemplatesInBody")?.classList.remove("
         processNotification(notification);
       }
     });
+
+ document.getElementById("socketLoader")?.classList.add("hidden");
+if (notificationData.length === 0) {
+     document.getElementById("noAllMessage")?.classList.remove("hidden");
+    document.getElementById("noAnnouncementsMessage")?.classList.remove("hidden");
+} else {
+  document.getElementById("noAllMessage")?.classList.add("hidden");
+    document.getElementById("noAnnouncementsMessage")?.classList.add("hidden");
+  document.getElementById("parentNotificationTemplatesInBody")?.classList.remove("hidden");
+}
 
     updateMarkAllReadVisibility();
   };
