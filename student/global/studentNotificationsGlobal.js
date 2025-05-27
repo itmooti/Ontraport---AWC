@@ -271,6 +271,7 @@ function getSubscriptionQueryForAllClasses() {
         orderBy: [{ path: ["created_at"], type: asc }]
       ) {
         ID: id
+        AnnouncementContent:content
         Class_ID: class_id
         Comment_ID: comment_id
         Content: content
@@ -305,6 +306,7 @@ function getSubscriptionQueryForAllClasses() {
         }
         Mentions { id }
         Submissions {
+        submission_note
         unique_id 
           Student {
             student_id
@@ -316,6 +318,7 @@ function getSubscriptionQueryForAllClasses() {
           ForumComments { Author { display_name first_name last_name } }
         }
         Comment { 
+        comment 
           id  
           author_id 
           reply_to_comment_id 
@@ -737,9 +740,14 @@ function createNotificationCard(notification, isRead) {
     let lowerContent = '';
     if(notification_Type==="Posts"){
         lowerContent=`${notification.Post?.post_copy}"`
+    }else if(notification_Type==="Submissions"){
+        lowerContent=`${notification.Submissions?.submission_note}`;
+    }else if(notification_Type==="Announcements"){
+        lowerContent=`${notification.AnnouncementContent}`;
     }else{
-        lowerContent='Text';
+    lowerContent=`${notification.Comment?.comment}`;
     }
+
 
   card.className = "notification-card cursor-pointer";
   card.innerHTML = `
@@ -750,7 +758,7 @@ function createNotificationCard(notification, isRead) {
         </div>
         <div class="extra-small-text text-dark line-clamp-2">${messageContent}</div>
         <div class="text-[#586A80] extra-small-text">${notification_course_name}-${notification_class_name}</div>
-        <div>${lowerContent}</div>
+        <div class="text-[#586A80] extra-small-text line-clamp-1">${lowerContent}</div>
       </div>
       <div class="extra-small-text text-[#586A80] text-nowrap">${timeAgo(notification.Date_Added)}</div>
     </div>
