@@ -396,7 +396,7 @@ function createNotificationCard(notification, isRead) {
       const lessonUid = notification.Submissions.Assessment.Lesson.unique_id;
           window.location.href = `https://courses.writerscentre.com.au/course-details/content/${lessonUid}?submissionPostIs=${notification.Notification_Type === 'Submissions' ? notification.Submissions_ID : commentIdForNoti}${assessmentType === "File Submission" ? `&subUID=${subUID}&commentScrollId=${commentScrollID}` : ""}`
     } else {
-      window.location.href = `https://courses.writerscentre.com.au/teacher/class/${classIDForADmin}?selectedTab=announcements?data-announcement-template-id=${anouncementScrollId}`;
+      window.location.href = `https://courses.writerscentre.com.au/teacher/class/${classIDForADmin}?selectedTab=announcements?data-announcement-template-id=${notification.Notification_Type === 'Announcements' ? anouncementScrollId : commentIdForNoti}`;
     }
   });
 
