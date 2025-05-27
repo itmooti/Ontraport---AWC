@@ -350,143 +350,7 @@
         return "";
       },
     });
-  //   async function fetchClassMembers(classIdForComment) {
-  //     const query = `
-  //   query getClasses {
-  //     getClasses(query: [{ where: { id: ${classIdForComment} } }]) {
-  //       Teacher {
-  //         display_name
-  //         first_name
-  //         last_name
-  //         profile_image
-  //         id 
-  //         unique_id
-  //       }
-  //       Enrolments {
-  //         Student {
-  //           unique_id
-  //           display_name
-  //           first_name
-  //           last_name
-  //           profile_image
-  //         }
-  //       }
-  //     }
-  //   }
-  // `;
-
-  //     const res = await fetch(endpointForComment, {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         "Api-Key": apiKeyForComment,
-  //       },
-  //       body: JSON.stringify({ query }),
-  //     });
-
-  //     const json = await res.json();
-  //     return json.data.getClasses?.[0];
-  //   }
-  //   //  initializs tribute
-  //   function initializeTribute() {
-  //     document.querySelectorAll(".mentionable").forEach((el) => {
-  //       if (!el.hasAttribute("data-tribute-attached")) {
-  //         globalTribute.attach(el);
-  //         el.setAttribute("data-tribute-attached", "true");
-  //       }
-  //     });
-  //   }
-  //   document.addEventListener("DOMContentLoaded", async () => {
-  //     try {
-  //       const classData = await fetchClassMembers(classIdForComment);
-  //       const people = [];
-
-  //       if (classData?.Teacher) {
-  //         const t = classData.Teacher;
-  //         people.push({
-  //           key: t.display_name || `${t.first_name} ${t.last_name}`,
-  //           value: t.unique_id,
-  //           image: t.profile_image || defaultImgComment,
-  //         });
-  //       }
-
-  //       (classData?.Enrolments || []).forEach((e) => {
-  //         const s = e.Student;
-  //         if (
-  //           s?.unique_id &&
-  //           (s.display_name || s.first_name || s.last_name)
-  //         ) {
-  //           people.push({
-  //             key: s.display_name || `${s.first_name} ${s.last_name}`,
-  //             value: s.unique_id,
-  //             image: s.profile_image || defaultImgComment,
-  //           });
-  //         }
-  //       });
-
-  //       globalTribute = new Tribute({
-  //         values: people,
-  //         menuItemTemplate: function (item) {
-  //           if (!item || !item.original) return "";
-  //           return `<div class="cursor-pointer inline-flex items-center gap-x-1">
-  //                 <img src="${item.original.image}" style="object-fit:cover;height:20px;width:20px;border-radius:50%">
-  //                 <span>${item.original.key}</span>
-  //               </div>`;
-  //         },
-  //         selectTemplate: function (item) {
-  //           if (!item || !item.original) return "";
-
-  //           const activeEditor = globalTribute.current.element;
-  //           if (!activeEditor._mentionIds) activeEditor._mentionIds = [];
-
-  //           activeEditor._mentionIds.push(item.original.value);
-
-  //           return `<span class="mention-handle label bg-[#ebf6f6] text-[#007c8a] py-[1px] px-[2px] rounded" data-mention-id="${item.original.value}">@${item.original.key}</span>`;
-  //         },
-  //       });
-
-  //       document.querySelectorAll(".mentionable").forEach((el) => {
-  //         globalTribute.attach(el);
-  //       });
-
-  //       document.querySelectorAll(".mentionable").forEach((singleEditor) => {
-  //         function setPlaceholder() {
-  //           if (!singleEditor.textContent.trim()) {
-  //             const span = document.createElement("span");
-  //             span.className =
-  //               "mention-placeholder text-[#586a80] text-base font-normal leading-normal pointer-events-none select-none";
-  //             span.innerHTML = "Type @ to mention members";
-  //             singleEditor.appendChild(span);
-  //           }
-  //         }
-
-  //         singleEditor.addEventListener("focus", () => {
-  //           const placeholder = singleEditor.querySelector(
-  //             ".mention-placeholder"
-  //           );
-  //           if (placeholder) placeholder.remove();
-  //         });
-
-  //         singleEditor.addEventListener("blur", () => {
-  //           setTimeout(() => {
-  //             if (
-  //               !singleEditor.textContent.trim() &&
-  //               !singleEditor.querySelector(".mention-placeholder")
-  //             ) {
-  //               const span = document.createElement("span");
-  //               span.className =
-  //                 "mention-placeholder text-[#586a80] text-base font-normal leading-normal pointer-events-none select-none";
-  //               span.innerHTML = "Type @ to mention members";
-  //               singleEditor.appendChild(span);
-  //             }
-  //           }, 10);
-  //         });
-
-  //         setPlaceholder();
-  //       });
-  //     } catch (err) {
-  //     }
-  //   });
+ 
 
 async function fetchClassMembers(classIdForComment) {
   const query = `
@@ -758,7 +622,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const match = window.location.href.match(/[?&]submissionPostIs=(\d+)/);
   if (match) {
     const submissionId = match[1];
-    const iframe = document.getElementById(`mainFileSubmissionList_${submissionId}`);
+    const iframe = document.querySelector(`.mainFileSubmissionList_${submissionId}`);
 
     if (iframe) {
       iframe.click();
