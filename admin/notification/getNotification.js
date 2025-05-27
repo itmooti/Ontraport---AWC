@@ -361,6 +361,17 @@ function createNotificationCard(notification, isRead) {
     messageContent = `${notification_Type || "Someone"} added something`;
   }
 
+    let lowerContent = '';
+    if(notification_Type==="Posts"){
+        lowerContent=`${notification.Post?.post_copy}`
+    }else if(notification_Type==="Submissions"){
+        lowerContent=`${notification.Submissions?.submission_note}`;
+    }else if(notification_Type==="Announcements"){
+        lowerContent=`${notification.Content}`;
+    }else{
+    lowerContent=`${notification.Comment?.comment}`;
+    }
+
   card.className = "notification-card cursor-pointer";
   card.innerHTML = `
     <div data-my-id="${notification.ID}" class="p-2 items-start gap-2 rounded justify-between notification-content w-full ${isRead ? "bg-white" : "bg-unread"} ${notification.Status === "Draft" ? "hidden" : "flex"}">
@@ -370,6 +381,7 @@ function createNotificationCard(notification, isRead) {
         </div>
         <div class="extra-small-text text-dark line-clamp-2">${messageContent}</div>
         <div class="text-[#586A80] extra-small-text">${notification_course_name}-${notification_class_name}</div>
+          <div class="text-[#586A80] extra-small-text line-clamp-1">${lowerContent}</div>
       </div>
       <div class="extra-small-text text-[#586A80] text-nowrap">${timeAgo(notification.Date_Added)}</div>
     </div>
