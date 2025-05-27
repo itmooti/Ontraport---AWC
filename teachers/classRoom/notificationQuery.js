@@ -142,7 +142,7 @@ function getSubscriptionQueryForAllClasses() {
         offset: 0
         orderBy: [{ path: ["created_at"], type: asc }]
       ) {
-       ID: id
+        ID: id
         Class_ID: class_id
         Comment_ID: comment_id
         Content: content
@@ -157,6 +157,7 @@ function getSubscriptionQueryForAllClasses() {
         Type: type
         Unique_ID: unique_id
         Class {
+        unique_id 
           class_name
           Enrolments { id }
           Active_Course {
@@ -170,7 +171,7 @@ function getSubscriptionQueryForAllClasses() {
           }
         }
         Post {
-         post_copy
+        post_copy
           author_id
           Author { display_name first_name last_name }
           Mentions { display_name first_name last_name id }
