@@ -171,12 +171,14 @@ function getSubscriptionQueryForAllClasses() {
           }
         }
         Post {
+        post_copy
           author_id
           Author { display_name first_name last_name }
           Mentions { display_name first_name last_name id }
         }
         Mentions { id }
         Submissions {
+        submission_note
         unique_id 
           Student {
             student_id
@@ -188,6 +190,7 @@ function getSubscriptionQueryForAllClasses() {
           ForumComments { Author { display_name first_name last_name } }
         }
         Comment { 
+        comment 
           id  
           author_id 
           reply_to_comment_id 
