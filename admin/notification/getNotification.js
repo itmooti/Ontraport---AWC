@@ -392,17 +392,13 @@ function createNotificationCard(notification, isRead) {
     const courseUid = notification.Class?.Active_Course?.unique_id || notification.Class?.Course?.unique_id;
       const classIDForADmin=  notification?.Class?.unique_id;
     const activeOrInactive = notification.Class?.Active_Course?.unique_id ? "Active_Course" : "Course";
-
+ const commentIdForNoti = notification.Comment?.id;
     if ((type === "Posts" || type === "Post Comments") && notification.Post_ID) {
-    //  const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);https://courses.writerscentre.com.au/admin/class/7EPM7Q9
-      window.location.href = `https://courses.writerscentre.com.au/admin/class/${classIDForADmin}?selectedTab=chats?current-post-id=${notification.Post_ID}`;
+      window.location.href = `https://courses.writerscentre.com.au/admin/class/${classIDForADmin}?selectedTab=chats?current-post-id=${notification.Notification_Type === 'Posts' ? notification.Post_ID : commentIdForNoti}`;
     } else if ((type === "Submissions" || type === "Submission Comments") && notification.Submissions?.Assessment?.Lesson?.unique_id) {
       const lessonUid = notification.Submissions.Assessment.Lesson.unique_id;
-     // const myEidFromLesson = await getEnrolmentIdsByLessonUid(lessonUid, activeOrInactive);
-    window.location.href = `https://courses.writerscentre.com.au/course-details/content/${lessonUid}?submissionPostIs=${notification.Submissions_ID}${assessmentType === "File Submission" ? `&subUID=${subUID}&commentScrollId=${commentScrollID}` : ""}`
-    //  window.location.href = `https://courses.writerscentre.com.au/course-details/content/${lessonUid}`;
+    window.location.href = `https://courses.writerscentre.com.au/course-details/content/${lessonUid}?submissionPostIs=${notification.Notification_Type === 'Submissions' ? notification.Submissions_ID : commentIdForNoti}${assessmentType === "File Submission" ? `&subUID=${subUID}&commentScrollId=${commentScrollID}` : ""}`
     } else {
-     // const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
       window.location.href = `https://courses.writerscentre.com.au/admin/class/${classIDForADmin}?selectedTab=announcements?data-announcement-template-id=${anouncementScrollId}`;
     }
   });
