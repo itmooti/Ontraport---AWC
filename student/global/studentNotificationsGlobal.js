@@ -271,7 +271,6 @@ function getSubscriptionQueryForAllClasses() {
         orderBy: [{ path: ["created_at"], type: asc }]
       ) {
         ID: id
-        AnnouncementContent:content
         Class_ID: class_id
         Comment_ID: comment_id
         Content: content
@@ -743,7 +742,7 @@ function createNotificationCard(notification, isRead) {
     }else if(notification_Type==="Submissions"){
         lowerContent=`${notification.Submissions?.submission_note}`;
     }else if(notification_Type==="Announcements"){
-        lowerContent=`${notification.AnnouncementContent}`;
+        lowerContent=`${notification.Content}`;
     }else{
     lowerContent=`${notification.Comment?.comment}`;
     }
