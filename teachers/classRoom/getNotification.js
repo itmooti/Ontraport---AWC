@@ -360,7 +360,7 @@ function createNotificationCard(notification, isRead) {
 
 let lowerContent = '';
     if(notification_Type==="Posts"){
-        lowerContent=`${notification.Post?.post_copy}"`
+        lowerContent=`${notification.Post?.post_copy}`
     }else if(notification_Type==="Submissions"){
         lowerContent=`${notification.Submissions?.submission_note}`;
     }else if(notification_Type==="Announcements"){
