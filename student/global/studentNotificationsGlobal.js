@@ -607,6 +607,7 @@ function createNotificationCard(notification, isRead) {
 
   const postMentionID = notification.Post?.Mentions?.some(m => String(m.id) === usersId);
   const commentMentionID = notification.Comment?.Mentions?.some(m => String(m.id) === usersId);
+  const commentIdForNoti = notification.Comment?.id;
   const announcementMentionID = notification.Mentions?.some(m => String(m.id) === usersId);
   const submissionMentionID = notification.Submissions?.Submission_Mentions?.some(m => String(m.id) === usersId);
 
@@ -768,7 +769,7 @@ function createNotificationCard(notification, isRead) {
       const commentScrollID = notification.Comment?.id;
     if ((type === "Posts" || type === "Post Comments") && notification.Post_ID) {
       const myEidFromCourse = await getEnrolmentIdsByCourseUid(courseUid, activeOrInactive);
-      window.location.href = `https://courses.writerscentre.com.au/students/course-details/${courseUid}?eid=${myEidFromCourse}&selectedTab=courseChat?current-post-id=${notification.Post_ID}`;
+      window.location.href = `https://courses.writerscentre.com.au/students/course-details/${courseUid}?eid=${myEidFromCourse}&selectedTab=courseChat?current-post-id=${notification.Post_ID}&test=${commentIdForNoti}`;
     } else if ((type === "Submissions" || type === "Submission Comments") && notification.Submissions?.Assessment?.Lesson?.unique_id) {
       const lessonUid = notification.Submissions.Assessment.Lesson.unique_id;
       const myEidFromLesson = await getEnrolmentIdsByLessonUid(lessonUid, activeOrInactive);
