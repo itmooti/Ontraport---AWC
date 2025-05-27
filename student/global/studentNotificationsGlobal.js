@@ -298,6 +298,7 @@ function getSubscriptionQueryForAllClasses() {
           }
         }
         Post {
+         post_copy
           author_id
           Author { display_name first_name last_name }
           Mentions { display_name first_name last_name id }
@@ -733,6 +734,12 @@ function createNotificationCard(notification, isRead) {
     message = `${notification_course_name} - A new notification has arrived`;
     messageContent = `${notification_Type || "Someone"} added something`;
   }
+    let lowerContent = '';
+    if(notification_Type==="Posts"){
+        lowerContent=`${notification.Post?.post_copy}"`
+    }else{
+        lowerContent='Text';
+    }
 
   card.className = "notification-card cursor-pointer";
   card.innerHTML = `
@@ -743,6 +750,7 @@ function createNotificationCard(notification, isRead) {
         </div>
         <div class="extra-small-text text-dark line-clamp-2">${messageContent}</div>
         <div class="text-[#586A80] extra-small-text">${notification_course_name}-${notification_class_name}</div>
+        <div>${lowerContent}</div>
       </div>
       <div class="extra-small-text text-[#586A80] text-nowrap">${timeAgo(notification.Date_Added)}</div>
     </div>
