@@ -167,7 +167,10 @@ const SubmissionService = {
                 author_id: authorID,
                 submissions_id: submissionID,
                 comment: commentContentHTML,
-                Mentions: mentionArrays.map(id => ({ unique_id: id })),
+                Mentions: mentionArrays.map(id => ({ 
+                    unique_id: id,
+                    has__new__notification: true
+                })),
                 file: fileData,
             },
         };
@@ -202,7 +205,10 @@ const CommentsService = {
                 author_id: authorID,
                 reply_to_comment_id: replyToCommentId,
                 comment: replyContentHTML,
-                Mentions: mentions.map(id => ({ unique_id: id })),
+                Mentions: mentions.map(id => ({ 
+                    unique_id: id,
+                    has__new__notification: true
+                })),
             },
         };
 
