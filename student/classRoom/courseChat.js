@@ -603,7 +603,18 @@ mutation deleteForumComment($id: AwcForumCommentID) {
 
   const createCommentMutation = `
 mutation createForumComment($payload: ForumCommentCreateInput = null) {
-  createForumComment(payload: $payload) { author_id comment file forum_post_id reply_to_comment_id id Mentions { id } }
+  createForumComment(payload: $payload) { 
+  author_id 
+  comment 
+  file 
+  forum_post_id 
+  reply_to_comment_id 
+  id 
+  Mentions { 
+  id 
+  has__new__notification 
+  } 
+  }
 }
 `;
 
@@ -942,10 +953,10 @@ $(document).ready(function () {
     let payload = {
       post_copy: htmlContent,
       author_id: visitorContactID,
-      Mentions: mentionedIds.map((id) => ({ 
-        id: id, 
-        has__new__notification: true
-    })),
+      Mentions: mentionedIds.map((id) => ({
+        id: id,
+        has__new__notification: true,
+      })),
       post_status: "Published - Not flagged",
       class_id: classId,
     };
@@ -1082,7 +1093,10 @@ $(document).on("submit", ".commentForm", function (event) {
   let payload = {
     comment: htmlContent,
     author_id: visitorContactID,
-    Mentions: mentionedIds.map((id) => ({ id: id })),
+    Mentions: mentionedIds.map((id) => ({
+      id: id,
+      has__new__notification: true,
+    })),
   };
   if (parentType === "post") {
     payload.forum_post_id = parentId;
