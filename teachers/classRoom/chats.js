@@ -1,127 +1,8 @@
-// class MentionManager {
-//     static allContacts = [];
-//     static initContacts() {
-//         const query = `
-//         query calcContacts {
-//         calcContacts(
-//             query: [
-//             { where: { email: "courses@writerscentre.com.au" } }
-//             {
-//                 orWhere: {
-//                 Enrolments: [
-//                     { where: { Class: [{ where: { id: ${classId} } }] } }
-//                 ]
-//             }
-           
-//             }
-//             ]
-//         ) {
-//                 Display_Name: field(arg: ["display_name"])
-//                 Contact_ID: field(arg: ["id"])
-//                 Profile_Image: field(arg: ["profile_image"])
-//                 Is_Instructor: field(arg: ["is_instructor"])
-//                 Is_Admin: field(arg: ["is_admin"])
-//                 Email: field(arg: ["email"])
-//           }
-//         }
-// `;
-//         fetch(graphqlApiEndpoint, {
-//             method: "POST",
-//             headers: {
-//                 "Content-Type": "application/json",
-//                 "Api-Key": apiAccessKey,
-//             },
-//             body: JSON.stringify({
-//                 query,
-//             }),
-//         })
-//             .then((response) => {
-//                 if (!response.ok) throw new Error("Network response not ok");
-//                 return response.json();
-//             })
-//             .then((data) => {
-//                 const contacts = data.data.calcContacts || [];
-//                 const validContacts = contacts.filter(
-//                     (contact) =>
-//                         contact.Display_Name && contact.Display_Name.trim() !== ""
-//                 );
-
-//                 MentionManager.allContacts = validContacts.map((contact) => ({
-//                     key: contact.Display_Name,
-//                     value: contact.Display_Name,
-//                     name: contact.Display_Name,
-//                     id: contact.Contact_ID,
-//                     profileImage: contact.Profile_Image,
-//                     isAdmin: contact.Is_Admin, // add admin flag
-//                     isInstructor: contact.Is_Instructor, // add instructor flag
-//                 }));
-//             })
-//             .catch((error) =>
-//                 console.error("Error fetching contacts for mentions:", error)
-//             );
-//     }
-
-//     static initEditor(editor) {
-//         new Tribute({
-//             trigger: "@",
-//             allowSpaces: true,
-//             lookup: "name",
-//             values: MentionManager.fetchMentionContacts.bind(MentionManager),
-//             menuItemTemplate: MentionManager.mentionTemplate,
-//             selectTemplate: MentionManager.selectTemplate,
-//             menuContainer: document.body,
-//         }).attach(editor);
-//     }
-
-//     static fetchMentionContacts(text, cb) {
-//         const searchText = text.toLowerCase();
-//         const filtered = MentionManager.allContacts.filter((contact) =>
-//             contact.value.toLowerCase().includes(searchText)
-//         );
-//         cb(filtered);
-//     }
-
-//     static mentionTemplate(item) {
-//         return `<div class="flex items-center gap-3 px-3 py-2">
-//             <img class="w-6 h-6 rounded-full border border-[#d3d3d3]" 
-//               src="${item.original.profileImage &&
-//                 item.original.profileImage !== "https://i.ontraport.com/abc.jpg"
-//                 ? item.original.profileImage
-//                 : "https://files.ontraport.com/media/b0456fe87439430680b173369cc54cea.php03bzcx?Expires=4895186056&Signature=fw-mkSjms67rj5eIsiDF9QfHb4EAe29jfz~yn3XT0--8jLdK4OGkxWBZR9YHSh26ZAp5EHj~6g5CUUncgjztHHKU9c9ymvZYfSbPO9JGht~ZJnr2Gwmp6vsvIpYvE1pEywTeoigeyClFm1dHrS7VakQk9uYac4Sw0suU4MpRGYQPFB6w3HUw-eO5TvaOLabtuSlgdyGRie6Ve0R7kzU76uXDvlhhWGMZ7alNCTdS7txSgUOT8oL9pJP832UsasK4~M~Na0ku1oY-8a7GcvvVv6j7yE0V0COB9OP0FbC8z7eSdZ8r7avFK~f9Wl0SEfS6MkPQR2YwWjr55bbJJhZnZA__&Key-Pair-Id=APKAJVAAMVW6XQYWSTNA"
-//             }" 
-//               alt="${item.original.name}'s Profile Image" />
-//         <div class="text-primary">
-//           ${item.original.name}
-//           ${item.original.isAdmin
-//                 ? " (Admin)"
-//                 : item.original.isInstructor
-//                     ? " (Teacher)"
-//                     : ""
-//             }
-//         </div>
-//       </div>`;
-//     }
-
-//     static selectTemplate(item) {
-//         return `<span class="mention" data-contact-id="${item.original.id}">@${item.original.value}</span>`;
-//     }
-// }
-
-// $(".comment-editor").each(function () {
-//     MentionManager.initEditor(this);
-// });
-
-// if ($("#announcementContent").length > 0) {
-//     $("#announcementContent").each(function () {
-//         MentionManager.initEditor(this);
-//     });
-// }
-
 class MentionManager {
-    static allContacts = [];
+  static allContacts = [];
 
-    static initContacts() {
-        const getClassQuery = `
+  static initContacts() {
+    const getClassQuery = `
             query {
                 getClasses(query: [{ where: { id: ${classId} } }]) {
                     Teacher {
@@ -146,7 +27,7 @@ class MentionManager {
             }
         `;
 
-        const getAdminQuery = `
+    const getAdminQuery = `
             query {
                 getContact(query: [{ where: { email: "courses@writerscentre.com.au" } }]) {
                     Display_Name: display_name
@@ -159,136 +40,140 @@ class MentionManager {
             }
         `;
 
-        const fetchClassContacts = fetch(graphqlApiEndpoint, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Api-Key": apiAccessKey,
-            },
-            body: JSON.stringify({ query: getClassQuery }),
-        }).then(res => res.ok ? res.json() : Promise.reject("getClasses query failed"));
+    const fetchClassContacts = fetch(graphqlApiEndpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Api-Key": apiAccessKey,
+      },
+      body: JSON.stringify({ query: getClassQuery }),
+    }).then((res) =>
+      res.ok ? res.json() : Promise.reject("getClasses query failed")
+    );
 
-        const fetchAdminContact = fetch(graphqlApiEndpoint, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Api-Key": apiAccessKey,
-            },
-            body: JSON.stringify({ query: getAdminQuery }),
-        }).then(res => res.ok ? res.json() : Promise.reject("getContact query failed"));
+    const fetchAdminContact = fetch(graphqlApiEndpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Api-Key": apiAccessKey,
+      },
+      body: JSON.stringify({ query: getAdminQuery }),
+    }).then((res) =>
+      res.ok ? res.json() : Promise.reject("getContact query failed")
+    );
 
-        Promise.all([fetchClassContacts, fetchAdminContact])
-            .then(([classData, adminData]) => {
-                const contacts = [];
+    Promise.all([fetchClassContacts, fetchAdminContact])
+      .then(([classData, adminData]) => {
+        const contacts = [];
 
-                const result = classData.data.getClasses?.[0];
-                if (result?.Teacher?.display_name?.trim()) {
-                    contacts.push({
-                        key: result.Teacher.display_name,
-                        value: result.Teacher.display_name,
-                        name: result.Teacher.display_name,
-                        id: result.Teacher.id,
-                        profileImage: result.Teacher.profile_image,
-                        isAdmin: false,
-                        isInstructor: true,
-                    });
-                }
+        const result = classData.data.getClasses?.[0];
+        if (result?.Teacher?.display_name?.trim()) {
+          contacts.push({
+            key: result.Teacher.display_name,
+            value: result.Teacher.display_name,
+            name: result.Teacher.display_name,
+            id: result.Teacher.id,
+            profileImage: result.Teacher.profile_image,
+            isAdmin: false,
+            isInstructor: true,
+          });
+        }
 
-                (result?.Enrolments || []).forEach(({ Student }) => {
-                    if (Student?.display_name?.trim()) {
-                        contacts.push({
-                            key: Student.display_name,
-                            value: Student.display_name,
-                            name: Student.display_name,
-                            id: Student.id,
-                            profileImage: Student.profile_image,
-                            isAdmin: false,
-                            isInstructor: false,
-                        });
-                    }
-                });
-
-                const admin = adminData.data.getContact;
-                if (admin?.Display_Name?.trim()) {
-                    contacts.push({
-                        key: admin.Display_Name,
-                        value: admin.Display_Name,
-                        name: admin.Display_Name,
-                        id: admin.Contact_ID,
-                        profileImage: admin.Profile_Image,
-                        isAdmin: true,
-                        isInstructor: admin.Is_Instructor,
-                    });
-                }
-
-                MentionManager.allContacts = contacts;
-            })
-            .catch(error => {
-                console.error("Error fetching mention contacts:", error);
+        (result?.Enrolments || []).forEach(({ Student }) => {
+          if (Student?.display_name?.trim()) {
+            contacts.push({
+              key: Student.display_name,
+              value: Student.display_name,
+              name: Student.display_name,
+              id: Student.id,
+              profileImage: Student.profile_image,
+              isAdmin: false,
+              isInstructor: false,
             });
-    }
+          }
+        });
 
-    static initEditor(editor) {
-        new Tribute({
-            trigger: "@",
-            allowSpaces: true,
-            lookup: "name",
-            values: MentionManager.fetchMentionContacts.bind(MentionManager),
-            menuItemTemplate: MentionManager.mentionTemplate,
-            selectTemplate: MentionManager.selectTemplate,
-            menuContainer: document.body,
-        }).attach(editor);
-    }
+        const admin = adminData.data.getContact;
+        if (admin?.Display_Name?.trim()) {
+          contacts.push({
+            key: admin.Display_Name,
+            value: admin.Display_Name,
+            name: admin.Display_Name,
+            id: admin.Contact_ID,
+            profileImage: admin.Profile_Image,
+            isAdmin: true,
+            isInstructor: admin.Is_Instructor,
+          });
+        }
 
-    static fetchMentionContacts(text, cb) {
-        const searchText = text.toLowerCase();
-        const filtered = MentionManager.allContacts.filter((contact) =>
-            contact.value.toLowerCase().includes(searchText)
-        );
-        cb(filtered);
-    }
+        MentionManager.allContacts = contacts;
+      })
+      .catch((error) => {
+        console.error("Error fetching mention contacts:", error);
+      });
+  }
 
-    static mentionTemplate(item) {
-        return `<div class="flex items-center gap-3 px-3 py-2">
+  static initEditor(editor) {
+    new Tribute({
+      trigger: "@",
+      allowSpaces: true,
+      lookup: "name",
+      values: MentionManager.fetchMentionContacts.bind(MentionManager),
+      menuItemTemplate: MentionManager.mentionTemplate,
+      selectTemplate: MentionManager.selectTemplate,
+      menuContainer: document.body,
+    }).attach(editor);
+  }
+
+  static fetchMentionContacts(text, cb) {
+    const searchText = text.toLowerCase();
+    const filtered = MentionManager.allContacts.filter((contact) =>
+      contact.value.toLowerCase().includes(searchText)
+    );
+    cb(filtered);
+  }
+
+  static mentionTemplate(item) {
+    return `<div class="flex items-center gap-3 px-3 py-2">
             <img class="w-6 h-6 rounded-full border border-[#d3d3d3]"
                 src="${
-                    item.original.profileImage &&
-                    item.original.profileImage !== "https://i.ontraport.com/abc.jpg"
-                        ? item.original.profileImage
-                        : "https://files.ontraport.com/media/b0456fe87439430680b173369cc54cea.php03bzcx?Expires=4895186056&Signature=fw-mkSjms67rj5eIsiDF9QfHb4EAe29jfz~yn3XT0--8jLdK4OGkxWBZR9YHSh26ZAp5EHj~6g5CUUncgjztHHKU9c9ymvZYfSbPO9JGht~ZJnr2Gwmp6vsvIpYvE1pEywTeoigeyClFm1dHrS7VakQk9uYac4Sw0suU4MpRGYQPFB6w3HUw-eO5TvaOLabtuSlgdyGRie6Ve0R7kzU76uXDvlhhWGMZ7alNCTdS7txSgUOT8oL9pJP832UsasK4~M~Na0ku1oY-8a7GcvvVv6j7yE0V0COB9OP0FbC8z7eSdZ8r7avFK~f9Wl0SEfS6MkPQR2YwWjr55bbJJhZnZA__&Key-Pair-Id=APKAJVAAMVW6XQYWSTNA"
+                  item.original.profileImage &&
+                  item.original.profileImage !==
+                    "https://i.ontraport.com/abc.jpg"
+                    ? item.original.profileImage
+                    : "https://files.ontraport.com/media/b0456fe87439430680b173369cc54cea.php03bzcx?Expires=4895186056&Signature=fw-mkSjms67rj5eIsiDF9QfHb4EAe29jfz~yn3XT0--8jLdK4OGkxWBZR9YHSh26ZAp5EHj~6g5CUUncgjztHHKU9c9ymvZYfSbPO9JGht~ZJnr2Gwmp6vsvIpYvE1pEywTeoigeyClFm1dHrS7VakQk9uYac4Sw0suU4MpRGYQPFB6w3HUw-eO5TvaOLabtuSlgdyGRie6Ve0R7kzU76uXDvlhhWGMZ7alNCTdS7txSgUOT8oL9pJP832UsasK4~M~Na0ku1oY-8a7GcvvVv6j7yE0V0COB9OP0FbC8z7eSdZ8r7avFK~f9Wl0SEfS6MkPQR2YwWjr55bbJJhZnZA__&Key-Pair-Id=APKAJVAAMVW6XQYWSTNA"
                 }"
                 alt="${item.original.name}'s Profile Image" />
             <div class="text-primary">
                 ${item.original.name}
                 ${
-                    item.original.isAdmin
-                        ? " (Admin)"
-                        : item.original.isInstructor
-                        ? " (Teacher)"
-                        : ""
+                  item.original.isAdmin
+                    ? " (Admin)"
+                    : item.original.isInstructor
+                    ? " (Teacher)"
+                    : ""
                 }
             </div>
         </div>`;
-    }
+  }
 
-    static selectTemplate(item) {
-        return `<span class="mention" data-contact-id="${item.original.id}">@${item.original.value}</span>`;
-    }
+  static selectTemplate(item) {
+    return `<span class="mention" data-contact-id="${item.original.id}">@${item.original.value}</span>`;
+  }
 }
 
 $(".comment-editor").each(function () {
-    MentionManager.initEditor(this);
+  MentionManager.initEditor(this);
 });
 
 if ($("#announcementContent").length > 0) {
-    $("#announcementContent").each(function () {
-        MentionManager.initEditor(this);
-    });
-};
-
+  $("#announcementContent").each(function () {
+    MentionManager.initEditor(this);
+  });
+}
 
 function renderAudioPlayer(link) {
-    return `
+  return `
               <div class="flex flex-col gap-y-4 mt-2 mb-4 p-4 bg-[#ebf6f6]" x-init="initPlayer()" x-data="audioPlayer();">
                   <div class=" flex items-center justify-between">
                       <div class="flex items-center gap-x-2" @click="muteUnmuteSound()">
@@ -357,168 +242,168 @@ function renderAudioPlayer(link) {
 }
 
 var myHelpers = {
-    formatRelativeTime: function (timestamp) {
-        if (!timestamp) return "";
-        const now = new Date();
-        const time = new Date(timestamp * 1000);
-        const diffInSeconds = Math.floor((now - time) / 1000);
-        if (diffInSeconds < 60) return diffInSeconds + " sec ago";
-        const minutes = Math.floor(diffInSeconds / 60);
-        if (minutes < 60) return minutes + " min ago";
-        const hours = Math.floor(minutes / 60);
-        if (hours < 24) return hours + " hr ago";
-        const days = Math.floor(hours / 24);
-        return days + " day" + (days > 1 ? "s" : "") + " ago";
-    },
-    fullName: function (author) {
-        return author
-            ? author.display_name || author.first_name + " " + author.last_name
-            : "Unknown Author";
-    },
-    getFileInfo: function (fileInput) {
-        if (!fileInput) return null;
-        if (typeof fileInput === "object") return fileInput;
-        let trimmed = fileInput.trim();
-        if (/^\{\s*\}$/.test(trimmed)) return null;
-        let parsed = null;
+  formatRelativeTime: function (timestamp) {
+    if (!timestamp) return "";
+    const now = new Date();
+    const time = new Date(timestamp * 1000);
+    const diffInSeconds = Math.floor((now - time) / 1000);
+    if (diffInSeconds < 60) return diffInSeconds + " sec ago";
+    const minutes = Math.floor(diffInSeconds / 60);
+    if (minutes < 60) return minutes + " min ago";
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return hours + " hr ago";
+    const days = Math.floor(hours / 24);
+    return days + " day" + (days > 1 ? "s" : "") + " ago";
+  },
+  fullName: function (author) {
+    return author
+      ? author.display_name || author.first_name + " " + author.last_name
+      : "Unknown Author";
+  },
+  getFileInfo: function (fileInput) {
+    if (!fileInput) return null;
+    if (typeof fileInput === "object") return fileInput;
+    let trimmed = fileInput.trim();
+    if (/^\{\s*\}$/.test(trimmed)) return null;
+    let parsed = null;
+    try {
+      parsed = JSON.parse(trimmed);
+    } catch (e) {
+      if (
+        (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+        (trimmed.startsWith("'") && trimmed.endsWith("'"))
+      ) {
+        trimmed = trimmed.substring(1, trimmed.length - 1).trim();
         try {
-            parsed = JSON.parse(trimmed);
-        } catch (e) {
-            if (
-                (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-                (trimmed.startsWith("'") && trimmed.endsWith("'"))
-            ) {
-                trimmed = trimmed.substring(1, trimmed.length - 1).trim();
-                try {
-                    parsed = JSON.parse(trimmed);
-                } catch (e2) {
-                    parsed = trimmed;
-                }
-            } else {
-                parsed = trimmed;
-            }
+          parsed = JSON.parse(trimmed);
+        } catch (e2) {
+          parsed = trimmed;
         }
-        if (typeof parsed === "string") {
-            if (parsed.trim() === "{}") return null;
-            return { link: parsed, name: parsed };
-        }
-        if (parsed && typeof parsed === "object") {
-            if (Object.keys(parsed).length === 0) return null;
-            if (!parsed.link && parsed.s3_id)
-                parsed.link =
-                    "https://t.writerscentre.com.au/s/dl?token=" + parsed.s3_id;
-            if (parsed.link || parsed.name) return parsed;
-        }
-        return { link: trimmed, name: trimmed };
-    },
-    getFileCategory: function (fileObj) {
-        let mime = fileObj.type || "";
-        if (mime) {
-            if (mime.startsWith("image/")) return "image";
-            if (mime.startsWith("audio/")) return "audio";
-            if (mime.startsWith("video/")) return "video";
-        }
-        const lowerName = fileObj.name.toLowerCase();
-        if (/\.(jpg|jpeg|png|gif|bmp|webp)$/.test(lowerName)) return "image";
-        if (/\.(mp3|wav|ogg)$/.test(lowerName)) return "audio";
-        if (/\.(mp4|webm|ogg)$/.test(lowerName)) return "video";
-        return "other";
-    },
-    renderFile: function (fileString) {
-        const fileObj = myHelpers.getFileInfo(fileString);
-        if (!fileObj) return "";
-        const category = myHelpers.getFileCategory(fileObj);
-        const link = fileObj.link;
-        const name = fileObj.name;
-        if (category === "image")
-            return (
-                "<div class='mt-2 mb-4 w-full'><img src='" +
-                link +
-                "' alt='" +
-                name +
-                "' class='w-full rounded'></div>"
-            );
-        else if (category === "audio") return renderAudioPlayer(link);
-        else if (category === "video")
-            return (
-                "<div class='mt-2 mb-4 w-full'><video controls src= '" +
-                link +
-                "' class='w-full rounded'>Your browser does not support the video element.</video></div>"
-            );
-        else
-            return (
-                "<div class='mt-2 mb-4 w-full'><a href='" +
-                link +
-                "' target='_blank' class='text-blue-500 hover:underline'>" +
-                name +
-                "</a></div>"
-            );
-    },
-    voteCount: function (votes) {
-        return Array.isArray(votes) ? votes.length : 0;
-    },
-    hasUserVoted: function (votes, recordId) {
-        var currentUserId = visitorContactID;
-        if (!Array.isArray(votes) || votes.length === 0) return false;
-        if (votes[0].hasOwnProperty("post_upvote_id"))
-            return votes.some(
-                (vote) =>
-                    Number(vote.member_post_upvote_id) === currentUserId &&
-                    Number(vote.post_upvote_id) === Number(recordId)
-            );
-        if (votes[0].hasOwnProperty("forum_comment_upvote_id"))
-            return votes.some(
-                (vote) =>
-                    Number(vote.member_comment_upvote_id) === currentUserId &&
-                    Number(vote.forum_comment_upvote_id) === Number(recordId)
-            );
-        return false;
-    },
-    getUserVoteId: function (votes, recordId) {
-        var currentUserId = visitorContactID;
-        if (!Array.isArray(votes) || votes.length === 0) return "";
-        if (votes[0].hasOwnProperty("post_upvote_id")) {
-            var vote = votes.find(
-                (vote) =>
-                    Number(vote.member_post_upvote_id) === currentUserId &&
-                    Number(vote.post_upvote_id) === Number(recordId)
-            );
-            return vote ? vote.id : "";
-        }
-        if (votes[0].hasOwnProperty("forum_comment_upvote_id")) {
-            var vote = votes.find(
-                (vote) =>
-                    Number(vote.member_comment_upvote_id) === currentUserId &&
-                    Number(vote.forum_comment_upvote_id) === Number(recordId)
-            );
-            return vote ? vote.id : "";
-        }
-        return "";
-    },
-    commentCount: function (comments) {
-        return Array.isArray(comments) ? comments.length : 0;
-    },
+      } else {
+        parsed = trimmed;
+      }
+    }
+    if (typeof parsed === "string") {
+      if (parsed.trim() === "{}") return null;
+      return { link: parsed, name: parsed };
+    }
+    if (parsed && typeof parsed === "object") {
+      if (Object.keys(parsed).length === 0) return null;
+      if (!parsed.link && parsed.s3_id)
+        parsed.link =
+          "https://t.writerscentre.com.au/s/dl?token=" + parsed.s3_id;
+      if (parsed.link || parsed.name) return parsed;
+    }
+    return { link: trimmed, name: trimmed };
+  },
+  getFileCategory: function (fileObj) {
+    let mime = fileObj.type || "";
+    if (mime) {
+      if (mime.startsWith("image/")) return "image";
+      if (mime.startsWith("audio/")) return "audio";
+      if (mime.startsWith("video/")) return "video";
+    }
+    const lowerName = fileObj.name.toLowerCase();
+    if (/\.(jpg|jpeg|png|gif|bmp|webp)$/.test(lowerName)) return "image";
+    if (/\.(mp3|wav|ogg)$/.test(lowerName)) return "audio";
+    if (/\.(mp4|webm|ogg)$/.test(lowerName)) return "video";
+    return "other";
+  },
+  renderFile: function (fileString) {
+    const fileObj = myHelpers.getFileInfo(fileString);
+    if (!fileObj) return "";
+    const category = myHelpers.getFileCategory(fileObj);
+    const link = fileObj.link;
+    const name = fileObj.name;
+    if (category === "image")
+      return (
+        "<div class='mt-2 mb-4 w-full'><img src='" +
+        link +
+        "' alt='" +
+        name +
+        "' class='w-full rounded'></div>"
+      );
+    else if (category === "audio") return renderAudioPlayer(link);
+    else if (category === "video")
+      return (
+        "<div class='mt-2 mb-4 w-full'><video controls src= '" +
+        link +
+        "' class='w-full rounded'>Your browser does not support the video element.</video></div>"
+      );
+    else
+      return (
+        "<div class='mt-2 mb-4 w-full'><a href='" +
+        link +
+        "' target='_blank' class='text-blue-500 hover:underline'>" +
+        name +
+        "</a></div>"
+      );
+  },
+  voteCount: function (votes) {
+    return Array.isArray(votes) ? votes.length : 0;
+  },
+  hasUserVoted: function (votes, recordId) {
+    var currentUserId = visitorContactID;
+    if (!Array.isArray(votes) || votes.length === 0) return false;
+    if (votes[0].hasOwnProperty("post_upvote_id"))
+      return votes.some(
+        (vote) =>
+          Number(vote.member_post_upvote_id) === currentUserId &&
+          Number(vote.post_upvote_id) === Number(recordId)
+      );
+    if (votes[0].hasOwnProperty("forum_comment_upvote_id"))
+      return votes.some(
+        (vote) =>
+          Number(vote.member_comment_upvote_id) === currentUserId &&
+          Number(vote.forum_comment_upvote_id) === Number(recordId)
+      );
+    return false;
+  },
+  getUserVoteId: function (votes, recordId) {
+    var currentUserId = visitorContactID;
+    if (!Array.isArray(votes) || votes.length === 0) return "";
+    if (votes[0].hasOwnProperty("post_upvote_id")) {
+      var vote = votes.find(
+        (vote) =>
+          Number(vote.member_post_upvote_id) === currentUserId &&
+          Number(vote.post_upvote_id) === Number(recordId)
+      );
+      return vote ? vote.id : "";
+    }
+    if (votes[0].hasOwnProperty("forum_comment_upvote_id")) {
+      var vote = votes.find(
+        (vote) =>
+          Number(vote.member_comment_upvote_id) === currentUserId &&
+          Number(vote.forum_comment_upvote_id) === Number(recordId)
+      );
+      return vote ? vote.id : "";
+    }
+    return "";
+  },
+  commentCount: function (comments) {
+    return Array.isArray(comments) ? comments.length : 0;
+  },
 };
 
 $.views.helpers(myHelpers);
 
 const ForumAPI = (function () {
-    function apiCall(query, variables = {}) {
-        return fetch(graphqlApiEndpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
-            body: JSON.stringify({ query, variables }),
-        })
-            .then((response) => {
-                if (!response.ok) throw new Error("Network response was not ok");
-                return response.json();
-            })
-            .catch((error) => {
-                console.error("API call error:", error);
-                throw error;
-            });
-    }
-    const myPostsQuery = `
+  function apiCall(query, variables = {}) {
+    return fetch(graphqlApiEndpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
+      body: JSON.stringify({ query, variables }),
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Network response was not ok");
+        return response.json();
+      })
+      .catch((error) => {
+        console.error("API call error:", error);
+        throw error;
+      });
+  }
+  const myPostsQuery = `
   query getForumPosts{
     getForumPosts(
       orderBy: [{ path: ["created_at"], type: desc }]
@@ -550,22 +435,22 @@ const ForumAPI = (function () {
   }
 `;
 
-    function fetchMyPosts() {
-        return apiCall(myPostsQuery).then((data) => {
-            let posts = data.data.getForumPosts || [];
-            posts.forEach((post) => {
-                if (post.ForumComments && Array.isArray(post.ForumComments)) {
-                    const flatComments = flattenComments(post.ForumComments);
-                    post.children = buildCommentTree(flatComments);
-                    assignCommentLevels(post.children, 1);
-                    attachForumPostIdToComments(post.children, post.id);
-                }
-            });
-            return posts;
-        });
-    }
+  function fetchMyPosts() {
+    return apiCall(myPostsQuery).then((data) => {
+      let posts = data.data.getForumPosts || [];
+      posts.forEach((post) => {
+        if (post.ForumComments && Array.isArray(post.ForumComments)) {
+          const flatComments = flattenComments(post.ForumComments);
+          post.children = buildCommentTree(flatComments);
+          assignCommentLevels(post.children, 1);
+          attachForumPostIdToComments(post.children, post.id);
+        }
+      });
+      return posts;
+    });
+  }
 
-    const forumQuery = `
+  const forumQuery = `
     query getForumPosts{
         getForumPosts(
             orderBy: [{ path: ["created_at"], type: desc }]
@@ -595,136 +480,150 @@ const ForumAPI = (function () {
         }
     }
 `;
-    function flattenComments(comments) {
-        let flat = [];
-        comments.forEach((comment) => {
-            flat.push(comment);
-            if (
-                comment.ForumComments &&
-                Array.isArray(comment.ForumComments) &&
-                comment.ForumComments.length
-            ) {
-                comment.ForumComments.forEach((child) => {
-                    if (!child.reply_to_comment_id)
-                        child.reply_to_comment_id = comment.id;
-                });
-                flat = flat.concat(flattenComments(comment.ForumComments));
-            }
+  function flattenComments(comments) {
+    let flat = [];
+    comments.forEach((comment) => {
+      flat.push(comment);
+      if (
+        comment.ForumComments &&
+        Array.isArray(comment.ForumComments) &&
+        comment.ForumComments.length
+      ) {
+        comment.ForumComments.forEach((child) => {
+          if (!child.reply_to_comment_id)
+            child.reply_to_comment_id = comment.id;
         });
-        return flat;
-    }
+        flat = flat.concat(flattenComments(comment.ForumComments));
+      }
+    });
+    return flat;
+  }
 
-    function buildCommentTree(comments) {
-        const commentMap = {};
-        const tree = [];
-        comments.forEach((comment) => {
-            comment.children = [];
-            commentMap[comment.id] = comment;
-        });
-        comments.forEach((comment) => {
-            if (comment.reply_to_comment_id) {
-                const parent = commentMap[comment.reply_to_comment_id];
-                if (parent) parent.children.push(comment);
-                else tree.push(comment);
-            } else tree.push(comment);
-        });
-        return tree;
-    }
+  function buildCommentTree(comments) {
+    const commentMap = {};
+    const tree = [];
+    comments.forEach((comment) => {
+      comment.children = [];
+      commentMap[comment.id] = comment;
+    });
+    comments.forEach((comment) => {
+      if (comment.reply_to_comment_id) {
+        const parent = commentMap[comment.reply_to_comment_id];
+        if (parent) parent.children.push(comment);
+        else tree.push(comment);
+      } else tree.push(comment);
+    });
+    return tree;
+  }
 
-    function assignCommentLevels(comments, level) {
-        comments.forEach((comment) => {
-            comment.level = level;
-            if (comment.children && comment.children.length)
-                assignCommentLevels(comment.children, level + 1);
-        });
-    }
+  function assignCommentLevels(comments, level) {
+    comments.forEach((comment) => {
+      comment.level = level;
+      if (comment.children && comment.children.length)
+        assignCommentLevels(comment.children, level + 1);
+    });
+  }
 
-    function attachForumPostIdToComments(comments, forumPostId) {
-        comments.forEach((comment) => {
-            comment.forum_post_id = forumPostId;
-            if (comment.children && comment.children.length)
-                attachForumPostIdToComments(comment.children, forumPostId);
-        });
-    }
+  function attachForumPostIdToComments(comments, forumPostId) {
+    comments.forEach((comment) => {
+      comment.forum_post_id = forumPostId;
+      if (comment.children && comment.children.length)
+        attachForumPostIdToComments(comment.children, forumPostId);
+    });
+  }
 
-    function fetchPosts() {
-        return apiCall(forumQuery).then((data) => {
-            let posts = data.data.getForumPosts || [];
-            posts.forEach((post) => {
-                if (post.ForumComments && Array.isArray(post.ForumComments)) {
-                    const flatComments = flattenComments(post.ForumComments);
-                    post.children = buildCommentTree(flatComments);
-                    assignCommentLevels(post.children, 1);
-                    attachForumPostIdToComments(post.children, post.id);
-                }
-            });
-            return posts;
-        });
-    }
+  function fetchPosts() {
+    return apiCall(forumQuery).then((data) => {
+      let posts = data.data.getForumPosts || [];
+      posts.forEach((post) => {
+        if (post.ForumComments && Array.isArray(post.ForumComments)) {
+          const flatComments = flattenComments(post.ForumComments);
+          post.children = buildCommentTree(flatComments);
+          assignCommentLevels(post.children, 1);
+          attachForumPostIdToComments(post.children, post.id);
+        }
+      });
+      return posts;
+    });
+  }
 
-    const createPostMutation = `
+  const createPostMutation = `
 mutation createForumPost($payload: ForumPostCreateInput!) {
   createForumPost(payload: $payload) { 
     post_copy 
     author_id 
     file 
     id 
-    Mentions { id } 
+    Mentions { 
+    id 
+    has__new__notification 
+    } 
     post_status
     class_id
   }
 }
 `;
 
-    function createPost(payload) {
-        return apiCall(createPostMutation, { payload }).then((data) => {
-            if (data.data && data.data.createForumPost)
-                return data.data.createForumPost;
-            else throw new Error("Error creating post");
-        });
-    }
+  function createPost(payload) {
+    return apiCall(createPostMutation, { payload }).then((data) => {
+      if (data.data && data.data.createForumPost)
+        return data.data.createForumPost;
+      else throw new Error("Error creating post");
+    });
+  }
 
-    const deletePostMutation = `
+  const deletePostMutation = `
 mutation deleteForumPost($postId: AwcForumPostID!) {
   deleteForumPost(query: [{ where: { id: $postId } }]) { id }
 }
 `;
-    function deletePost(postId) {
-        return apiCall(deletePostMutation, { postId }).then((data) => {
-            if (data.data && data.data.deleteForumPost)
-                return data.data.deleteForumPost;
-            else throw new Error("Error deleting post");
-        });
-    }
+  function deletePost(postId) {
+    return apiCall(deletePostMutation, { postId }).then((data) => {
+      if (data.data && data.data.deleteForumPost)
+        return data.data.deleteForumPost;
+      else throw new Error("Error deleting post");
+    });
+  }
 
-    const deleteCommentMutation = `
+  const deleteCommentMutation = `
 mutation deleteForumComment($id: AwcForumCommentID) {
   deleteForumComment(query: [{ where: { id: $id } }]) { id }
 }
 `;
 
-    function deleteComment(commentId) {
-        return apiCall(deleteCommentMutation, { id: commentId }).then((data) => {
-            if (data.data && data.data.deleteForumComment)
-                return data.data.deleteForumComment;
-            else throw new Error("Error deleting comment");
-        });
-    }
+  function deleteComment(commentId) {
+    return apiCall(deleteCommentMutation, { id: commentId }).then((data) => {
+      if (data.data && data.data.deleteForumComment)
+        return data.data.deleteForumComment;
+      else throw new Error("Error deleting comment");
+    });
+  }
 
-    const createCommentMutation = `
+  const createCommentMutation = `
 mutation createForumComment($payload: ForumCommentCreateInput = null) {
-  createForumComment(payload: $payload) { author_id comment file forum_post_id reply_to_comment_id id Mentions { id } }
+  createForumComment(payload: $payload) { 
+  author_id 
+  comment 
+  file 
+  forum_post_id 
+  reply_to_comment_id 
+  id 
+  Mentions { 
+  id 
+  has__new__notification 
+  } 
+  }
 }
 `;
-    function createComment(payload) {
-        return apiCall(createCommentMutation, { payload }).then((data) => {
-            if (data.data && data.data.createForumComment)
-                return data.data.createForumComment;
-            else throw new Error("Error creating comment");
-        });
-    }
+  function createComment(payload) {
+    return apiCall(createCommentMutation, { payload }).then((data) => {
+      if (data.data && data.data.createForumComment)
+        return data.data.createForumComment;
+      else throw new Error("Error creating comment");
+    });
+  }
 
-    const singlePostQuery = `
+  const singlePostQuery = `
         query getSinglePost($id: AwcForumPostID!) {
         getForumPosts(query: [{ where: { id: $id } }]) {
             created_at post_copy post_image author_id file id
@@ -745,962 +644,965 @@ mutation createForumComment($payload: ForumCommentCreateInput = null) {
     }
 `;
 
-    function fetchPostById(postId) {
-        return apiCall(singlePostQuery, { id: postId }).then((data) => {
-            let posts = data.data.getForumPosts || [];
-            if (posts.length > 0) {
-                let post = posts[0];
-                if (post.ForumComments && Array.isArray(post.ForumComments)) {
-                    const flatComments = flattenComments(post.ForumComments);
-                    post.children = buildCommentTree(flatComments);
-                    assignCommentLevels(post.children, 1);
-                    attachForumPostIdToComments(post.children, post.id);
-                }
-                return post;
-            } else throw new Error("Post not found");
-        });
-    }
+  function fetchPostById(postId) {
+    return apiCall(singlePostQuery, { id: postId }).then((data) => {
+      let posts = data.data.getForumPosts || [];
+      if (posts.length > 0) {
+        let post = posts[0];
+        if (post.ForumComments && Array.isArray(post.ForumComments)) {
+          const flatComments = flattenComments(post.ForumComments);
+          post.children = buildCommentTree(flatComments);
+          assignCommentLevels(post.children, 1);
+          attachForumPostIdToComments(post.children, post.id);
+        }
+        return post;
+      } else throw new Error("Post not found");
+    });
+  }
 
-    const createPostVoteMutation = `
+  const createPostVoteMutation = `
 mutation createMemberPostUpvotesPostUpvotes($payload: MemberPostUpvotesPostUpvotesCreateInput = null) {
   createMemberPostUpvotesPostUpvotes(payload: $payload) { member_post_upvote_id post_upvote_id id }
 }
 `;
 
-    function createPostVote(payload) {
-        return apiCall(createPostVoteMutation, { payload }).then((data) => {
-            if (data.data && data.data.createMemberPostUpvotesPostUpvotes)
-                return data.data.createMemberPostUpvotesPostUpvotes;
-            else throw new Error("Error creating post vote");
-        });
-    }
+  function createPostVote(payload) {
+    return apiCall(createPostVoteMutation, { payload }).then((data) => {
+      if (data.data && data.data.createMemberPostUpvotesPostUpvotes)
+        return data.data.createMemberPostUpvotesPostUpvotes;
+      else throw new Error("Error creating post vote");
+    });
+  }
 
-    const deletePostVoteMutation = `
+  const deletePostVoteMutation = `
 mutation deleteMemberPostUpvotesPostUpvotes($id: AwcMemberPostUpvotesPostUpvotesID) {
   deleteMemberPostUpvotesPostUpvotes(query: [{ where: { id: $id } }]) { id }
 }
 `;
 
-    function deletePostVote(voteId) {
-        return apiCall(deletePostVoteMutation, { id: voteId }).then((data) => {
-            if (data.data && data.data.deleteMemberPostUpvotesPostUpvotes)
-                return data.data.deleteMemberPostUpvotesPostUpvotes;
-            else throw new Error("Error deleting post vote");
-        });
-    }
+  function deletePostVote(voteId) {
+    return apiCall(deletePostVoteMutation, { id: voteId }).then((data) => {
+      if (data.data && data.data.deleteMemberPostUpvotesPostUpvotes)
+        return data.data.deleteMemberPostUpvotesPostUpvotes;
+      else throw new Error("Error deleting post vote");
+    });
+  }
 
-    const createCommentVoteMutation = `
+  const createCommentVoteMutation = `
 mutation createMemberCommentUpvotesForumCommentUpvotes($payload: MemberCommentUpvotesForumCommentUpvotesCreateInput = null) {
   createMemberCommentUpvotesForumCommentUpvotes(payload: $payload) { forum_comment_upvote_id member_comment_upvote_id id }
 }
 `;
 
-    function createCommentVote(payload) {
-        return apiCall(createCommentVoteMutation, { payload }).then((data) => {
-            if (data.data && data.data.createMemberCommentUpvotesForumCommentUpvotes)
-                return data.data.createMemberCommentUpvotesForumCommentUpvotes;
-            else throw new Error("Error creating comment vote");
-        });
-    }
+  function createCommentVote(payload) {
+    return apiCall(createCommentVoteMutation, { payload }).then((data) => {
+      if (data.data && data.data.createMemberCommentUpvotesForumCommentUpvotes)
+        return data.data.createMemberCommentUpvotesForumCommentUpvotes;
+      else throw new Error("Error creating comment vote");
+    });
+  }
 
-    const deleteCommentVoteMutation = `
+  const deleteCommentVoteMutation = `
 mutation deleteMemberCommentUpvotesForumCommentUpvotes($id: AwcMemberCommentUpvotesForumCommentUpvotesID) {
   deleteMemberCommentUpvotesForumCommentUpvotes(query: [{ where: { id: $id } }]) { id }
 }
 `;
 
-    function deleteCommentVote(voteId) {
-        return apiCall(deleteCommentVoteMutation, { id: voteId }).then((data) => {
-            if (data.data && data.data.deleteMemberCommentUpvotesForumCommentUpvotes)
-                return data.data.deleteMemberCommentUpvotesForumCommentUpvotes;
-            else throw new Error("Error deleting comment vote");
-        });
-    }
+  function deleteCommentVote(voteId) {
+    return apiCall(deleteCommentVoteMutation, { id: voteId }).then((data) => {
+      if (data.data && data.data.deleteMemberCommentUpvotesForumCommentUpvotes)
+        return data.data.deleteMemberCommentUpvotesForumCommentUpvotes;
+      else throw new Error("Error deleting comment vote");
+    });
+  }
 
-    return {
-        fetchPosts,
-        createPost,
-        deletePost,
-        deleteComment,
-        createComment,
-        fetchPostById,
-        createPostVote,
-        deletePostVote,
-        createCommentVote,
-        deleteCommentVote,
-        fetchMyPosts,
-    };
+  return {
+    fetchPosts,
+    createPost,
+    deletePost,
+    deleteComment,
+    createComment,
+    fetchPostById,
+    createPostVote,
+    deletePostVote,
+    createCommentVote,
+    deleteCommentVote,
+    fetchMyPosts,
+  };
 })();
 
 const FileUploader = (function () {
-    function decodeAwsParam(awsParam) {
-        if (!awsParam) awsParam = window.awsParam;
-        const serializedString = atob(awsParam);
-        const hashMatch = serializedString.match(/s:\d+:"([a-f0-9]+)"/);
-        const expiryMatch = serializedString.match(/i:(\d+)/);
-        return {
-            hash: hashMatch ? hashMatch[1] : null,
-            expiry: expiryMatch ? parseInt(expiryMatch[1], 10) : null,
-        };
-    }
-    function encodeAwsParam(hash, currentEpoch) {
-        if (typeof currentEpoch !== "number")
-            currentEpoch = Math.round(Date.now() / 1000);
-        const expiry = new Date(currentEpoch * 1000);
-        expiry.setTime(expiry.getTime() + 12 * 60 * 60 * 1000);
-        return btoa(
-            `a:2:{s:4:"hash";s:${hash.length}:"${hash}";s:6:"expiry";i:${Math.round(
-                expiry.getTime() / 1000
-            )};}`
-        );
-    }
-    function createS3FileId(key, filename) {
-        return key.replace("${filename}", filename);
-    }
-    function getS3UploadParams(awsParam, url) {
-        if (typeof awsParam !== "string") awsParam = window.awsParam;
-        if (typeof url !== "string") url = `//${window.location.host}/s/aws`;
-        const formData = new FormData();
-        formData.append("awsParam", JSON.stringify(awsParam));
-        return fetch(url, { method: "POST", body: formData })
-            .then((res) => res.text())
-            .then((text) => {
-                try {
-                    const data = JSON.parse(text);
-                    if (data.code === 0 && data.data) return data.data;
-                    throw new Error("Upload params error: " + text);
-                } catch (e) {
-                    throw new Error("Invalid JSON response: " + text);
-                }
-            });
-    }
-    function uploadFiles(filesToUpload, s3Params, toSubmit) {
-        const paramsInputs = s3Params.inputs;
-        const method = s3Params.attributes.method;
-        const action = s3Params.attributes.action;
-        const uploadPromises = filesToUpload.map(
-            ({ file, fieldName }) =>
-                new Promise((resolve) => {
-                    let s3FormData = new FormData();
-                    for (const key in paramsInputs)
-                        s3FormData.append(key, paramsInputs[key]);
-                    s3FormData.append("Content-Type", file.type);
-                    s3FormData.append("file", file, file.name);
-                    let xhr = new XMLHttpRequest();
-                    xhr.open(method, action);
-                    xhr.onloadend = function () {
-                        if (xhr.status === 204) {
-                            let s3Id = createS3FileId(paramsInputs.key, file.name);
-                            const result = { name: file.name, type: file.type, s3_id: s3Id };
-                            if (toSubmit && fieldName)
-                                toSubmit[fieldName] = JSON.stringify(result);
-                            resolve(result);
-                        } else {
-                            console.error("File upload failed", xhr.statusText);
-                            resolve(null);
-                        }
-                    };
-                    xhr.send(s3FormData);
-                })
-        );
-        return Promise.all(uploadPromises);
-    }
-    function processFileFields(
-        toSubmit,
-        filesToUpload,
-        awsParamHash,
-        awsParamUrl
-    ) {
-        let awsParam;
-        if (!awsParamHash) awsParam = window.awsParam;
-        else if (typeof awsParamHash === "string")
-            awsParam = encodeAwsParam(awsParamHash);
-        return getS3UploadParams(awsParam, awsParamUrl).then((s3Params) => {
-            if (!s3Params) {
-                const e = new Error("Failed to retrieve S3 upload parameters.");
-                e.failures = filesToUpload;
-                throw e;
+  function decodeAwsParam(awsParam) {
+    if (!awsParam) awsParam = window.awsParam;
+    const serializedString = atob(awsParam);
+    const hashMatch = serializedString.match(/s:\d+:"([a-f0-9]+)"/);
+    const expiryMatch = serializedString.match(/i:(\d+)/);
+    return {
+      hash: hashMatch ? hashMatch[1] : null,
+      expiry: expiryMatch ? parseInt(expiryMatch[1], 10) : null,
+    };
+  }
+  function encodeAwsParam(hash, currentEpoch) {
+    if (typeof currentEpoch !== "number")
+      currentEpoch = Math.round(Date.now() / 1000);
+    const expiry = new Date(currentEpoch * 1000);
+    expiry.setTime(expiry.getTime() + 12 * 60 * 60 * 1000);
+    return btoa(
+      `a:2:{s:4:"hash";s:${hash.length}:"${hash}";s:6:"expiry";i:${Math.round(
+        expiry.getTime() / 1000
+      )};}`
+    );
+  }
+  function createS3FileId(key, filename) {
+    return key.replace("${filename}", filename);
+  }
+  function getS3UploadParams(awsParam, url) {
+    if (typeof awsParam !== "string") awsParam = window.awsParam;
+    if (typeof url !== "string") url = `//${window.location.host}/s/aws`;
+    const formData = new FormData();
+    formData.append("awsParam", JSON.stringify(awsParam));
+    return fetch(url, { method: "POST", body: formData })
+      .then((res) => res.text())
+      .then((text) => {
+        try {
+          const data = JSON.parse(text);
+          if (data.code === 0 && data.data) return data.data;
+          throw new Error("Upload params error: " + text);
+        } catch (e) {
+          throw new Error("Invalid JSON response: " + text);
+        }
+      });
+  }
+  function uploadFiles(filesToUpload, s3Params, toSubmit) {
+    const paramsInputs = s3Params.inputs;
+    const method = s3Params.attributes.method;
+    const action = s3Params.attributes.action;
+    const uploadPromises = filesToUpload.map(
+      ({ file, fieldName }) =>
+        new Promise((resolve) => {
+          let s3FormData = new FormData();
+          for (const key in paramsInputs)
+            s3FormData.append(key, paramsInputs[key]);
+          s3FormData.append("Content-Type", file.type);
+          s3FormData.append("file", file, file.name);
+          let xhr = new XMLHttpRequest();
+          xhr.open(method, action);
+          xhr.onloadend = function () {
+            if (xhr.status === 204) {
+              let s3Id = createS3FileId(paramsInputs.key, file.name);
+              const result = { name: file.name, type: file.type, s3_id: s3Id };
+              if (toSubmit && fieldName)
+                toSubmit[fieldName] = JSON.stringify(result);
+              resolve(result);
+            } else {
+              console.error("File upload failed", xhr.statusText);
+              resolve(null);
             }
-            return uploadFiles(filesToUpload, s3Params, toSubmit).then((result) => {
-                let error;
-                for (let i = 0; i < result.length; i++) {
-                    if (!result[i]) {
-                        if (!error) {
-                            error = new Error("One or more files failed to upload.");
-                            error.failures = [];
-                        }
-                        error.failures.push(filesToUpload[i]);
-                    }
-                }
-                if (error) throw error;
-                return toSubmit;
-            });
-        });
-    }
-    return { processFileFields };
+          };
+          xhr.send(s3FormData);
+        })
+    );
+    return Promise.all(uploadPromises);
+  }
+  function processFileFields(
+    toSubmit,
+    filesToUpload,
+    awsParamHash,
+    awsParamUrl
+  ) {
+    let awsParam;
+    if (!awsParamHash) awsParam = window.awsParam;
+    else if (typeof awsParamHash === "string")
+      awsParam = encodeAwsParam(awsParamHash);
+    return getS3UploadParams(awsParam, awsParamUrl).then((s3Params) => {
+      if (!s3Params) {
+        const e = new Error("Failed to retrieve S3 upload parameters.");
+        e.failures = filesToUpload;
+        throw e;
+      }
+      return uploadFiles(filesToUpload, s3Params, toSubmit).then((result) => {
+        let error;
+        for (let i = 0; i < result.length; i++) {
+          if (!result[i]) {
+            if (!error) {
+              error = new Error("One or more files failed to upload.");
+              error.failures = [];
+            }
+            error.failures.push(filesToUpload[i]);
+          }
+        }
+        if (error) throw error;
+        return toSubmit;
+      });
+    });
+  }
+  return { processFileFields };
 })();
 
 function renderPosts(posts) {
-    const template = $.templates("#forumTemplate");
-    const htmlOutput = template.render(posts);
-    $("#forumContainer").html(htmlOutput);
-    $(".comment-editor").each(function () {
-        MentionManager.initEditor(this);
-        $(this).attr("contenteditable", true);
-    });
-    applyLinkPreviewsAndLinkify();
+  const template = $.templates("#forumTemplate");
+  const htmlOutput = template.render(posts);
+  $("#forumContainer").html(htmlOutput);
+  $(".comment-editor").each(function () {
+    MentionManager.initEditor(this);
+    $(this).attr("contenteditable", true);
+  });
+  applyLinkPreviewsAndLinkify();
 }
 
 function loadPosts(filter = "all") {
-    let promise;
-    if (filter === "mine") {
-        promise = ForumAPI.fetchMyPosts(visitorContactID);
-    } else {
-        promise = ForumAPI.fetchPosts();
-    }
-    promise
-        .then((posts) => {
-            if (posts.length === 0) {
-                $("#forumContainer").html(
-                    "<div class='text-gray-600 p-4'>No posts found.</div>"
-                );
-            } else {
-                renderPosts(posts);
-            }
-        })
-        .catch((error) => {
-            console.error("Error fetching posts:", error);
-            $("#forumContainer").html(
-                "<div class='text-red-500'>Failed to load posts.</div>"
-            );
-        });
+  let promise;
+  if (filter === "mine") {
+    promise = ForumAPI.fetchMyPosts(visitorContactID);
+  } else {
+    promise = ForumAPI.fetchPosts();
+  }
+  promise
+    .then((posts) => {
+      if (posts.length === 0) {
+        $("#forumContainer").html(
+          "<div class='text-gray-600 p-4'>No posts found.</div>"
+        );
+      } else {
+        renderPosts(posts);
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching posts:", error);
+      $("#forumContainer").html(
+        "<div class='text-red-500'>Failed to load posts.</div>"
+      );
+    });
 }
 
 $(document).ready(function () {
-    MentionManager.initContacts();
-    MentionManager.initEditor(document.getElementById("post-editor"));
+  MentionManager.initContacts();
+  MentionManager.initEditor(document.getElementById("post-editor"));
 
-    $("#postFile").on("change", function () {
-        if (this.files && this.files.length > 0) {
-            // Hide attach button and show replace/delete buttons
-            $(".attachAFileForClassChat").addClass("hidden");
-            $("#replaceFileContainer, #deleteFileContainer").removeClass("hidden");
-            // Generate and show preview
-            const file = this.files[0];
-            const previewHtml = getFilePreviewHTML(file);
-            $("#showContainerForAllFiles").html(previewHtml);
-        } else {
-            $("#showContainerForAllFiles").html("");
-        }
-    });
-
-    // When the Replace button is clicked, trigger the file input click to allow a new selection.
-    $("#replaceFileContainer").on("click", function () {
-        $("#postFile").click();
-    });
-
-    // Update Delete button for post creation to clear preview
-    $("#deleteFileContainer").on("click", function () {
-        $("#postFile").val("");
-        $("#replaceFileContainer, #deleteFileContainer").addClass("hidden");
-        $(".attachAFileForClassChat").removeClass("hidden");
-        $("#showContainerForAllFiles").html("");
-    });
-
-    // Helper to reset the file attachment UI for post creation
-    function resetFileAttachmentUI() {
-        $("#postFile").val("");
-        $("#replaceFileContainer, #deleteFileContainer").addClass("hidden");
-        $(".attachAFileForClassChat").removeClass("hidden");
-        $("#showContainerForAllFiles").html("");
+  $("#postFile").on("change", function () {
+    if (this.files && this.files.length > 0) {
+      // Hide attach button and show replace/delete buttons
+      $(".attachAFileForClassChat").addClass("hidden");
+      $("#replaceFileContainer, #deleteFileContainer").removeClass("hidden");
+      // Generate and show preview
+      const file = this.files[0];
+      const previewHtml = getFilePreviewHTML(file);
+      $("#showContainerForAllFiles").html(previewHtml);
+    } else {
+      $("#showContainerForAllFiles").html("");
     }
+  });
 
-    $("#all-posts-tab").on("click", function () {
-        loadPosts("all");
-        $(this).addClass("activePostTab");
-        $("#my-posts-tab").removeClass("activePostTab");
-    });
+  // When the Replace button is clicked, trigger the file input click to allow a new selection.
+  $("#replaceFileContainer").on("click", function () {
+    $("#postFile").click();
+  });
 
-    $("#my-posts-tab").on("click", function () {
-        loadPosts("mine");
-        $(this).addClass("activePostTab");
-        $("#all-posts-tab").removeClass("activePostTab");
-    });
+  // Update Delete button for post creation to clear preview
+  $("#deleteFileContainer").on("click", function () {
+    $("#postFile").val("");
+    $("#replaceFileContainer, #deleteFileContainer").addClass("hidden");
+    $(".attachAFileForClassChat").removeClass("hidden");
+    $("#showContainerForAllFiles").html("");
+  });
 
+  // Helper to reset the file attachment UI for post creation
+  function resetFileAttachmentUI() {
+    $("#postFile").val("");
+    $("#replaceFileContainer, #deleteFileContainer").addClass("hidden");
+    $(".attachAFileForClassChat").removeClass("hidden");
+    $("#showContainerForAllFiles").html("");
+  }
 
+  $("#all-posts-tab").on("click", function () {
+    loadPosts("all");
+    $(this).addClass("activePostTab");
+    $("#my-posts-tab").removeClass("activePostTab");
+  });
 
+  $("#my-posts-tab").on("click", function () {
+    loadPosts("mine");
+    $(this).addClass("activePostTab");
+    $("#all-posts-tab").removeClass("activePostTab");
+  });
 
-    $("#submit-post").on("click", function (event) {
-        event.preventDefault();
-        const postEditor = document.getElementById("post-editor");
-        const postOuterWrapper = document.getElementById("postOuterWrapper");
-        const htmlContent = postEditor.innerHTML.trim();
-        const fileInput = $("#postFile")[0];
-        const responseMessage = $("#responseMessage");
-        const submitButton = $(this);
-        submitButton.prop("disabled", true);
-        postOuterWrapper.classList.add("state-disabled");
-        $("#post-editor").attr("contenteditable", false);
-        responseMessage.removeClass("hidden");
-        responseMessage.text("Creating post...");
-        const tempContainer = document.createElement("div");
-        tempContainer.innerHTML = htmlContent;
-        const mentionedIds = [];
-        tempContainer.querySelectorAll(".mention").forEach((mention) => {
-            const id = mention.dataset.contactId;
-            if (id && !mentionedIds.includes(Number(id)))
-                mentionedIds.push(Number(id));
-        });
-        let payload = {
-            post_copy: htmlContent,
-            author_id: visitorContactID,
-            Mentions: mentionedIds.map((id) => ({ id: id })),
-            post_status: "Published - Not flagged",
-            class_id: classId,
-        };
-        let uploadedFileInfo = null;
-        if (fileInput.files && fileInput.files[0]) {
-            const file = fileInput.files[0];
-            uploadedFileInfo = { name: file.name, type: file.type };
-        }
-        function submitNewPost(finalPayload) {
-            ForumAPI.createPost(finalPayload)
-                .then((data) => {
-                    responseMessage.text("Post created successfully!");
-                    resetFileAttachmentUI();
-                    return ForumAPI.fetchPostById(data.id);
-                })
-                .then((post) => {
-                    if (uploadedFileInfo && post.file) {
-                        const link = post.file.replace(/^"|"$/g, "");
-                        post.file = JSON.stringify({
-                            link: link,
-                            name: uploadedFileInfo.name,
-                            type: uploadedFileInfo.type,
-                        });
-                    }
-                    const template = $.templates("#forumTemplate");
-                    const htmlOutput = template.render(post);
-                    $("#forumContainer").prepend(htmlOutput);
-                    postEditor.innerHTML = "";
-                    $(fileInput).val("");
-                })
-                .catch((error) => {
-                    console.error("Error creating post:", error);
-                    responseMessage.text("Error creating post.");
-                })
-                .finally(() => {
-                    submitButton.prop("disabled", false);
-                    postOuterWrapper.classList.remove("state-disabled");
-                    $("#post-editor").attr("contenteditable", true);
-                    setTimeout(() => responseMessage.addClass("hidden"), 500);
-                });
-        }
-        if (fileInput.files && fileInput.files[0]) {
-            const filesToUpload = [{ file: fileInput.files[0], fieldName: "file" }];
-            FileUploader.processFileFields(
-                payload,
-                filesToUpload,
-                awsParam,
-                awsParamUrl
-            )
-                .then((updatedPayload) => submitNewPost(updatedPayload))
-                .catch((error) => {
-                    console.error("File processing error:", error);
-                    responseMessage.text("Error processing file.");
-                    submitButton.prop("disabled", false);
-                    $("#post-editor").attr("contenteditable", true);
-                });
-        } else {
-            submitNewPost(payload);
-        }
-    });
-});
-
-function handleDelete(button) {
-    const postId = $(button).data("id");
-    const postCard = $(button).closest(".postCard");
-    const responseMessage = $("#responseMessage");
-    responseMessage.removeClass("hidden");
-    responseMessage.text("Deleting post...");
-    postCard.css("opacity", "0.5");
-    $(button).prop("disabled", true);
-
-    ForumAPI.deletePost(postId)
-        .then(() => {
-            responseMessage.text("Post deleted successfully");
-            postCard.slideUp(() => postCard.remove());
-            setTimeout(() => responseMessage.addClass("hidden"), 500); // Hide message after 2 seconds
-        })
-        .catch((error) => {
-            console.error("Error deleting post:", error);
-            postCard.css("opacity", "1");
-            $(button).prop("disabled", false);
-            alert("Error deleting post.");
-        });
-}
-
-function handleDeleteComment(button) {
-    const commentId = $(button).data("id");
-    const commentContainer = $(button).closest(".commentCard");
-    commentContainer.css("opacity", "0.5");
-    const responseMessage = $("#responseMessage");
-    responseMessage.removeClass("hidden");
-    responseMessage.text("Deleting comment...");
-    $(button).prop("disabled", true);
-
-    ForumAPI.deleteComment(commentId)
-        .then(() => {
-            responseMessage.text("Comment deleted successfully");
-            commentContainer.slideUp(() => commentContainer.remove());
-            setTimeout(() => responseMessage.addClass("hidden"), 2000); // Hide message after 2 seconds
-        })
-        .catch((error) => {
-            console.error("Error deleting comment:", error);
-            $(button).prop("disabled", false);
-            alert("Error deleting comment.");
-        });
-}
-
-$(document).on("submit", ".commentForm", function (event) {
+  $("#submit-post").on("click", function (event) {
     event.preventDefault();
-    const form = $(this);
-    const editor = form.find(".comment-editor")[0];
-    const htmlContent = editor.innerHTML.trim();
-    const fileInput = form.find("input[name='commentFile']")[0];
-    const parentId = form.data("parent-id");
-    const parentType = form.data("parent-type");
-    const forumPostId = form.data("forum-post-id");
-    const submitButton = form.find("button[type='submit']");
-
-    form.addClass("state-disabled");
-    submitButton.prop("disabled", true);
-    editor.setAttribute("contenteditable", false);
+    const postEditor = document.getElementById("post-editor");
+    const postOuterWrapper = document.getElementById("postOuterWrapper");
+    const htmlContent = postEditor.innerHTML.trim();
+    const fileInput = $("#postFile")[0];
     const responseMessage = $("#responseMessage");
+    const submitButton = $(this);
+    submitButton.prop("disabled", true);
+    postOuterWrapper.classList.add("state-disabled");
+    $("#post-editor").attr("contenteditable", false);
     responseMessage.removeClass("hidden");
-    responseMessage.text("Creating comment...");
-
+    responseMessage.text("Creating post...");
     const tempContainer = document.createElement("div");
     tempContainer.innerHTML = htmlContent;
     const mentionedIds = [];
     tempContainer.querySelectorAll(".mention").forEach((mention) => {
-        const id = mention.dataset.contactId;
-        if (id && !mentionedIds.includes(Number(id))) mentionedIds.push(Number(id));
+      const id = mention.dataset.contactId;
+      if (id && !mentionedIds.includes(Number(id)))
+        mentionedIds.push(Number(id));
     });
-
     let payload = {
-        comment: htmlContent,
-        author_id: visitorContactID,
-        Mentions: mentionedIds.map((id) => ({ id: id })),
+      post_copy: htmlContent,
+      author_id: visitorContactID,
+      Mentions: mentionedIds.map((id) => ({ 
+        id: id,
+        has__new__notification: true
+    })),
+      post_status: "Published - Not flagged",
+      class_id: classId,
     };
-    if (parentType === "post") {
-        payload.forum_post_id = parentId;
-    } else {
-        payload.reply_to_comment_id = parentId;
-    }
-
     let uploadedFileInfo = null;
     if (fileInput.files && fileInput.files[0]) {
-        const file = fileInput.files[0];
-        uploadedFileInfo = { name: file.name, type: file.type };
+      const file = fileInput.files[0];
+      uploadedFileInfo = { name: file.name, type: file.type };
     }
-    let createdCommentId = null;
-
-    function submitComment(finalPayload) {
-        ForumAPI.createComment(finalPayload)
-            .then((data) => {
-                responseMessage.text("Comment created successfully!");
-                form.removeClass("state-disabled");
-                createdCommentId = data.id;
-                // Fetch only the updated post data for the specific forum post
-                return ForumAPI.fetchPostById(forumPostId);
-            })
-            .then((post) => {
-                // Update file info for the new comment if applicable
-                if (uploadedFileInfo) {
-                    function findComment(comments) {
-                        for (let comment of comments) {
-                            if (comment.id == createdCommentId) return comment;
-                            if (comment.children && comment.children.length) {
-                                let found = findComment(comment.children);
-                                if (found) return found;
-                            }
-                        }
-                        return null;
-                    }
-                    const newComment = findComment(post.children);
-                    if (newComment) {
-                        let link = "";
-                        if (newComment.file) link = newComment.file.replace(/^"|"$/g, "");
-                        newComment.file = JSON.stringify({
-                            link: link,
-                            name: uploadedFileInfo.name,
-                            type: uploadedFileInfo.type,
-                        });
-                    }
-                }
-                // Re-render only the comment section for this post
-                const template = $.templates("#forumTemplate");
-                let newCommentsHtml = "";
-                if (post.children && post.children.length) {
-                    newCommentsHtml = template.render(post.children);
-                }
-                $("#comments-" + forumPostId).html(newCommentsHtml);
-                $("#comments-" + forumPostId + " .comment-editor").each(function () {
-                    MentionManager.initEditor(this);
-                    $(this).attr("contenteditable", true);
-                });
-            })
-            .catch((error) => {
-                console.error("Error creating comment:", error);
-                alert("Error creating comment.");
-            })
-            .finally(() => {
-                submitButton.prop("disabled", false);
-                editor.setAttribute("contenteditable", true);
-                editor.innerHTML = "";
-                $(fileInput).val("");
-                resetCommentFileUploadUI(form);
-                setTimeout(() => responseMessage.addClass("hidden"), 500);
+    function submitNewPost(finalPayload) {
+      ForumAPI.createPost(finalPayload)
+        .then((data) => {
+          responseMessage.text("Post created successfully!");
+          resetFileAttachmentUI();
+          return ForumAPI.fetchPostById(data.id);
+        })
+        .then((post) => {
+          if (uploadedFileInfo && post.file) {
+            const link = post.file.replace(/^"|"$/g, "");
+            post.file = JSON.stringify({
+              link: link,
+              name: uploadedFileInfo.name,
+              type: uploadedFileInfo.type,
             });
+          }
+          const template = $.templates("#forumTemplate");
+          const htmlOutput = template.render(post);
+          $("#forumContainer").prepend(htmlOutput);
+          postEditor.innerHTML = "";
+          $(fileInput).val("");
+        })
+        .catch((error) => {
+          console.error("Error creating post:", error);
+          responseMessage.text("Error creating post.");
+        })
+        .finally(() => {
+          submitButton.prop("disabled", false);
+          postOuterWrapper.classList.remove("state-disabled");
+          $("#post-editor").attr("contenteditable", true);
+          setTimeout(() => responseMessage.addClass("hidden"), 500);
+        });
     }
-
     if (fileInput.files && fileInput.files[0]) {
-        const filesToUpload = [{ file: fileInput.files[0], fieldName: "file" }];
-        FileUploader.processFileFields(
-            payload,
-            filesToUpload,
-            awsParam,
-            awsParamUrl
-        )
-            .then((updatedPayload) => submitComment(updatedPayload))
-            .catch((error) => {
-                console.error("File processing error:", error);
-                alert("Error processing file.");
-                submitButton.prop("disabled", false);
-                editor.setAttribute("contenteditable", true);
-            });
+      const filesToUpload = [{ file: fileInput.files[0], fieldName: "file" }];
+      FileUploader.processFileFields(
+        payload,
+        filesToUpload,
+        awsParam,
+        awsParamUrl
+      )
+        .then((updatedPayload) => submitNewPost(updatedPayload))
+        .catch((error) => {
+          console.error("File processing error:", error);
+          responseMessage.text("Error processing file.");
+          submitButton.prop("disabled", false);
+          $("#post-editor").attr("contenteditable", true);
+        });
     } else {
-        submitComment(payload);
+      submitNewPost(payload);
     }
+  });
+});
+
+function handleDelete(button) {
+  const postId = $(button).data("id");
+  const postCard = $(button).closest(".postCard");
+  const responseMessage = $("#responseMessage");
+  responseMessage.removeClass("hidden");
+  responseMessage.text("Deleting post...");
+  postCard.css("opacity", "0.5");
+  $(button).prop("disabled", true);
+
+  ForumAPI.deletePost(postId)
+    .then(() => {
+      responseMessage.text("Post deleted successfully");
+      postCard.slideUp(() => postCard.remove());
+      setTimeout(() => responseMessage.addClass("hidden"), 500); // Hide message after 2 seconds
+    })
+    .catch((error) => {
+      console.error("Error deleting post:", error);
+      postCard.css("opacity", "1");
+      $(button).prop("disabled", false);
+      alert("Error deleting post.");
+    });
+}
+
+function handleDeleteComment(button) {
+  const commentId = $(button).data("id");
+  const commentContainer = $(button).closest(".commentCard");
+  commentContainer.css("opacity", "0.5");
+  const responseMessage = $("#responseMessage");
+  responseMessage.removeClass("hidden");
+  responseMessage.text("Deleting comment...");
+  $(button).prop("disabled", true);
+
+  ForumAPI.deleteComment(commentId)
+    .then(() => {
+      responseMessage.text("Comment deleted successfully");
+      commentContainer.slideUp(() => commentContainer.remove());
+      setTimeout(() => responseMessage.addClass("hidden"), 2000); // Hide message after 2 seconds
+    })
+    .catch((error) => {
+      console.error("Error deleting comment:", error);
+      $(button).prop("disabled", false);
+      alert("Error deleting comment.");
+    });
+}
+
+$(document).on("submit", ".commentForm", function (event) {
+  event.preventDefault();
+  const form = $(this);
+  const editor = form.find(".comment-editor")[0];
+  const htmlContent = editor.innerHTML.trim();
+  const fileInput = form.find("input[name='commentFile']")[0];
+  const parentId = form.data("parent-id");
+  const parentType = form.data("parent-type");
+  const forumPostId = form.data("forum-post-id");
+  const submitButton = form.find("button[type='submit']");
+
+  form.addClass("state-disabled");
+  submitButton.prop("disabled", true);
+  editor.setAttribute("contenteditable", false);
+  const responseMessage = $("#responseMessage");
+  responseMessage.removeClass("hidden");
+  responseMessage.text("Creating comment...");
+
+  const tempContainer = document.createElement("div");
+  tempContainer.innerHTML = htmlContent;
+  const mentionedIds = [];
+  tempContainer.querySelectorAll(".mention").forEach((mention) => {
+    const id = mention.dataset.contactId;
+    if (id && !mentionedIds.includes(Number(id))) mentionedIds.push(Number(id));
+  });
+
+  let payload = {
+    comment: htmlContent,
+    author_id: visitorContactID,
+    Mentions: mentionedIds.map((id) => ({ 
+        id: id,
+        has__new__notification: true
+    })),
+  };
+  if (parentType === "post") {
+    payload.forum_post_id = parentId;
+  } else {
+    payload.reply_to_comment_id = parentId;
+  }
+
+  let uploadedFileInfo = null;
+  if (fileInput.files && fileInput.files[0]) {
+    const file = fileInput.files[0];
+    uploadedFileInfo = { name: file.name, type: file.type };
+  }
+  let createdCommentId = null;
+
+  function submitComment(finalPayload) {
+    ForumAPI.createComment(finalPayload)
+      .then((data) => {
+        responseMessage.text("Comment created successfully!");
+        form.removeClass("state-disabled");
+        createdCommentId = data.id;
+        // Fetch only the updated post data for the specific forum post
+        return ForumAPI.fetchPostById(forumPostId);
+      })
+      .then((post) => {
+        // Update file info for the new comment if applicable
+        if (uploadedFileInfo) {
+          function findComment(comments) {
+            for (let comment of comments) {
+              if (comment.id == createdCommentId) return comment;
+              if (comment.children && comment.children.length) {
+                let found = findComment(comment.children);
+                if (found) return found;
+              }
+            }
+            return null;
+          }
+          const newComment = findComment(post.children);
+          if (newComment) {
+            let link = "";
+            if (newComment.file) link = newComment.file.replace(/^"|"$/g, "");
+            newComment.file = JSON.stringify({
+              link: link,
+              name: uploadedFileInfo.name,
+              type: uploadedFileInfo.type,
+            });
+          }
+        }
+        // Re-render only the comment section for this post
+        const template = $.templates("#forumTemplate");
+        let newCommentsHtml = "";
+        if (post.children && post.children.length) {
+          newCommentsHtml = template.render(post.children);
+        }
+        $("#comments-" + forumPostId).html(newCommentsHtml);
+        $("#comments-" + forumPostId + " .comment-editor").each(function () {
+          MentionManager.initEditor(this);
+          $(this).attr("contenteditable", true);
+        });
+      })
+      .catch((error) => {
+        console.error("Error creating comment:", error);
+        alert("Error creating comment.");
+      })
+      .finally(() => {
+        submitButton.prop("disabled", false);
+        editor.setAttribute("contenteditable", true);
+        editor.innerHTML = "";
+        $(fileInput).val("");
+        resetCommentFileUploadUI(form);
+        setTimeout(() => responseMessage.addClass("hidden"), 500);
+      });
+  }
+
+  if (fileInput.files && fileInput.files[0]) {
+    const filesToUpload = [{ file: fileInput.files[0], fieldName: "file" }];
+    FileUploader.processFileFields(
+      payload,
+      filesToUpload,
+      awsParam,
+      awsParamUrl
+    )
+      .then((updatedPayload) => submitComment(updatedPayload))
+      .catch((error) => {
+        console.error("File processing error:", error);
+        alert("Error processing file.");
+        submitButton.prop("disabled", false);
+        editor.setAttribute("contenteditable", true);
+      });
+  } else {
+    submitComment(payload);
+  }
 });
 
 function handleVote(button) {
-    var $btn = $(button);
-    var recordId = $btn.data("id");
-    var type = $btn.data("type");
-    var voteId = $btn.data("vote-id");
-    var currentUserId = visitorContactID; // defined globally
+  var $btn = $(button);
+  var recordId = $btn.data("id");
+  var type = $btn.data("type");
+  var voteId = $btn.data("vote-id");
+  var currentUserId = visitorContactID; // defined globally
 
-    // Show temporary UI feedback if desired
-    $btn.addClass("state-disabled");
+  // Show temporary UI feedback if desired
+  $btn.addClass("state-disabled");
 
-    if (type === "post") {
-        if (voteId) {
-            // Vote removal: delete the vote and update the count locally.
-            ForumAPI.deletePostVote(voteId)
-                .then(() => {
-                    let $voteCount = $btn.find(".vote-count");
-                    let count = parseInt($voteCount.text(), 10);
-                    $voteCount.text(count - 1);
-                    $btn.data("vote-id", "");
-                    $btn.removeClass("upVoted").removeClass("state-disabled");
-                })
-                .catch((error) => {
-                    console.error("Error removing post vote:", error);
-                    $btn.removeClass("state-disabled");
-                    alert("Error removing vote.");
-                });
-        } else {
-            // Vote addition: create a vote and update the UI.
-            var payload = {
-                member_post_upvote_id: currentUserId,
-                post_upvote_id: recordId,
-            };
-            ForumAPI.createPostVote(payload)
-                .then((data) => {
-                    let $voteCount = $btn.find(".vote-count");
-                    let count = parseInt($voteCount.text(), 10);
-                    $voteCount.text(count + 1);
-                    $btn.data("vote-id", data.id);
-                    $btn.addClass("upVoted").removeClass("state-disabled");
-                })
-                .catch((error) => {
-                    console.error("Error creating post vote:", error);
-                    $btn.removeClass("state-disabled");
-                    alert("Error casting vote.");
-                });
-        }
-    } else if (type === "comment") {
-        // Similar logic for comment votes can be applied here.
-        if (voteId) {
-            // Removing comment vote
-            ForumAPI.deleteCommentVote(voteId)
-                .then(() => {
-                    let $voteCount = $btn.find(".vote-count");
-                    let count = parseInt($voteCount.text(), 10);
-                    $voteCount.text(count - 1);
-                    $btn.data("vote-id", "");
-                    $btn.removeClass("upVoted").removeClass("state-disabled");
-                })
-                .catch((error) => {
-                    console.error("Error removing comment vote:", error);
-                    $btn.removeClass("state-disabled");
-                    alert("Error removing vote.");
-                });
-        } else {
-            // Creating comment vote
-            var payload = {
-                member_comment_upvote_id: currentUserId,
-                forum_comment_upvote_id: recordId,
-            };
-            ForumAPI.createCommentVote(payload)
-                .then((data) => {
-                    let $voteCount = $btn.find(".vote-count");
-                    let count = parseInt($voteCount.text(), 10);
-                    $voteCount.text(count + 1);
-                    $btn.data("vote-id", data.id);
-                    $btn.addClass("upVoted").removeClass("state-disabled");
-                })
-                .catch((error) => {
-                    console.error("Error creating comment vote:", error);
-                    $btn.removeClass("state-disabled");
-                    alert("Error casting vote.");
-                });
-        }
+  if (type === "post") {
+    if (voteId) {
+      // Vote removal: delete the vote and update the count locally.
+      ForumAPI.deletePostVote(voteId)
+        .then(() => {
+          let $voteCount = $btn.find(".vote-count");
+          let count = parseInt($voteCount.text(), 10);
+          $voteCount.text(count - 1);
+          $btn.data("vote-id", "");
+          $btn.removeClass("upVoted").removeClass("state-disabled");
+        })
+        .catch((error) => {
+          console.error("Error removing post vote:", error);
+          $btn.removeClass("state-disabled");
+          alert("Error removing vote.");
+        });
+    } else {
+      // Vote addition: create a vote and update the UI.
+      var payload = {
+        member_post_upvote_id: currentUserId,
+        post_upvote_id: recordId,
+      };
+      ForumAPI.createPostVote(payload)
+        .then((data) => {
+          let $voteCount = $btn.find(".vote-count");
+          let count = parseInt($voteCount.text(), 10);
+          $voteCount.text(count + 1);
+          $btn.data("vote-id", data.id);
+          $btn.addClass("upVoted").removeClass("state-disabled");
+        })
+        .catch((error) => {
+          console.error("Error creating post vote:", error);
+          $btn.removeClass("state-disabled");
+          alert("Error casting vote.");
+        });
     }
+  } else if (type === "comment") {
+    // Similar logic for comment votes can be applied here.
+    if (voteId) {
+      // Removing comment vote
+      ForumAPI.deleteCommentVote(voteId)
+        .then(() => {
+          let $voteCount = $btn.find(".vote-count");
+          let count = parseInt($voteCount.text(), 10);
+          $voteCount.text(count - 1);
+          $btn.data("vote-id", "");
+          $btn.removeClass("upVoted").removeClass("state-disabled");
+        })
+        .catch((error) => {
+          console.error("Error removing comment vote:", error);
+          $btn.removeClass("state-disabled");
+          alert("Error removing vote.");
+        });
+    } else {
+      // Creating comment vote
+      var payload = {
+        member_comment_upvote_id: currentUserId,
+        forum_comment_upvote_id: recordId,
+      };
+      ForumAPI.createCommentVote(payload)
+        .then((data) => {
+          let $voteCount = $btn.find(".vote-count");
+          let count = parseInt($voteCount.text(), 10);
+          $voteCount.text(count + 1);
+          $btn.data("vote-id", data.id);
+          $btn.addClass("upVoted").removeClass("state-disabled");
+        })
+        .catch((error) => {
+          console.error("Error creating comment vote:", error);
+          $btn.removeClass("state-disabled");
+          alert("Error casting vote.");
+        });
+    }
+  }
 }
 
 function audioPlayer() {
-    return {
-        currentTime: 0,
-        duration: 0,
-        isPlaying: false,
-        volume: 1,
+  return {
+    currentTime: 0,
+    duration: 0,
+    isPlaying: false,
+    volume: 1,
 
-        initPlayer() {
-            if (typeof window.audioPlayerss === "undefined") {
-                window.audioPlayerss = [];
-            }
-            window.audioPlayerss.push(this);
-        },
+    initPlayer() {
+      if (typeof window.audioPlayerss === "undefined") {
+        window.audioPlayerss = [];
+      }
+      window.audioPlayerss.push(this);
+    },
 
-        muteUnmuteSound() {
-            if (this.volume == 0) {
-                this.volume = 1;
-                this.$refs.audioElement.volume = 1;
-            } else {
-                this.$refs.audioElement.volume = 0;
-                this.volume = 0;
-            }
-        },
+    muteUnmuteSound() {
+      if (this.volume == 0) {
+        this.volume = 1;
+        this.$refs.audioElement.volume = 1;
+      } else {
+        this.$refs.audioElement.volume = 0;
+        this.volume = 0;
+      }
+    },
 
-        updateVolume() {
-            this.volume = this.$refs.audioElement.volume;
-        },
+    updateVolume() {
+      this.volume = this.$refs.audioElement.volume;
+    },
 
-        seek() {
-            this.$refs.audioElement.currentTime = this.currentTime;
-        },
+    seek() {
+      this.$refs.audioElement.currentTime = this.currentTime;
+    },
 
-        updateProgress() {
-            this.currentTime = this.$refs.audioElement.currentTime.toFixed(2);
-        },
+    updateProgress() {
+      this.currentTime = this.$refs.audioElement.currentTime.toFixed(2);
+    },
 
-        loadMetadatafn() {
-            this.duration = this.$refs.audioElement.duration;
-        },
+    loadMetadatafn() {
+      this.duration = this.$refs.audioElement.duration;
+    },
 
-        playPauseAudio() {
-            // Toggle the current player state
-            if (!this.isPlaying) {
-                // First pause any other playing audio
-                window.audioPlayerss.forEach((player) => {
-                    if (player !== this && player.isPlaying) {
-                        player.$refs.audioElement.pause();
-                        player.isPlaying = false;
-                    }
-                });
+    playPauseAudio() {
+      // Toggle the current player state
+      if (!this.isPlaying) {
+        // First pause any other playing audio
+        window.audioPlayerss.forEach((player) => {
+          if (player !== this && player.isPlaying) {
+            player.$refs.audioElement.pause();
+            player.isPlaying = false;
+          }
+        });
 
-                // Then play this audio
-                this.$refs.audioElement
-                    .play()
-                    .then(() => {
-                        this.isPlaying = true;
-                    })
-                    .catch((error) => { });
-            } else {
-                this.$refs.audioElement.pause();
-                this.isPlaying = false;
-            }
-        },
+        // Then play this audio
+        this.$refs.audioElement
+          .play()
+          .then(() => {
+            this.isPlaying = true;
+          })
+          .catch((error) => {});
+      } else {
+        this.$refs.audioElement.pause();
+        this.isPlaying = false;
+      }
+    },
 
-        formattedTime() {
-            let hours = Math.floor(this.currentTime / 3600);
-            let minutes = Math.floor((this.currentTime % 3600) / 60);
-            let seconds = Math.floor(this.currentTime % 60);
+    formattedTime() {
+      let hours = Math.floor(this.currentTime / 3600);
+      let minutes = Math.floor((this.currentTime % 3600) / 60);
+      let seconds = Math.floor(this.currentTime % 60);
 
-            return (
-                (hours ? hours + ":" : "") +
-                (minutes < 10 ? "0" : "") +
-                minutes +
-                ":" +
-                (seconds < 10 ? "0" : "") +
-                seconds
-            );
-        },
-        formattedRemainingTime() {
-            let remaining = this.duration - this.currentTime;
-            let minutes = Math.floor(remaining / 60);
-            let seconds = Math.floor(remaining % 60);
-            return (
-                "-" +
-                (minutes < 10 ? "0" : "") +
-                minutes +
-                ":" +
-                (seconds < 10 ? "0" : "") +
-                seconds
-            );
-        },
-        downloadAudio() {
-            let a = document.createElement("a");
-            a.href = this.$refs.audioElement.src;
-            a.download = "audio.mp3";
-            a.click();
-        },
-    };
+      return (
+        (hours ? hours + ":" : "") +
+        (minutes < 10 ? "0" : "") +
+        minutes +
+        ":" +
+        (seconds < 10 ? "0" : "") +
+        seconds
+      );
+    },
+    formattedRemainingTime() {
+      let remaining = this.duration - this.currentTime;
+      let minutes = Math.floor(remaining / 60);
+      let seconds = Math.floor(remaining % 60);
+      return (
+        "-" +
+        (minutes < 10 ? "0" : "") +
+        minutes +
+        ":" +
+        (seconds < 10 ? "0" : "") +
+        seconds
+      );
+    },
+    downloadAudio() {
+      let a = document.createElement("a");
+      a.href = this.$refs.audioElement.src;
+      a.download = "audio.mp3";
+      a.click();
+    },
+  };
 }
 
 // When a file is selected in any comment form file input
 $(document).on("change", ".formFileInputForComment", function () {
-    if (this.files && this.files.length > 0) {
-        var container = $(this).closest(".commentForm");
-        // Hide the attach button and show replace/delete buttons
-        container.find(".attachAFileForComment").hide();
-        container
-            .find(".replaceFileContainerComment, .deleteFileContainerComment")
-            .show();
-        // Generate preview for the selected file and update the preview container
-        const file = this.files[0];
-        const previewHtml = getFilePreviewHTML(file);
-        container.find(".commentFilePreviewContainer").html(previewHtml);
-    } else {
-        $(this)
-            .closest(".commentForm")
-            .find(".commentFilePreviewContainer")
-            .html("");
-    }
+  if (this.files && this.files.length > 0) {
+    var container = $(this).closest(".commentForm");
+    // Hide the attach button and show replace/delete buttons
+    container.find(".attachAFileForComment").hide();
+    container
+      .find(".replaceFileContainerComment, .deleteFileContainerComment")
+      .show();
+    // Generate preview for the selected file and update the preview container
+    const file = this.files[0];
+    const previewHtml = getFilePreviewHTML(file);
+    container.find(".commentFilePreviewContainer").html(previewHtml);
+  } else {
+    $(this)
+      .closest(".commentForm")
+      .find(".commentFilePreviewContainer")
+      .html("");
+  }
 });
 
 $(document).on("click", ".replaceFileContainerComment", function () {
-    $(this).closest(".commentForm").find(".formFileInputForComment").click();
+  $(this).closest(".commentForm").find(".formFileInputForComment").click();
 });
 
 // When the Delete button is clicked, clear the file input and reset the UI
 $(document).on("click", ".deleteFileContainerComment", function () {
-    var container = $(this).closest(".commentForm");
-    container.find(".formFileInputForComment").val("");
-    container
-        .find(".replaceFileContainerComment, .deleteFileContainerComment")
-        .hide();
-    container.find(".attachAFileForComment").show();
-    container.find(".commentFilePreviewContainer").html("");
+  var container = $(this).closest(".commentForm");
+  container.find(".formFileInputForComment").val("");
+  container
+    .find(".replaceFileContainerComment, .deleteFileContainerComment")
+    .hide();
+  container.find(".attachAFileForComment").show();
+  container.find(".commentFilePreviewContainer").html("");
 });
 
 // Helper to reset the file upload UI for a comment form
 function resetCommentFileUploadUI(form) {
-    var container = $(form).find(".commentForm");
-    container.find(".formFileInputForComment").val("");
-    container
-        .find(".replaceFileContainerComment, .deleteFileContainerComment")
-        .hide();
-    container.find(".attachAFileForComment").show();
-    container.find(".commentFilePreviewContainer").html("");
+  var container = $(form).find(".commentForm");
+  container.find(".formFileInputForComment").val("");
+  container
+    .find(".replaceFileContainerComment, .deleteFileContainerComment")
+    .hide();
+  container.find(".attachAFileForComment").show();
+  container.find(".commentFilePreviewContainer").html("");
 }
 
 function getFilePreviewHTML(file) {
-    const blobUrl = URL.createObjectURL(file);
-    const type = file.type;
-    if (type.startsWith("image/")) {
-        return `<div class="file-preview mt-2"><img src="${blobUrl}" alt="${file.name}" class="max-w-full rounded"></div>`;
-    } else if (type.startsWith("audio/")) {
-        // Use your existing renderAudioPlayer function.
-        return `<div class="file-preview mt-2">${renderAudioPlayer(blobUrl)}</div>`;
-    } else if (type.startsWith("video/")) {
-        return `<div class="file-preview mt-2"><video controls src="${blobUrl}" class="max-w-full rounded">Your browser does not support the video element.</video></div>`;
-    } else {
-        return `<div class="file-preview mt-2"><a href="${blobUrl}" target="_blank" class="text-blue-500 hover:underline">${file.name}</a></div>`;
-    }
+  const blobUrl = URL.createObjectURL(file);
+  const type = file.type;
+  if (type.startsWith("image/")) {
+    return `<div class="file-preview mt-2"><img src="${blobUrl}" alt="${file.name}" class="max-w-full rounded"></div>`;
+  } else if (type.startsWith("audio/")) {
+    // Use your existing renderAudioPlayer function.
+    return `<div class="file-preview mt-2">${renderAudioPlayer(blobUrl)}</div>`;
+  } else if (type.startsWith("video/")) {
+    return `<div class="file-preview mt-2"><video controls src="${blobUrl}" class="max-w-full rounded">Your browser does not support the video element.</video></div>`;
+  } else {
+    return `<div class="file-preview mt-2"><a href="${blobUrl}" target="_blank" class="text-blue-500 hover:underline">${file.name}</a></div>`;
+  }
 }
 
 // Process all elements with the "content-container" class to generate previews and hyperlinks.
 function formatPreview() {
-    // Use a short timeout to let the content render before processing
-    setTimeout(() => {
-        const containers = document.querySelectorAll(".content-container");
-        const urlRegex =
-            /(https?:\/\/(?:www\.)?(youtube\.com|youtu\.be|loom\.com|vimeo\.com)\/\S+)/gi;
+  // Use a short timeout to let the content render before processing
+  setTimeout(() => {
+    const containers = document.querySelectorAll(".content-container");
+    const urlRegex =
+      /(https?:\/\/(?:www\.)?(youtube\.com|youtu\.be|loom\.com|vimeo\.com)\/\S+)/gi;
 
-        containers.forEach((container) => {
-            let content = container.innerHTML;
-            const matches = content.match(urlRegex);
-            if (matches) {
-                matches.forEach((rawUrl) => {
-                    let url = rawUrl;
-                    if (url.includes("youtube") || url.includes("youtu.be")) {
-                        url = transformYoutubeUrl(url);
-                    } else if (url.includes("loom.com")) {
-                        url = transformLoomUrl(url);
-                    } else if (url.includes("vimeo.com")) {
-                        url = transformVimeoUrl(url);
-                    }
-                    // If a preview hasn’t already been added for this URL, create one.
-                    if (!container.querySelector(`[data-preview-url="${url}"]`)) {
-                        createPreviewContainer(url, container);
-                    }
-                });
-            }
+    containers.forEach((container) => {
+      let content = container.innerHTML;
+      const matches = content.match(urlRegex);
+      if (matches) {
+        matches.forEach((rawUrl) => {
+          let url = rawUrl;
+          if (url.includes("youtube") || url.includes("youtu.be")) {
+            url = transformYoutubeUrl(url);
+          } else if (url.includes("loom.com")) {
+            url = transformLoomUrl(url);
+          } else if (url.includes("vimeo.com")) {
+            url = transformVimeoUrl(url);
+          }
+          // If a preview hasn’t already been added for this URL, create one.
+          if (!container.querySelector(`[data-preview-url="${url}"]`)) {
+            createPreviewContainer(url, container);
+          }
         });
-    }, 1000);
+      }
+    });
+  }, 1000);
 }
 
 function createPreviewContainer(url, container) {
-    if (container.querySelector(`[data-preview-url="${url}"]`)) return;
-    const iframe = document.createElement("iframe");
-    iframe.src = url;
-    iframe.setAttribute("frameborder", "0");
-    iframe.setAttribute("allowfullscreen", "");
-    iframe.style.position = "absolute";
-    iframe.style.top = "0";
-    iframe.style.left = "0";
-    iframe.style.width = "100%";
-    iframe.style.height = "100%";
+  if (container.querySelector(`[data-preview-url="${url}"]`)) return;
+  const iframe = document.createElement("iframe");
+  iframe.src = url;
+  iframe.setAttribute("frameborder", "0");
+  iframe.setAttribute("allowfullscreen", "");
+  iframe.style.position = "absolute";
+  iframe.style.top = "0";
+  iframe.style.left = "0";
+  iframe.style.width = "100%";
+  iframe.style.height = "100%";
 
-    const previewDiv = document.createElement("div");
-    previewDiv.classList.add("preview-container");
-    previewDiv.style.position = "relative";
-    previewDiv.style.paddingBottom = "56.25%"; // 16:9 aspect ratio
-    previewDiv.style.height = "0";
-    previewDiv.style.marginTop = "16px";
-    previewDiv.setAttribute("data-preview-url", url);
+  const previewDiv = document.createElement("div");
+  previewDiv.classList.add("preview-container");
+  previewDiv.style.position = "relative";
+  previewDiv.style.paddingBottom = "56.25%"; // 16:9 aspect ratio
+  previewDiv.style.height = "0";
+  previewDiv.style.marginTop = "16px";
+  previewDiv.setAttribute("data-preview-url", url);
 
-    // Optional: add a skeleton loader
-    const skeleton = document.createElement("div");
-    skeleton.classList.add("skeleton-loader");
-    skeleton.style.position = "absolute";
-    skeleton.style.top = "0";
-    skeleton.style.left = "0";
-    skeleton.style.width = "100%";
-    skeleton.style.height = "100%";
-    skeleton.style.backgroundColor = "#e0e0e0";
-    skeleton.style.animation = "pulse 1.5s infinite";
+  // Optional: add a skeleton loader
+  const skeleton = document.createElement("div");
+  skeleton.classList.add("skeleton-loader");
+  skeleton.style.position = "absolute";
+  skeleton.style.top = "0";
+  skeleton.style.left = "0";
+  skeleton.style.width = "100%";
+  skeleton.style.height = "100%";
+  skeleton.style.backgroundColor = "#e0e0e0";
+  skeleton.style.animation = "pulse 1.5s infinite";
 
-    previewDiv.appendChild(skeleton);
-    previewDiv.appendChild(iframe);
+  previewDiv.appendChild(skeleton);
+  previewDiv.appendChild(iframe);
 
-    // When the iframe loads, remove the skeleton
-    iframe.addEventListener("load", () => {
-        skeleton.remove();
-    });
+  // When the iframe loads, remove the skeleton
+  iframe.addEventListener("load", () => {
+    skeleton.remove();
+  });
 
-    container.appendChild(previewDiv);
+  container.appendChild(previewDiv);
 }
 
 function transformYoutubeUrl(url) {
-    try {
-        const urlObj = new URL(url);
-        let videoId;
-        if (urlObj.hostname === "youtu.be") {
-            videoId = urlObj.pathname.slice(1);
-        } else if (urlObj.hostname.includes("youtube.com")) {
-            videoId = urlObj.searchParams.get("v");
-        }
-        if (videoId && videoId.length === 11) {
-            return "https://www.youtube.com/embed/" + videoId;
-        }
-    } catch (e) {
-        var regExp =
-            /^.*(?:youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-        var match = url.match(regExp);
-        if (match && match[1].length === 11) {
-            return "https://www.youtube.com/embed/" + match[1];
-        }
+  try {
+    const urlObj = new URL(url);
+    let videoId;
+    if (urlObj.hostname === "youtu.be") {
+      videoId = urlObj.pathname.slice(1);
+    } else if (urlObj.hostname.includes("youtube.com")) {
+      videoId = urlObj.searchParams.get("v");
     }
-    return url;
+    if (videoId && videoId.length === 11) {
+      return "https://www.youtube.com/embed/" + videoId;
+    }
+  } catch (e) {
+    var regExp =
+      /^.*(?:youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    var match = url.match(regExp);
+    if (match && match[1].length === 11) {
+      return "https://www.youtube.com/embed/" + match[1];
+    }
+  }
+  return url;
 }
 
 function transformLoomUrl(url) {
-    var regExp = /loom\.com\/share\/([a-f0-9]+)/;
-    var match = url.match(regExp);
-    if (match && match[1]) {
-        return "https://www.loom.com/embed/" + match[1];
-    }
-    return url;
+  var regExp = /loom\.com\/share\/([a-f0-9]+)/;
+  var match = url.match(regExp);
+  if (match && match[1]) {
+    return "https://www.loom.com/embed/" + match[1];
+  }
+  return url;
 }
 
 function transformVimeoUrl(url) {
-    if (url.includes("player.vimeo.com/video/")) {
-        return url;
-    }
-    var regExp = /vimeo\.com\/(\d+)\/(\w+)/;
-    var match = url.match(regExp);
-    if (match && match[1] && match[2]) {
-        return "https://player.vimeo.com/video/" + match[1] + "?h=" + match[2];
-    }
+  if (url.includes("player.vimeo.com/video/")) {
     return url;
+  }
+  var regExp = /vimeo\.com\/(\d+)\/(\w+)/;
+  var match = url.match(regExp);
+  if (match && match[1] && match[2]) {
+    return "https://player.vimeo.com/video/" + match[1] + "?h=" + match[2];
+  }
+  return url;
 }
 
 // Replace plain text links with anchor tags that open in a new tab.
 function linkifyElement(element) {
-    const urlRegex = /(\b(https?:\/\/|www\.)\S+\b)/gi;
-    const walker = document.createTreeWalker(
-        element,
-        NodeFilter.SHOW_TEXT,
-        null,
-        false
-    );
-    const textNodes = [];
-    while (walker.nextNode()) {
-        textNodes.push(walker.currentNode);
-    }
-    textNodes.forEach((textNode) => {
-        const text = textNode.nodeValue;
-        if (urlRegex.test(text)) {
-            const fragment = document.createDocumentFragment();
-            let lastIndex = 0;
-            text.replace(urlRegex, (match, p1, offset) => {
-                if (offset > lastIndex) {
-                    fragment.appendChild(
-                        document.createTextNode(text.substring(lastIndex, offset))
-                    );
-                }
-                const a = document.createElement("a");
-                a.href = match.startsWith("http") ? match : "http://" + match;
-                a.textContent = match;
-                // Add custom class if desired
-                a.classList.add("custom-link-class");
-                // Add inline styles for color and underline
-                a.style.color = "blue";
-                a.style.textDecoration = "underline";
-                a.target = "_blank";
-                a.rel = "noopener noreferrer";
-                fragment.appendChild(a);
-                lastIndex = offset + match.length;
-                return match;
-            });
-            if (lastIndex < text.length) {
-                fragment.appendChild(
-                    document.createTextNode(text.substring(lastIndex))
-                );
-            }
-            textNode.parentNode.replaceChild(fragment, textNode);
+  const urlRegex = /(\b(https?:\/\/|www\.)\S+\b)/gi;
+  const walker = document.createTreeWalker(
+    element,
+    NodeFilter.SHOW_TEXT,
+    null,
+    false
+  );
+  const textNodes = [];
+  while (walker.nextNode()) {
+    textNodes.push(walker.currentNode);
+  }
+  textNodes.forEach((textNode) => {
+    const text = textNode.nodeValue;
+    if (urlRegex.test(text)) {
+      const fragment = document.createDocumentFragment();
+      let lastIndex = 0;
+      text.replace(urlRegex, (match, p1, offset) => {
+        if (offset > lastIndex) {
+          fragment.appendChild(
+            document.createTextNode(text.substring(lastIndex, offset))
+          );
         }
-    });
+        const a = document.createElement("a");
+        a.href = match.startsWith("http") ? match : "http://" + match;
+        a.textContent = match;
+        // Add custom class if desired
+        a.classList.add("custom-link-class");
+        // Add inline styles for color and underline
+        a.style.color = "blue";
+        a.style.textDecoration = "underline";
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        fragment.appendChild(a);
+        lastIndex = offset + match.length;
+        return match;
+      });
+      if (lastIndex < text.length) {
+        fragment.appendChild(
+          document.createTextNode(text.substring(lastIndex))
+        );
+      }
+      textNode.parentNode.replaceChild(fragment, textNode);
+    }
+  });
 }
 
 // A helper to run both preview formatting and linkification.
 function applyLinkPreviewsAndLinkify() {
-    formatPreview();
-    const containers = document.querySelectorAll(".content-container");
-    containers.forEach((el) => linkifyElement(el));
+  formatPreview();
+  const containers = document.querySelectorAll(".content-container");
+  containers.forEach((el) => linkifyElement(el));
 }
