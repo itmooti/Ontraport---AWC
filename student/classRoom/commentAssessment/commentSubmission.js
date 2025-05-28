@@ -21,6 +21,7 @@
         comment_file_name
         Mentions {
           unique_id 
+          has__new__notification 
         }
         Author {
           display_name
@@ -41,7 +42,10 @@
           file,
           comment_file_type: fileCategory,
           comment_file_name: fileName,
-          Mentions: Mentions.map((id) => ({ unique_id: id })),
+          Mentions: Mentions.map((id) => ({ 
+            unique_id: id,
+            has__new__notification: true
+        })),
           Author: {
             display_name: currentUserDisplayName,
             first_name: currentUserFirstName,
