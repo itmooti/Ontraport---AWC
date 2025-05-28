@@ -71,6 +71,7 @@ submissions_id
 file  
 Mentions {
 unique_id 
+has__new__notification 
 }
 }
 }
@@ -155,6 +156,7 @@ profile_image
 }
 Mentions {
 unique_id 
+has__new__notification 
 }
 }
 }
