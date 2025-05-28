@@ -46,7 +46,8 @@ async function createAnnouncement(payload) {
                 attachment
 				notification__type 
  			Mentions {
-     			 id
+     			 id 
+                 has__new__notification 
     				}
                 Instructor {
                   First_Name: first_name 
@@ -156,7 +157,10 @@ document.getElementById("announcementForm").addEventListener("submit", async (e)
         when_to_post: "Post Now",
         status: "Published",
         attachment: fileData,
-        Mentions: mentionedIds.map((id) => ({ id: id })),
+        Mentions: mentionedIds.map((id) => ({ 
+            id: id,
+            has__new__notification: true
+        })),
         notification__type: "Announcements",
     };
 
