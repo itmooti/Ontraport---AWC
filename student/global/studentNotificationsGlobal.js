@@ -757,7 +757,7 @@ function createNotificationCard(notification, isRead) {
         </div>
         <div class="extra-small-text text-dark line-clamp-2">${messageContent}</div>
         <div class="text-[#586A80] extra-small-text">${notification_class_name}</div>
-        <div class="text-[#586A80] extra-small-text line-clamp-1">${lowerContent}</div>
+        <div class="text-[#586A80] extra-small-text line-clamp-2">${lowerContent}</div>
       </div>
       <div class="extra-small-text text-[#586A80] text-nowrap">${timeAgo(notification.Date_Added)}</div>
     </div>
