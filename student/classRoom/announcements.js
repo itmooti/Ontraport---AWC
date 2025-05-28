@@ -62,8 +62,8 @@ query getAnnouncements {
 `;
 
 // For Unix timestamps in seconds, multiply by 1000.
- // Helper function to return relative time or Australian date format (dd/mm/yyyy)
- function parseUnix(dateInput) {
+// Helper function to return relative time or Australian date format (dd/mm/yyyy)
+function parseUnix(dateInput) {
   return new Date(dateInput * 1000);
 }
 function relativeTime(unixTimestamp) {
@@ -87,20 +87,30 @@ function relativeTime(unixTimestamp) {
 // Helper function to get a display name from an author object
 function getDisplayName(author, type) {
   if (type === "comment") {
-    if (author.commentsAuthorDisplayName) return author.commentsAuthorDisplayName;
+    if (author.commentsAuthorDisplayName)
+      return author.commentsAuthorDisplayName;
     if (author.commentsAuthorFirstName || author.commentsAuthorLastName)
-      return (author.commentsAuthorFirstName || "") + " " + (author.commentsAuthorLastName || "");
+      return (
+        (author.commentsAuthorFirstName || "") +
+        " " +
+        (author.commentsAuthorLastName || "")
+      );
   } else if (type === "reply") {
     if (author.repliesAuthorDisplayName) return author.repliesAuthorDisplayName;
     if (author.repliesAuthorFirstName || author.repliesAuthorLastName)
-      return (author.repliesAuthorFirstName || "") + " " + (author.repliesAuthorLastName || "");
+      return (
+        (author.repliesAuthorFirstName || "") +
+        " " +
+        (author.repliesAuthorLastName || "")
+      );
   }
   return "Anamolous";
 }
 
 function getProfileImage(imageUrl) {
   const unwantedUrl = "https://i.ontraport.com/abc.jpg";
-  const defaultUrl = "https://files.ontraport.com/media/b0456fe87439430680b173369cc54cea.php03bzcx?Expires=4895186056&Signature=fw-mkSjms67rj5eIsiDF9QfHb4EAe29jfz~yn3XT0--8jLdK4OGkxWBZR9YHSh26ZAp5EHj~6g5CUUncgjztHHKU9c9ymvZYfSbPO9JGht~ZJnr2Gwmp6vsvIpYvE1pEywTeoigeyClFm1dHrS7VakQk9uYac4Sw0suU4MpRGYQPFB6w3HUw-eO5TvaOLabtuSlgdyGRie6Ve0R7kzU76uXDvlhhWGMZ7alNCTdS7txSgUOT8oL9pJP832UsasK4~M~Na0ku1oY-8a7GcvvVv6j7yE0V0COB9OP0FbC8z7eSdZ8r7avFK~f9Wl0SEfS6MkPQR2YwWjr55bbJJhZnZA__&Key-Pair-Id=APKAJVAAMVW6XQYWSTNA";
+  const defaultUrl =
+    "https://files.ontraport.com/media/b0456fe87439430680b173369cc54cea.php03bzcx?Expires=4895186056&Signature=fw-mkSjms67rj5eIsiDF9QfHb4EAe29jfz~yn3XT0--8jLdK4OGkxWBZR9YHSh26ZAp5EHj~6g5CUUncgjztHHKU9c9ymvZYfSbPO9JGht~ZJnr2Gwmp6vsvIpYvE1pEywTeoigeyClFm1dHrS7VakQk9uYac4Sw0suU4MpRGYQPFB6w3HUw-eO5TvaOLabtuSlgdyGRie6Ve0R7kzU76uXDvlhhWGMZ7alNCTdS7txSgUOT8oL9pJP832UsasK4~M~Na0ku1oY-8a7GcvvVv6j7yE0V0COB9OP0FbC8z7eSdZ8r7avFK~f9Wl0SEfS6MkPQR2YwWjr55bbJJhZnZA__&Key-Pair-Id=APKAJVAAMVW6XQYWSTNA";
   if (!imageUrl || imageUrl.trim() === "" || imageUrl === unwantedUrl) {
     return defaultUrl;
   }
@@ -116,50 +126,60 @@ function hasVoted(likesArray, type) {
   let contactId = currentPageUserID;
   if (!likesArray || !likesArray.length) return false;
   if (type === "announcement") {
-    return likesArray.some(like => like.likesInAnnouncementContactId == contactId);
+    return likesArray.some(
+      (like) => like.likesInAnnouncementContactId == contactId
+    );
   } else if (type === "comment") {
-    return likesArray.some(like => like.likesInCommentContactId == contactId);
+    return likesArray.some((like) => like.likesInCommentContactId == contactId);
   } else if (type === "reply") {
-    return likesArray.some(like => like.likesInReplyContactId == contactId);
+    return likesArray.some((like) => like.likesInReplyContactId == contactId);
   }
   return false;
 }
 
-
-
-
 // Sanitize fetched data to avoid null values
 function sanitizeAnnouncements(announcements) {
-  return announcements.map(announcement => {
+  return announcements.map((announcement) => {
     // Set default Instructor if missing
     announcement.Instructor = announcement.Instructor || {
       instructorDisplayName: "Unknown",
-      instructorProfileImage: ""
+      instructorProfileImage: "",
     };
     // Ensure likes array exists for the announcement
-    announcement.mainAnnouncementVotedContactID = announcement.mainAnnouncementVotedContactID || [];
+    announcement.mainAnnouncementVotedContactID =
+      announcement.mainAnnouncementVotedContactID || [];
     // Sanitize comments array
-    if (announcement.commentOnAnnouncement && Array.isArray(announcement.commentOnAnnouncement)) {
-      announcement.commentOnAnnouncement = announcement.commentOnAnnouncement.map(comment => {
-        comment.Author = comment.Author || {
-          commentsAuthorDisplayName: "Unknown",
-          commentsAuthorProfileImage: ""
-        };
-        comment.Member_Comment_Upvotes = comment.Member_Comment_Upvotes || [];
-        if (comment.repliesOnComments && Array.isArray(comment.repliesOnComments)) {
-          comment.repliesOnComments = comment.repliesOnComments.map(reply => {
-            reply.Author = reply.Author || {
-              repliesAuthorDisplayName: "Unknown",
-              repliesAuthorProfileImage: ""
-            };
-            reply.Member_Comment_Upvotes = reply.Member_Comment_Upvotes || [];
-            return reply;
-          });
-        } else {
-          comment.repliesOnComments = [];
-        }
-        return comment;
-      });
+    if (
+      announcement.commentOnAnnouncement &&
+      Array.isArray(announcement.commentOnAnnouncement)
+    ) {
+      announcement.commentOnAnnouncement =
+        announcement.commentOnAnnouncement.map((comment) => {
+          comment.Author = comment.Author || {
+            commentsAuthorDisplayName: "Unknown",
+            commentsAuthorProfileImage: "",
+          };
+          comment.Member_Comment_Upvotes = comment.Member_Comment_Upvotes || [];
+          if (
+            comment.repliesOnComments &&
+            Array.isArray(comment.repliesOnComments)
+          ) {
+            comment.repliesOnComments = comment.repliesOnComments.map(
+              (reply) => {
+                reply.Author = reply.Author || {
+                  repliesAuthorDisplayName: "Unknown",
+                  repliesAuthorProfileImage: "",
+                };
+                reply.Member_Comment_Upvotes =
+                  reply.Member_Comment_Upvotes || [];
+                return reply;
+              }
+            );
+          } else {
+            comment.repliesOnComments = [];
+          }
+          return comment;
+        });
     } else {
       announcement.commentOnAnnouncement = [];
     }
@@ -180,10 +200,11 @@ $.views.helpers({
   countLikes,
   elapsedlikeCount: countLikes,
   hasVoted,
-  elapsedvoted: hasVoted
+  elapsedvoted: hasVoted,
 });
+
 async function fetchAnnouncements() {
-     $("#announcementsContainer").html(`
+  $("#announcementsContainer").html(`
     <div class="skeleton-container w-full">
 <div class="skeleton-card skeleton-shimmer"></div>
 <div class="skeleton-card skeleton-shimmer"></div>
@@ -194,12 +215,12 @@ async function fetchAnnouncements() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Api-Key": apiKeyForAnouncement
+        "Api-Key": apiKeyForAnouncement,
       },
-      body: JSON.stringify({ query })
+      body: JSON.stringify({ query }),
     });
     const jsonData = await response.json();
-    let announcements = jsonData.data.getAnnouncements || [] ;
+    let announcements = jsonData.data.getAnnouncements || [];
     // Sanitize the data to avoid null errors
     announcements = sanitizeAnnouncements(announcements);
     renderAnnouncements(announcements);
@@ -213,8 +234,6 @@ function renderAnnouncements(announcements) {
   const htmlOutput = template.render({ announcements });
   $("#announcementsContainer").html(htmlOutput);
 }
-
-
 
 // Function to fetch a comment by its ID using the provided GraphQL query
 async function fetchCommentById(commentId) {
@@ -238,30 +257,44 @@ query getForumComments($id: AwcForumCommentID) {
 }
 `;
   const response = await fetch(apiUrlForAnouncement, {
-    method: 'POST',
+    method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Api-Key": apiKeyForAnouncement
+      "Api-Key": apiKeyForAnouncement,
     },
-    body: JSON.stringify({ query: getCommentQuery, variables: { id: commentId } })
+    body: JSON.stringify({
+      query: getCommentQuery,
+      variables: { id: commentId },
+    }),
   });
   const jsonData = await response.json();
   return jsonData.data.getForumComments[0];
 }
 
-async function createForumComment(parentAnnouncementId, parentCommentID, mentionedIds, comments) {
-  const textAreas = document.querySelectorAll('.formTextArea');
-  textAreas.forEach(el => {
-    el.setAttribute('data-prev-contenteditable', el.getAttribute('contenteditable'));
-    el.removeAttribute('contenteditable');
-    el.style.opacity = '0.5';
+async function createForumComment(
+  parentAnnouncementId,
+  parentCommentID,
+  mentionedIds,
+  comments
+) {
+  const textAreas = document.querySelectorAll(".formTextArea");
+  textAreas.forEach((el) => {
+    el.setAttribute(
+      "data-prev-contenteditable",
+      el.getAttribute("contenteditable")
+    );
+    el.removeAttribute("contenteditable");
+    el.style.opacity = "0.5";
   });
   const payload = {
     parent_announcement_id: parentAnnouncementId,
-    reply_to_comment_id: parentCommentID, 
+    reply_to_comment_id: parentCommentID,
     comment: comments,
-    author_id:  currentPageUserID,
-    Mentions: mentionedIds.map((id) => ({ id: id })),
+    author_id: currentPageUserID,
+    Mentions: mentionedIds.map((id) => ({ 
+        id: id,
+        has__new__notification: true
+    })),
   };
   const mutation = `
 mutation createForumComment($payload: ForumCommentCreateInput) {
@@ -273,17 +306,18 @@ mutation createForumComment($payload: ForumCommentCreateInput) {
     reply_to_comment_id 
     Mentions {
       id
+      has__new__notification 
     }
   }
 }
 `;
   const response = await fetch(apiUrlForAnouncement, {
-    method: 'POST',
+    method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Api-Key": apiKeyForAnouncement
+      "Api-Key": apiKeyForAnouncement,
     },
-    body: JSON.stringify({ query: mutation, variables: { payload } })
+    body: JSON.stringify({ query: mutation, variables: { payload } }),
   });
   const result = await response.json();
   const newCommentId = result.data.createForumComment.id;
@@ -293,9 +327,12 @@ mutation createForumComment($payload: ForumCommentCreateInput) {
     // Top-level comment: Use commentTemplate and append to announcement's replies container.
     const commentTemplate = $.templates("#commentAnnouncementTemplate");
     const commentHtml = commentTemplate.render(newComment);
-    const announcementEl = document.querySelector(`[data-announcement-template-id="${parentAnnouncementId}"]`);
+    const announcementEl = document.querySelector(
+      `[data-announcement-template-id="${parentAnnouncementId}"]`
+    );
     if (announcementEl) {
-      const repliesContainer = announcementEl.querySelector('.repliesContainer');
+      const repliesContainer =
+        announcementEl.querySelector(".repliesContainer");
       if (repliesContainer) {
         $(repliesContainer).append(commentHtml);
       }
@@ -303,23 +340,27 @@ mutation createForumComment($payload: ForumCommentCreateInput) {
   } else {
     const replyTemplate = $.templates("#replyAnnouncementTemplate");
     const replyHtml = replyTemplate.render(newComment);
-   const parentCommentEl = document.querySelector(`[data-reply-id="${parentCommentID}"]`);
+    const parentCommentEl = document.querySelector(
+      `[data-reply-id="${parentCommentID}"]`
+    );
     if (parentCommentEl) {
-      let repliesContainer = parentCommentEl.querySelector('.repliesOfReplyContainer');
+      let repliesContainer = parentCommentEl.querySelector(
+        ".repliesOfReplyContainer"
+      );
       if (!repliesContainer) {
-        repliesContainer = document.createElement('div');
-        repliesContainer.className = 'repliesOfReplyContainer w-full flex flex-col gap-2';
+        repliesContainer = document.createElement("div");
+        repliesContainer.className =
+          "repliesOfReplyContainer w-full flex flex-col gap-2";
         parentCommentEl.appendChild(repliesContainer);
       }
       $(repliesContainer).append(replyHtml);
     }
-    }
-  textAreas.forEach(el => {
-    
-    const prev = el.getAttribute('data-prev-contenteditable') || "true";
-    el.setAttribute('contenteditable', prev);
-    el.style.opacity = '1';
-    el.innerText = '';
+  }
+  textAreas.forEach((el) => {
+    const prev = el.getAttribute("data-prev-contenteditable") || "true";
+    el.setAttribute("contenteditable", prev);
+    el.style.opacity = "1";
+    el.innerText = "";
   });
   return result;
 }
@@ -332,24 +373,29 @@ mutation deleteAnnouncement($id: AwcAnnouncementID) {
     id
   }
 }
-`
-  const announcementEl = document.querySelector(`[data-announcement-template-id="${id}"]`)
-  if (announcementEl) announcementEl.style.opacity = "0.6"
+`;
+  const announcementEl = document.querySelector(
+    `[data-announcement-template-id="${id}"]`
+  );
+  if (announcementEl) announcementEl.style.opacity = "0.6";
   try {
     const response = await fetch(apiUrlForAnouncement, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Api-Key": apiKeyForAnouncement },
-      body: JSON.stringify({ query, variables: { id } })
-    })
-    const result = await response.json()
+      headers: {
+        "Content-Type": "application/json",
+        "Api-Key": apiKeyForAnouncement,
+      },
+      body: JSON.stringify({ query, variables: { id } }),
+    });
+    const result = await response.json();
     if (result.data?.deleteAnnouncement) {
-      if (announcementEl) announcementEl.remove()
+      if (announcementEl) announcementEl.remove();
     } else {
-      if (announcementEl) announcementEl.style.opacity = "1"
+      if (announcementEl) announcementEl.style.opacity = "1";
     }
   } catch (error) {
-    if (announcementEl) announcementEl.style.opacity = "1"
-    console.error("Error deleting announcement:", error)
+    if (announcementEl) announcementEl.style.opacity = "1";
+    console.error("Error deleting announcement:", error);
   }
 }
 
@@ -361,39 +407,42 @@ mutation deleteForumComment($id: AwcForumCommentID) {
     id
   }
 }
-`
-  const replyEl = document.querySelector(`[data-reply-id="${replyID}"]`)
-  if (replyEl) replyEl.style.opacity = "0.6"
+`;
+  const replyEl = document.querySelector(`[data-reply-id="${replyID}"]`);
+  if (replyEl) replyEl.style.opacity = "0.6";
 
   try {
     const response = await fetch(apiUrlForAnouncement, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Api-Key": apiKeyForAnouncement },
+      headers: {
+        "Content-Type": "application/json",
+        "Api-Key": apiKeyForAnouncement,
+      },
       body: JSON.stringify({ query, variables: { id: replyID } }),
-    })
-    const result = await response.json()
+    });
+    const result = await response.json();
     if (result.data?.deleteForumComment) {
-      replyEl.remove()
+      replyEl.remove();
     } else {
-      if (replyEl) replyEl.style.opacity = "1"
+      if (replyEl) replyEl.style.opacity = "1";
     }
   } catch (error) {
-    if (replyEl) replyEl.style.opacity = "1"
-    console.error("Error deleting reply:", error)
+    if (replyEl) replyEl.style.opacity = "1";
+    console.error("Error deleting reply:", error);
   }
 }
 
 // create or delete vote from announcement
 async function createContactVotedAnnouncement(announcementId) {
   const el = document.getElementById(`vote-${announcementId}`);
-  const counterEl = el ? el.querySelector('.voteCounter') : null;
+  const counterEl = el ? el.querySelector(".voteCounter") : null;
   const updateCounter = (delta) => {
     if (counterEl) {
       const currentCount = parseInt(counterEl.innerText, 10) || 0;
       counterEl.innerText = currentCount + delta;
     }
   };
-  if (el && el.classList.contains('voted')) {
+  if (el && el.classList.contains("voted")) {
     const deleteQuery = `
   mutation deleteContactVotedAnnouncement {
     deleteContactVotedAnnouncement(
@@ -403,12 +452,15 @@ async function createContactVotedAnnouncement(announcementId) {
     try {
       const response = await fetch(apiUrlForAnouncement, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Api-Key": apiKeyForAnouncement },
-        body: JSON.stringify({ query: deleteQuery })
+        headers: {
+          "Content-Type": "application/json",
+          "Api-Key": apiKeyForAnouncement,
+        },
+        body: JSON.stringify({ query: deleteQuery }),
       });
       const result = await response.json();
       if (result.data && result.data.deleteContactVotedAnnouncement && el) {
-        el.classList.remove('voted');
+        el.classList.remove("voted");
         updateCounter(-1);
       }
       return result;
@@ -436,12 +488,15 @@ mutation createContactVotedAnnouncement($payload: ContactVotedAnnouncementCreate
   try {
     const response = await fetch(apiUrlForAnouncement, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Api-Key": apiKeyForAnouncement },
-      body: JSON.stringify({ query: createQuery, variables: { payload } })
+      headers: {
+        "Content-Type": "application/json",
+        "Api-Key": apiKeyForAnouncement,
+      },
+      body: JSON.stringify({ query: createQuery, variables: { payload } }),
     });
     const result = await response.json();
     if (result.data && result.data.createContactVotedAnnouncement && el) {
-      el.classList.add('voted');
+      el.classList.add("voted");
       updateCounter(1);
     }
     return result;
@@ -453,7 +508,7 @@ mutation createContactVotedAnnouncement($payload: ContactVotedAnnouncementCreate
 // create or delete upvote for a forum comment
 async function createMemberCommentUpvotesForumCommentUpvotes(commentId) {
   const el = document.getElementById(`vote-${commentId}`);
-  const counterEl = el ? el.querySelector('.voteCounter') : null;
+  const counterEl = el ? el.querySelector(".voteCounter") : null;
   const updateCounter = (delta) => {
     if (counterEl) {
       const currentCount = parseInt(counterEl.innerText, 10) || 0;
@@ -462,7 +517,7 @@ async function createMemberCommentUpvotesForumCommentUpvotes(commentId) {
   };
 
   // If already upvoted, call the delete mutation to remove the upvote
-  if (el && el.classList.contains('voted')) {
+  if (el && el.classList.contains("voted")) {
     const deleteQuery = `
   mutation deleteMemberCommentUpvotesForumCommentUpvotes {
     deleteMemberCommentUpvotesForumCommentUpvotes(
@@ -478,12 +533,19 @@ async function createMemberCommentUpvotesForumCommentUpvotes(commentId) {
     try {
       const response = await fetch(apiUrlForAnouncement, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Api-Key": apiKeyForAnouncement },
-        body: JSON.stringify({ query: deleteQuery })
+        headers: {
+          "Content-Type": "application/json",
+          "Api-Key": apiKeyForAnouncement,
+        },
+        body: JSON.stringify({ query: deleteQuery }),
       });
       const result = await response.json();
-      if (result.data && result.data.deleteMemberCommentUpvotesForumCommentUpvotes && el) {
-        el.classList.remove('voted');
+      if (
+        result.data &&
+        result.data.deleteMemberCommentUpvotesForumCommentUpvotes &&
+        el
+      ) {
+        el.classList.remove("voted");
         updateCounter(-1);
       }
       return result;
@@ -511,12 +573,19 @@ mutation createMemberCommentUpvotesForumCommentUpvotes($payload: MemberCommentUp
   try {
     const response = await fetch(apiUrlForAnouncement, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Api-Key": apiKeyForAnouncement },
-      body: JSON.stringify({ query: createQuery, variables: { payload } })
+      headers: {
+        "Content-Type": "application/json",
+        "Api-Key": apiKeyForAnouncement,
+      },
+      body: JSON.stringify({ query: createQuery, variables: { payload } }),
     });
     const result = await response.json();
-    if (result.data && result.data.createMemberCommentUpvotesForumCommentUpvotes && el) {
-      el.classList.add('voted');
+    if (
+      result.data &&
+      result.data.createMemberCommentUpvotesForumCommentUpvotes &&
+      el
+    ) {
+      el.classList.add("voted");
       updateCounter(1);
     }
     return result;
