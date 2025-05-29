@@ -628,31 +628,35 @@ function getPreviousLessonUnique() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  // 1. pull current URL params
   const parsed = parseUrlLUID();
   currentLessonUnique = parsed.lessonUnique;
   usereid = parsed.eid;
 
-  // 2. render + expose data
   renderUnifiedModules().then(() => {
-    // 3. now you can fetch the UIDs:
     const nextUID = getNextLessonUnique();
     const prevUID = getPreviousLessonUnique();
 
-    console.log("Previous lesson UID:", prevUID);
-    console.log("Next lesson UID:", nextUID);
-
-    // 4. (optional) attach to buttons or links:
     const nextBtn = document.getElementById("nextButtonTest");
     const prevBtn = document.getElementById("prevButtonTest");
-    if (nextBtn && nextUID) {
-      nextBtn.href = `/course‐details/content/${nextUID}?eid=${usereid}`;
-    }
+
+    // if there's a previous lesson, enable and bind a click
     if (prevBtn && prevUID) {
-      prevBtn.href = `/course‐details/content/${prevUID}?eid=${usereid}`;
+      prevBtn.disabled = false;
+      prevBtn.addEventListener("click", () => {
+        window.location.href = `/course-details/content/${prevUID}?eid=${usereid}`;
+      });
+    }
+
+    // if there's a next lesson, enable and bind a click
+    if (nextBtn && nextUID) {
+      nextBtn.disabled = false;
+      nextBtn.addEventListener("click", () => {
+        window.location.href = `/course-details/content/${nextUID}?eid=${usereid}`;
+      });
     }
   });
 });
+
 
 // Attach events on DOM load
 document.addEventListener("DOMContentLoaded", function () {
