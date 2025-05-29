@@ -595,7 +595,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (module && module.availability === false) {
       window.location.href = href;
     } else {
-      alert('Lesson not available yet.');
+      document.querySelector('.unavailableLessonModal').classList.remove('hidden');
     }
   });
 });
