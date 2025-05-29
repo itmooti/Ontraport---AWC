@@ -624,7 +624,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (m) {
 	updatePrevNextLessons(m[1]);
       }
-      console.log("Current Lesson is", m);	    
+      console.log("Current Lesson is", m[1]);	    
       console.log('Previous Lesson:', prevLesson);
       console.log('Next Lesson:', nextLesson);
     });
