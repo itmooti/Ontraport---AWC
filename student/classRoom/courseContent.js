@@ -5,8 +5,8 @@ let lessonDateProgress;
 let getEnrollmentFormat;
 let globalClassId = null;
 let showDripFed = false;
-let nextLesson='';
-let prevLessson='';
+let prevLesson = '';
+let nextLesson = '';
 
 function defineQuery() {
   getEnrollmentFormat = `
@@ -533,8 +533,7 @@ async function combineUnifiedData() {
     enrolments,
   };
 }
-let prevLesson = '';
-let nextLesson = '';
+
 function updatePrevNextLessons(currentLessonUniqueId) {
   const entries = (window.unifiedModules || [])
     .map(mod =>
