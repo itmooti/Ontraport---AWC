@@ -613,11 +613,10 @@ async function renderUnifiedModules() {
 
 
 document.addEventListener('DOMContentLoaded', function() {
-  document.body.addEventListener('click',async function(event) {
+  document.body.addEventListener('click',function(event) {
     var anchor = event.target.closest('a.nextLessonUrl');
     if (!anchor) return;
     event.preventDefault();
-    await renderUnifiedModules();
     var href = anchor.getAttribute('href');
     var match = href.match(/content\/([^?\/]+)/);
     if (!match) return;
@@ -664,20 +663,15 @@ document.addEventListener("DOMContentLoaded", function () {
   );
   addEventListenerIfExists("finalMessageButton", "click", renderUnifiedModules);
 	
-
-
-
-  
- // document.querySelectorAll('.lesson-link').forEach(el => {
- //    el.addEventListener('click', e => {
- //      const m = window.location.pathname.match(/\/content\/([^?/]+)/);	
- //      if (m) {
-	// updatePrevNextLessons(m[1]);
- //      }
- //      console.log("Current Lesson is", m[1]);	    
- //      console.log('Previous Lesson:', prevLesson);
- //      console.log('Next Lesson:', nextLesson);
-	//     bindLessonLinks(); 
- //    });
- //  });
 });
+document.addEventListener('DOMContentLoaded', function() {
+  const basePath = 'https://courses.writerscentre.com.au/course-details/content/';
+  if (window.location.href.includes(basePath)) {
+    console.log('Is a lesson page');
+    renderUnifiedModules();
+  } else {
+    console.log('Not a lesson page');
+  }
+});
+
+
