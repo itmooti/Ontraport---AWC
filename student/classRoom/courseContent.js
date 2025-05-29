@@ -617,6 +617,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var anchor = event.target.closest('a.nextLessonUrl');
     if (!anchor) return;
     event.preventDefault();
+    renderUnifiedModules();
     var href = anchor.getAttribute('href');
     var match = href.match(/content\/([^?\/]+)/);
     if (!match) return;
