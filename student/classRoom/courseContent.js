@@ -533,10 +533,31 @@ async function combineUnifiedData() {
     enrolments,
   };
 }
+let prevLesson = '';
+let nextLesson = '';
+function updatePrevNextLessons(currentLessonUniqueId) {
+  const entries = (window.unifiedModules || [])
+    .map(mod =>
+      mod.availability
+        ? mod.lessons.map(les => ({ lesson: les }))
+        : []
+    )
+    .flat();
+  const pos = entries.findIndex(e => e.lesson.uniqueId === currentLessonUniqueId);
+  prevLesson = pos > 0
+    ? entries[pos - 1].lesson.uniqueId
+    : '';
+  nextLesson = (pos !== -1 && pos < entries.length - 1)
+    ? entries[pos + 1].lesson.uniqueId
+    : '';
+}
 
 
 
-
+window.showPrevNextLessons = function() {
+  console.log('Previous Lesson:', prevLesson);
+  console.log('Next Lesson:', nextLesson);
+};
 
 async function renderUnifiedModules() {
   const skeletonHTML = `
@@ -554,7 +575,7 @@ async function renderUnifiedModules() {
   const unifiedData = await combineUnifiedData();
   if (!unifiedData || !Array.isArray(unifiedData.modules)) return;
 
-
+window.unifiedModules = unifiedData.modules;
 	
   const template = $.templates("#modulesTemplate");
   const htmlOutput = template.render({
