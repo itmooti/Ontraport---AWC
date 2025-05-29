@@ -536,22 +536,6 @@ async function combineUnifiedData() {
 
 
 
-function findAdjacentLessons(lessons, currentLessonUniqueId) {
-  const idx = lessons.findIndex(l => l.uniqueId === currentLessonUniqueId);
-  for (let i = idx - 1; i >= 0; i--) {
-    if (lessons[i].availability) {
-      prevLessson = lessons[i];
-      break;
-    }
-  }
-  for (let i = idx + 1; i < lessons.length; i++) {
-    if (lessons[i].availability) {
-      nextLesson = lessons[i];
-      break;
-    }
-  }
-  return { prevLesson, nextLesson };
-}
 
 
 async function renderUnifiedModules() {
@@ -571,17 +555,6 @@ async function renderUnifiedModules() {
   if (!unifiedData || !Array.isArray(unifiedData.modules)) return;
 
 
-//added
-  const moduleObj = unifiedData.modules.find(m => m.id === currentModuleId);
-  if (moduleObj) {
-    const { prevLesson, nextLesson } = findAdjacentLessons(
-      moduleObj.lessons,
-      currentLessonUniqueId
-    );
-    unifiedData.prevLesson = prevLesson;
-    unifiedData.nextLesson = nextLesson;
-  }  //aded end
-
 	
   const template = $.templates("#modulesTemplate");
   const htmlOutput = template.render({
@@ -598,12 +571,6 @@ async function renderUnifiedModules() {
   $("#modulesContainer").html(htmlOutput);
   $("#progressModulesContainer").html(progressOutput);
 	  
-	   $("#prevLessonBtnTest").off("click").on("click", () => {
-    console.log("Previous lesson:", unifiedData.prevLesson);
-  });
-  $("#nextLessonBtnTest").off("click").on("click", () => {
-    console.log("Next lesson:", unifiedData.nextLesson);
-  });
 	  
 }
 
@@ -616,6 +583,38 @@ function addEventListenerIfExists(id, event, handler) {
     });
   }
 }
+
+
+async function isLessonAvailable(lessonUniqueId) {
+  const data = await combineUnifiedData();
+  const lesson = data.modules
+    .flatMap(module => module.lessons)
+    .find(l => l.uniqueId === lessonUniqueId);
+
+  if (!lesson) {
+    console.error(`Lesson with unique id ${lessonUniqueId} not found.`);
+    return false;
+  }
+
+  return lesson.availability;
+}
+
+function onLessonUrlClick(url) {
+  const match = url.match(/\/content\/([^?]+)/);
+  if (!match) {
+    console.error(`Invalid lesson URL: ${url}`);
+    return;
+  }
+  const lessonUniqueId = match[1];
+  isLessonAvailable(lessonUniqueId).then(isAvailable => {
+    if (isAvailable) {
+      window.location.href = url;
+    } else {
+      alert(`This lesson isn’t available yet. ${lessonUniqueId} unlocks later.`);
+    }
+  });
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
   const button = document.getElementById('prevLessonBtnTest');
