@@ -5,6 +5,19 @@ let lessonDateProgress;
 let getEnrollmentFormat;
 let globalClassId = null;
 let showDripFed = false;
+
+function parseUrlLUID() {
+  const url = new URL(window.location.href);
+  const parts = url.pathname.split('/');
+  const idx = parts.indexOf('content');
+  const lessonUnique = idx > -1 ? parts[idx + 1] : null;
+  const eid = url.searchParams.get('eid');
+  return { lessonUnique, eid };
+}
+
+let currentLessonUnique = null;
+let usereid = null;
+
 function defineQuery() {
   getEnrollmentFormat = `
         query calcEnrolments {
@@ -554,6 +567,8 @@ async function renderUnifiedModules() {
   $("#modulesContainer").html(skeletonHTML);
 
   const unifiedData = await combineUnifiedData();
+	//added
+	  window.unifiedData = unifiedData;
 
   if (!unifiedData || !Array.isArray(unifiedData.modules)) return;
 
@@ -582,6 +597,62 @@ function addEventListenerIfExists(id, event, handler) {
     });
   }
 }
+//added
+function _getFlatLessons() {
+  return (window.unifiedData.modules || []).flatMap(mod =>
+    mod.lessons.map(les => ({
+      lessonUnique: les.uniqueId,
+      availability: les.availability
+    }))
+  );
+}
+function getAdjacentLessonUnique(direction) {
+  const flat = _getFlatLessons();
+  const idx = flat.findIndex(item => item.lessonUnique === currentLessonUnique);
+  if (idx === -1) return null;
+
+  let i = idx + direction;
+  // skip locked lessons
+  while (i >= 0 && i < flat.length && !flat[i].availability) {
+    i += direction;
+  }
+  return (i >= 0 && i < flat.length) ? flat[i].lessonUnique : null;
+}
+
+function getNextLessonUnique() {
+  return getAdjacentLessonUnique(+1);
+}
+
+function getPreviousLessonUnique() {
+  return getAdjacentLessonUnique(-1);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  // 1. pull current URL params
+  const parsed = parseUrlLUID();
+  currentLessonUnique = parsed.lessonUnique;
+  usereid = parsed.eid;
+
+  // 2. render + expose data
+  renderUnifiedModules().then(() => {
+    // 3. now you can fetch the UIDs:
+    const nextUID = getNextLessonUnique();
+    const prevUID = getPreviousLessonUnique();
+
+    console.log("Previous lesson UID:", prevUID);
+    console.log("Next lesson UID:", nextUID);
+
+    // 4. (optional) attach to buttons or links:
+    const nextBtn = document.getElementById("nextButtonTest");
+    const prevBtn = document.getElementById("prevButtonTest");
+    if (nextBtn && nextUID) {
+      nextBtn.href = `/course‐details/content/${nextUID}?eid=${usereid}`;
+    }
+    if (prevBtn && prevUID) {
+      prevBtn.href = `/course‐details/content/${prevUID}?eid=${usereid}`;
+    }
+  });
+});
 
 // Attach events on DOM load
 document.addEventListener("DOMContentLoaded", function () {
