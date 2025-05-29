@@ -7,6 +7,7 @@ let globalClassId = null;
 let showDripFed = false;
 let prevLesson = '';
 let nextLesson = '';
+let unifiedNewModules=[];
 
 function defineQuery() {
   getEnrollmentFormat = `
@@ -554,7 +555,7 @@ async function renderUnifiedModules() {
   const unifiedData = await combineUnifiedData();
   if (!unifiedData || !Array.isArray(unifiedData.modules)) return;
 
-   window.unifiedModules = unifiedData.modules;
+   unifiedNewModules = unifiedData.modules;
 	
   const template = $.templates("#modulesTemplate");
   const htmlOutput = template.render({
@@ -574,34 +575,42 @@ async function renderUnifiedModules() {
 	  
 }
 
-function updatePrevNextLessons(uniqueId) {
-  const entries = (window.unifiedModules || [])
+// ── updatePrevNextLessons ────────────────────────────────────────────────────
+function updatePrevNextLessons(currentLessonUniqueId) {
+  // only lessons from modules that are available
+  const entries = unifiedModules
     .filter(mod => mod.availability)
     .flatMap(mod => mod.lessons);
 
-  const pos = entries.findIndex(les => les.uniqueId === uniqueId);
+  const pos = entries.findIndex(les => les.uniqueId === currentLessonUniqueId);
+
   prevLesson = pos > 0 ? entries[pos - 1].uniqueId : '';
   nextLesson = (pos >= 0 && pos < entries.length - 1) ? entries[pos + 1].uniqueId : '';
 }
 
+// ── bindLessonLinks ──────────────────────────────────────────────────────────
 function bindLessonLinks() {
   document.querySelectorAll('.lesson-link').forEach(el => {
     el.removeEventListener('click', el._handler);
     const handler = e => {
+      e.preventDefault();
       const url = e.currentTarget.dataset.lessonUrl;
-      const match = url.match(/\/content\/([^?]+)/);
-      if (!match) return;
-      const uid = match[1];
+      const m   = url.match(/\/content\/([^?]+)/);
+      if (!m) return;
+      const uid = m[1];
+
       updatePrevNextLessons(uid);
-      console.log('Current:', uid);
-      console.log('Previous:', prevLesson);
-      console.log('Next:', nextLesson);
+      console.log('Current Lesson:', uid);
+      console.log('Previous Lesson:', prevLesson);
+      console.log('Next Lesson:', nextLesson);
+
       onLessonUrlClick(url);
     };
     el._handler = handler;
     el.addEventListener('click', handler);
   });
 }
+
 
 
 // Helper to add event listeners if element exists
