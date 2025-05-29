@@ -5,6 +5,8 @@ let lessonDateProgress;
 let getEnrollmentFormat;
 let globalClassId = null;
 let showDripFed = false;
+let nextLesson='';
+let prevLessson='';
 
 function defineQuery() {
   getEnrollmentFormat = `
@@ -536,14 +538,12 @@ async function combineUnifiedData() {
 
 function findAdjacentLessons(lessons, currentLessonUniqueId) {
   const idx = lessons.findIndex(l => l.uniqueId === currentLessonUniqueId);
-  let prevLesson = null;
   for (let i = idx - 1; i >= 0; i--) {
     if (lessons[i].availability) {
-      prevLesson = lessons[i];
+      prevLessson = lessons[i];
       break;
     }
   }
-  let nextLesson = null;
   for (let i = idx + 1; i < lessons.length; i++) {
     if (lessons[i].availability) {
       nextLesson = lessons[i];
@@ -620,7 +620,7 @@ function addEventListenerIfExists(id, event, handler) {
 document.addEventListener('DOMContentLoaded', () => {
   const button = document.getElementById('prevLessonBtnTest');
   button.addEventListener('click', () => {
-    console.log('clicked prev');
+    console.log('clicked prev',prevLessson);
   });
 });
 
