@@ -617,6 +617,15 @@ document.addEventListener("DOMContentLoaded", function () {
   if (m) {
     updatePrevNextLessons(m[1]);
   }
-  console.log('Previous Lesson:', prevLesson);
+
+	 document.querySelectorAll('.lesson-link').forEach(el => {
+    el.addEventListener('click', e => {
+      const url     = e.currentTarget.dataset.lessonUrl;
+      const uniqueId = url.match(/\/content\/([^?]+)/)[1];
+      updatePrevNextLessons(uniqueId);
+      onLessonUrlClick(url);
+	      console.log('Previous Lesson:', prevLesson);
   console.log('Next Lesson:', nextLesson);
+    });
+  });
 });
