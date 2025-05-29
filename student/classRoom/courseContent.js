@@ -617,6 +617,12 @@ function addEventListenerIfExists(id, event, handler) {
   }
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+  const button = document.getElementById('prevLessonBtnTest');
+  button.addEventListener('click', () => {
+    console.log('clicked prev');
+  });
+});
 
 // Attach events on DOM load
 document.addEventListener("DOMContentLoaded", function () {
