@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", function () {
   eid = match ? parseInt(match[1]) : null;
 
   if (!eid) {
-    //console.error("eid parameter not found in URL.");
+   
     return;
   } 
   defineQuery();
@@ -575,42 +575,6 @@ async function renderUnifiedModules() {
 	  
 }
 
-// // ── updatePrevNextLessons ────────────────────────────────────────────────────
-// function updatePrevNextLessons(currentLessonUniqueId) {
-//   // only lessons from modules that are available
-//   const entries = unifiedNewModules
-//     .filter(mod => mod.availability)
-//     .flatMap(mod => mod.lessons);
-
-//   const pos = entries.findIndex(les => les.uniqueId === currentLessonUniqueId);
-
-//   prevLesson = pos > 0 ? entries[pos - 1].uniqueId : '';
-//   nextLesson = (pos >= 0 && pos < entries.length - 1) ? entries[pos + 1].uniqueId : '';
-// }
-
-// // ── bindLessonLinks ──────────────────────────────────────────────────────────
-// function bindLessonLinks() {
-//   document.querySelectorAll('.lesson-link').forEach(el => {
-//     el.removeEventListener('click', el._handler);
-//     const handler = e => {
-//       e.preventDefault();
-//       const url = e.currentTarget.dataset.lessonUrl;
-//       const m   = url.match(/\/content\/([^?]+)/);
-//       if (!m) return;
-//       const uid = m[1];
-
-//       updatePrevNextLessons(uid);
-//       console.log('Current Lesson:', uid);
-//       console.log('Previous Lesson:', prevLesson);
-//       console.log('Next Lesson:', nextLesson);
-
-//       onLessonUrlClick(url);
-//     };
-//     el._handler = handler;
-//     el.addEventListener('click', handler);
-//   });
-// }
-
 
 document.addEventListener('DOMContentLoaded', function() {
   document.body.addEventListener('click',function(event) {
@@ -667,11 +631,8 @@ document.addEventListener("DOMContentLoaded", function () {
 document.addEventListener('DOMContentLoaded', function() {
   const basePath = 'https://courses.writerscentre.com.au/course-details/content/';
   if (window.location.href.includes(basePath)) {
-    console.log('Is a lesson page');
     renderUnifiedModules();
-  } else {
-    console.log('Not a lesson page');
-  }
+  } 
 });
 
 
