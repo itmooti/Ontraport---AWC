@@ -613,7 +613,7 @@ async function renderUnifiedModules() {
 
 
 document.addEventListener('DOMContentLoaded', function() {
-  document.body.addEventListener('click', function(event) {
+  document.body.addEventListener('click',async function(event) {
     var anchor = event.target.closest('a.nextLessonUrl');
     if (!anchor) return;
     event.preventDefault();
