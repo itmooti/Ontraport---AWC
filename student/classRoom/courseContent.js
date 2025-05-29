@@ -531,6 +531,29 @@ async function combineUnifiedData() {
     enrolments,
   };
 }
+
+
+
+function findAdjacentLessons(lessons, currentLessonUniqueId) {
+  const idx = lessons.findIndex(l => l.uniqueId === currentLessonUniqueId);
+  let prevLesson = null;
+  for (let i = idx - 1; i >= 0; i--) {
+    if (lessons[i].availability) {
+      prevLesson = lessons[i];
+      break;
+    }
+  }
+  let nextLesson = null;
+  for (let i = idx + 1; i < lessons.length; i++) {
+    if (lessons[i].availability) {
+      nextLesson = lessons[i];
+      break;
+    }
+  }
+  return { prevLesson, nextLesson };
+}
+
+
 async function renderUnifiedModules() {
   const skeletonHTML = `
     <div class="skeleton-container">
@@ -547,6 +570,19 @@ async function renderUnifiedModules() {
   const unifiedData = await combineUnifiedData();
   if (!unifiedData || !Array.isArray(unifiedData.modules)) return;
 
+
+//added
+  const moduleObj = unifiedData.modules.find(m => m.id === currentModuleId);
+  if (moduleObj) {
+    const { prevLesson, nextLesson } = findAdjacentLessons(
+      moduleObj.lessons,
+      currentLessonUniqueId
+    );
+    unifiedData.prevLesson = prevLesson;
+    unifiedData.nextLesson = nextLesson;
+	  //aded end
+
+	
   const template = $.templates("#modulesTemplate");
   const htmlOutput = template.render({
     modules: unifiedData.modules,
@@ -561,6 +597,14 @@ async function renderUnifiedModules() {
 
   $("#modulesContainer").html(htmlOutput);
   $("#progressModulesContainer").html(progressOutput);
+	  
+	   $("#prevLessonBtnTest").off("click").on("click", () => {
+    console.log("Previous lesson:", unifiedData.prevLesson);
+  });
+  $("#nextLessonBtnTest").off("click").on("click", () => {
+    console.log("Next lesson:", unifiedData.nextLesson);
+  });
+	  
 }
 
 // Helper to add event listeners if element exists
