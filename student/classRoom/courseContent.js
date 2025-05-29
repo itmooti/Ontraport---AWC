@@ -616,8 +616,7 @@ document.addEventListener("DOMContentLoaded", function () {
 	  const m = window.location.pathname.match(/\/content\/([^?/]+)/);
   if (m) {
     updatePrevNextLessons(m[1]);
-    showPrevNextLessons();
   }
-	  console.log('Previous Lesson:', prevLesson);
+  console.log('Previous Lesson:', prevLesson);
   console.log('Next Lesson:', nextLesson);
 });
