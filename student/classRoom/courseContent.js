@@ -596,8 +596,15 @@ async function isLessonAvailable(lessonUniqueId) {
     return false;
   }
 
-  return lesson.availability;
+  // override the (inverted) availability flag by directly comparing timestamps
+  const nowUnix = Math.floor(Date.now() / 1000);
+  // lesson.openDateUnix comes from your existing determineAvailability()
+  if (lesson.openDateUnix == null) {
+    return false;
+  }
+  return nowUnix >= lesson.openDateUnix;
 }
+
 
 function onLessonUrlClick(url) {
   const match = url.match(/\/content\/([^?]+)/);
