@@ -6,18 +6,6 @@ let getEnrollmentFormat;
 let globalClassId = null;
 let showDripFed = false;
 
-function parseUrlLUID() {
-  const url = new URL(window.location.href);
-  const parts = url.pathname.split('/');
-  const idx = parts.indexOf('content');
-  const lessonUnique = idx > -1 ? parts[idx + 1] : null;
-  const eid = url.searchParams.get('eid');
-  return { lessonUnique, eid };
-}
-
-let currentLessonUnique = null;
-let usereid = null;
-
 function defineQuery() {
   getEnrollmentFormat = `
         query calcEnrolments {
@@ -244,10 +232,6 @@ function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customis
     return { dueDateUnix, dueDateText };
   }
 
-  // const secondsInAWeek = 7 * 86400;
-  // const sundayEndOfDayOffset = 6 * 86400 + 23 * 3600 + 59 * 60;
-
-  // dueDateUnix = normalizedStartUnix + (dueWeek - 1) * secondsInAWeek + sundayEndOfDayOffset;
 const secondsInADay = 86400;
 const endOfDayOffset = 23 * 3600 + 59 * 60;
 dueDateUnix = normalizedStartUnix + (dueWeek - 1) * secondsInADay + endOfDayOffset;
@@ -256,7 +240,6 @@ dueDateText = `Due on ${formatDate(dueDateUnix)}`;
   return { dueDateUnix, dueDateText };
 }
 
-// Unified GraphQL query (includes all customisations)
 const lmsQuery = `
     query LMSQuery {
 LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
@@ -483,11 +466,6 @@ async function combineUnifiedData() {
           let dueDateInfo = { dueDateUnix: null, dueDateText: "No Due Date" };
           if (lesson.type === "Assessment") {
             const lessonCustomisations = lesson.lessonCustomisations || [];
-            // dueDateInfo = determineAssessmentDueDateUnified(
-            //   lesson,
-            //   defaultClassStartDate,
-            //   lessonCustomisations
-            // );
  dueDateInfo = determineAssessmentDueDateUnified(
     lesson,
     availability.openDateUnix, 
@@ -567,9 +545,6 @@ async function renderUnifiedModules() {
   $("#modulesContainer").html(skeletonHTML);
 
   const unifiedData = await combineUnifiedData();
-	//added
-	  window.unifiedData = unifiedData;
-
   if (!unifiedData || !Array.isArray(unifiedData.modules)) return;
 
   const template = $.templates("#modulesTemplate");
@@ -597,65 +572,6 @@ function addEventListenerIfExists(id, event, handler) {
     });
   }
 }
-//added
-function _getFlatLessons() {
-  return (window.unifiedData.modules || []).flatMap(mod =>
-    mod.lessons.map(les => ({
-      lessonUnique: les.uniqueId,
-      availability: les.availability
-    }))
-  );
-}
-function getAdjacentLessonUnique(direction) {
-  const flat = _getFlatLessons();
-  const idx = flat.findIndex(item => item.lessonUnique === currentLessonUnique);
-  if (idx === -1) return null;
-
-  let i = idx + direction;
-  // skip locked lessons
-  while (i >= 0 && i < flat.length && !flat[i].availability) {
-    i += direction;
-  }
-  return (i >= 0 && i < flat.length) ? flat[i].lessonUnique : null;
-}
-
-function getNextLessonUnique() {
-  return getAdjacentLessonUnique(+1);
-}
-
-function getPreviousLessonUnique() {
-  return getAdjacentLessonUnique(-1);
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  const parsed = parseUrlLUID();
-  currentLessonUnique = parsed.lessonUnique;
-  usereid = parsed.eid;
-
-  renderUnifiedModules().then(() => {
-    const nextUID = getNextLessonUnique();
-    const prevUID = getPreviousLessonUnique();
-
-    const nextBtn = document.getElementById("nextButtonTest");
-    const prevBtn = document.getElementById("prevButtonTest");
-
-    // if there's a previous lesson, enable and bind a click
-    if (prevBtn && prevUID) {
-      prevBtn.disabled = false;
-      prevBtn.addEventListener("click", () => {
-        window.location.href = `/course-details/content/${prevUID}?eid=${usereid}`;
-      });
-    }
-
-    // if there's a next lesson, enable and bind a click
-    if (nextBtn && nextUID) {
-      nextBtn.disabled = false;
-      nextBtn.addEventListener("click", () => {
-        window.location.href = `/course-details/content/${nextUID}?eid=${usereid}`;
-      });
-    }
-  });
-});
 
 
 // Attach events on DOM load
