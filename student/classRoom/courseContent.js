@@ -574,33 +574,36 @@ async function renderUnifiedModules() {
 	  
 }
 
-function updatePrevNextLessons(currentLessonUniqueId) {
-  console.log("Update function is running");
+function updatePrevNextLessons(uniqueId) {
   const entries = (window.unifiedModules || [])
-    .map(mod =>
-      mod.availability
-        ? mod.lessons.map(les => ({ lesson: les }))
-        : []
-    )
-    .flat();
-	
-  console.log("All records", entries);
-	
-  const pos = entries.findIndex(e => e.lesson.uniqueId === currentLessonUniqueId);
+    .filter(mod => mod.availability)
+    .flatMap(mod => mod.lessons);
 
-  console.log("Current postion match", pos);
-  
-  prevLesson = pos > 0
-    ? entries[pos - 1].lesson.uniqueId
-    : '';
-
-  console.log("Prev postion", prevLesson);
-	
-  nextLesson = (pos !== -1 && pos < entries.length - 1)
-    ? entries[pos + 1].lesson.uniqueId
-    : '';
- console.log("Next postion", nextLesson);
+  const pos = entries.findIndex(les => les.uniqueId === uniqueId);
+  prevLesson = pos > 0 ? entries[pos - 1].uniqueId : '';
+  nextLesson = (pos >= 0 && pos < entries.length - 1) ? entries[pos + 1].uniqueId : '';
 }
+
+function bindLessonLinks() {
+  document.querySelectorAll('.lesson-link').forEach(el => {
+    el.removeEventListener('click', el._handler);
+    const handler = e => {
+      const url = e.currentTarget.dataset.lessonUrl;
+      const match = url.match(/\/content\/([^?]+)/);
+      if (!match) return;
+      const uid = match[1];
+      updatePrevNextLessons(uid);
+      console.log('Current:', uid);
+      console.log('Previous:', prevLesson);
+      console.log('Next:', nextLesson);
+      onLessonUrlClick(url);
+    };
+    el._handler = handler;
+    el.addEventListener('click', handler);
+  });
+}
+
+
 // Helper to add event listeners if element exists
 function addEventListenerIfExists(id, event, handler) {
   const element = document.getElementById(id);
@@ -639,6 +642,7 @@ document.addEventListener("DOMContentLoaded", function () {
       console.log("Current Lesson is", m[1]);	    
       console.log('Previous Lesson:', prevLesson);
       console.log('Next Lesson:', nextLesson);
+	    bindLessonLinks(); 
     });
   });
 });
