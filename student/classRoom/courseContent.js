@@ -580,7 +580,7 @@ async function renderUnifiedModules() {
     );
     unifiedData.prevLesson = prevLesson;
     unifiedData.nextLesson = nextLesson;
-	  //aded end
+  }  //aded end
 
 	
   const template = $.templates("#modulesTemplate");
