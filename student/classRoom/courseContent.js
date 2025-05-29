@@ -613,13 +613,11 @@ document.addEventListener("DOMContentLoaded", function () {
     renderUnifiedModules
   );
   addEventListenerIfExists("finalMessageButton", "click", renderUnifiedModules);
-	  console.log('Previous Lesson:', prevLesson);
-  console.log('Next Lesson:', nextLesson);
-});
-window.addEventListener('load', () => {
-  const m = window.location.pathname.match(/\/content\/([^?/]+)/);
+	  const m = window.location.pathname.match(/\/content\/([^?/]+)/);
   if (m) {
     updatePrevNextLessons(m[1]);
     showPrevNextLessons();
   }
+	  console.log('Previous Lesson:', prevLesson);
+  console.log('Next Lesson:', nextLesson);
 });
