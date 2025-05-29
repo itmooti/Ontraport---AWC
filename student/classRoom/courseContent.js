@@ -617,10 +617,13 @@ function onLessonUrlClick(url) {
 
 
 document.addEventListener('DOMContentLoaded', () => {
-  const button = document.getElementById('prevLessonBtnTest');
-  button.addEventListener('click', () => {
-    console.log('clicked prev',prevLessson);
+ document.querySelectorAll('.lesson-link').forEach(el => {
+  el.addEventListener('click', e => {
+    const url = e.currentTarget.dataset.lessonUrl;
+    onLessonUrlClick(url);
   });
+});
+
 });
 
 // Attach events on DOM load
