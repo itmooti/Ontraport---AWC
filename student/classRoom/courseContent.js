@@ -575,41 +575,66 @@ async function renderUnifiedModules() {
 	  
 }
 
-// ── updatePrevNextLessons ────────────────────────────────────────────────────
-function updatePrevNextLessons(currentLessonUniqueId) {
-  // only lessons from modules that are available
-  const entries = unifiedNewModules
-    .filter(mod => mod.availability)
-    .flatMap(mod => mod.lessons);
+// // ── updatePrevNextLessons ────────────────────────────────────────────────────
+// function updatePrevNextLessons(currentLessonUniqueId) {
+//   // only lessons from modules that are available
+//   const entries = unifiedNewModules
+//     .filter(mod => mod.availability)
+//     .flatMap(mod => mod.lessons);
 
-  const pos = entries.findIndex(les => les.uniqueId === currentLessonUniqueId);
+//   const pos = entries.findIndex(les => les.uniqueId === currentLessonUniqueId);
 
-  prevLesson = pos > 0 ? entries[pos - 1].uniqueId : '';
-  nextLesson = (pos >= 0 && pos < entries.length - 1) ? entries[pos + 1].uniqueId : '';
-}
+//   prevLesson = pos > 0 ? entries[pos - 1].uniqueId : '';
+//   nextLesson = (pos >= 0 && pos < entries.length - 1) ? entries[pos + 1].uniqueId : '';
+// }
 
-// ── bindLessonLinks ──────────────────────────────────────────────────────────
-function bindLessonLinks() {
-  document.querySelectorAll('.lesson-link').forEach(el => {
-    el.removeEventListener('click', el._handler);
-    const handler = e => {
-      e.preventDefault();
-      const url = e.currentTarget.dataset.lessonUrl;
-      const m   = url.match(/\/content\/([^?]+)/);
-      if (!m) return;
-      const uid = m[1];
+// // ── bindLessonLinks ──────────────────────────────────────────────────────────
+// function bindLessonLinks() {
+//   document.querySelectorAll('.lesson-link').forEach(el => {
+//     el.removeEventListener('click', el._handler);
+//     const handler = e => {
+//       e.preventDefault();
+//       const url = e.currentTarget.dataset.lessonUrl;
+//       const m   = url.match(/\/content\/([^?]+)/);
+//       if (!m) return;
+//       const uid = m[1];
 
-      updatePrevNextLessons(uid);
-      console.log('Current Lesson:', uid);
-      console.log('Previous Lesson:', prevLesson);
-      console.log('Next Lesson:', nextLesson);
+//       updatePrevNextLessons(uid);
+//       console.log('Current Lesson:', uid);
+//       console.log('Previous Lesson:', prevLesson);
+//       console.log('Next Lesson:', nextLesson);
 
-      onLessonUrlClick(url);
-    };
-    el._handler = handler;
-    el.addEventListener('click', handler);
+//       onLessonUrlClick(url);
+//     };
+//     el._handler = handler;
+//     el.addEventListener('click', handler);
+//   });
+// }
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.body.addEventListener('click', function(event) {
+    var anchor = event.target.closest('a.nextLessonUrl');
+    if (!anchor) return;
+    event.preventDefault();
+    var href = anchor.getAttribute('href');
+    var match = href.match(/content\/([^?\/]+)/);
+    if (!match) return;
+    var lessonUid = match[1];
+    var module = unifiedNewModules.find(function(mod) {
+      return Array.isArray(mod.lessons) &&
+             mod.lessons.some(function(lesson) {
+               return lesson.awcLessonContentPageUrl &&
+                      lesson.awcLessonContentPageUrl.indexOf(lessonUid) !== -1;
+             });
+    });
+    if (module && module.availability === false) {
+      window.location.href = href;
+    } else {
+      alert('Lesson not available yet.');
+    }
   });
-}
+});
 
 
 
@@ -642,16 +667,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
   
- document.querySelectorAll('.lesson-link').forEach(el => {
-    el.addEventListener('click', e => {
-      const m = window.location.pathname.match(/\/content\/([^?/]+)/);	
-      if (m) {
-	updatePrevNextLessons(m[1]);
-      }
-      console.log("Current Lesson is", m[1]);	    
-      console.log('Previous Lesson:', prevLesson);
-      console.log('Next Lesson:', nextLesson);
-	    bindLessonLinks(); 
-    });
-  });
+ // document.querySelectorAll('.lesson-link').forEach(el => {
+ //    el.addEventListener('click', e => {
+ //      const m = window.location.pathname.match(/\/content\/([^?/]+)/);	
+ //      if (m) {
+	// updatePrevNextLessons(m[1]);
+ //      }
+ //      console.log("Current Lesson is", m[1]);	    
+ //      console.log('Previous Lesson:', prevLesson);
+ //      console.log('Next Lesson:', nextLesson);
+	//     bindLessonLinks(); 
+ //    });
+ //  });
 });
