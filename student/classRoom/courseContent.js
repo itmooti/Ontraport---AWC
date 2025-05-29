@@ -585,52 +585,6 @@ function addEventListenerIfExists(id, event, handler) {
 }
 
 
-async function isLessonAvailable(lessonUniqueId) {
-  const data = await combineUnifiedData();
-
-  // Find the module containing this lesson
-  const moduleFound = data.modules.find(mod =>
-    mod.lessons.some(l => l.uniqueId === lessonUniqueId)
-  );
-
-  if (!moduleFound) {
-    console.error(`Lesson with unique id ${lessonUniqueId} not found.`);
-    return false;
-  }
-
-  // A lesson is available exactly when its module is available
-  return moduleFound.availability;
-}
-
-
-
-function onLessonUrlClick(url) {
-  const match = url.match(/\/content\/([^?]+)/);
-  if (!match) {
-    console.error(`Invalid lesson URL: ${url}`);
-    return;
-  }
-  const lessonUniqueId = match[1];
-  isLessonAvailable(lessonUniqueId).then(isAvailable => {
-    if (isAvailable) {
-      window.location.href = url;
-    } else {
-      alert(`This lesson isn’t available yet. ${lessonUniqueId} unlocks later.`);
-    }
-  });
-}
-
-
-document.addEventListener('DOMContentLoaded', () => {
- document.querySelectorAll('.lesson-link').forEach(el => {
-  el.addEventListener('click', e => {
-    const url = e.currentTarget.dataset.lessonUrl;
-    onLessonUrlClick(url);
-  });
-});
-
-});
-
 // Attach events on DOM load
 document.addEventListener("DOMContentLoaded", function () {
   addEventListenerIfExists(
