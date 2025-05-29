@@ -556,7 +556,7 @@ async function renderUnifiedModules() {
   if (!unifiedData || !Array.isArray(unifiedData.modules)) return;
 
    unifiedNewModules = unifiedData.modules;
-	
+	console.log('unifiedNewModules',unifiedNewModules);
   const template = $.templates("#modulesTemplate");
   const htmlOutput = template.render({
     modules: unifiedData.modules,
