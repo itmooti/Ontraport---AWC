@@ -553,11 +553,6 @@ function updatePrevNextLessons(currentLessonUniqueId) {
 
 
 
-window.showPrevNextLessons = function() {
-  console.log('Previous Lesson:', prevLesson);
-  console.log('Next Lesson:', nextLesson);
-};
-
 async function renderUnifiedModules() {
   const skeletonHTML = `
     <div class="skeleton-container">
@@ -618,6 +613,8 @@ document.addEventListener("DOMContentLoaded", function () {
     renderUnifiedModules
   );
   addEventListenerIfExists("finalMessageButton", "click", renderUnifiedModules);
+	  console.log('Previous Lesson:', prevLesson);
+  console.log('Next Lesson:', nextLesson);
 });
 window.addEventListener('load', () => {
   const m = window.location.pathname.match(/\/content\/([^?/]+)/);
