@@ -534,22 +534,7 @@ async function combineUnifiedData() {
   };
 }
 
-function updatePrevNextLessons(currentLessonUniqueId) {
-  const entries = (window.unifiedModules || [])
-    .map(mod =>
-      mod.availability
-        ? mod.lessons.map(les => ({ lesson: les }))
-        : []
-    )
-    .flat();
-  const pos = entries.findIndex(e => e.lesson.uniqueId === currentLessonUniqueId);
-  prevLesson = pos > 0
-    ? entries[pos - 1].lesson.uniqueId
-    : '';
-  nextLesson = (pos !== -1 && pos < entries.length - 1)
-    ? entries[pos + 1].lesson.uniqueId
-    : '';
-}
+
 
 
 
@@ -569,7 +554,7 @@ async function renderUnifiedModules() {
   const unifiedData = await combineUnifiedData();
   if (!unifiedData || !Array.isArray(unifiedData.modules)) return;
 
-window.unifiedModules = unifiedData.modules;
+   window.unifiedModules = unifiedData.modules;
 	
   const template = $.templates("#modulesTemplate");
   const htmlOutput = template.render({
@@ -589,6 +574,33 @@ window.unifiedModules = unifiedData.modules;
 	  
 }
 
+function updatePrevNextLessons(currentLessonUniqueId) {
+  console.log("Update function is running");
+  const entries = (window.unifiedModules || [])
+    .map(mod =>
+      mod.availability
+        ? mod.lessons.map(les => ({ lesson: les }))
+        : []
+    )
+    .flat();
+	
+  console.log("All records", entries);
+	
+  const pos = entries.findIndex(e => e.lesson.uniqueId === currentLessonUniqueId);
+
+  console.log("Current postion match", pos);
+  
+  prevLesson = pos > 0
+    ? entries[pos - 1].lesson.uniqueId
+    : '';
+
+  console.log("Prev postion", prevLesson);
+	
+  nextLesson = (pos !== -1 && pos < entries.length - 1)
+    ? entries[pos + 1].lesson.uniqueId
+    : '';
+ console.log("Next postion", nextLesson);
+}
 // Helper to add event listeners if element exists
 function addEventListenerIfExists(id, event, handler) {
   const element = document.getElementById(id);
