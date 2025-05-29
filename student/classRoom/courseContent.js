@@ -587,23 +587,21 @@ function addEventListenerIfExists(id, event, handler) {
 
 async function isLessonAvailable(lessonUniqueId) {
   const data = await combineUnifiedData();
-  const lesson = data.modules
-    .flatMap(module => module.lessons)
-    .find(l => l.uniqueId === lessonUniqueId);
 
-  if (!lesson) {
+  // Find the module containing this lesson
+  const moduleFound = data.modules.find(mod =>
+    mod.lessons.some(l => l.uniqueId === lessonUniqueId)
+  );
+
+  if (!moduleFound) {
     console.error(`Lesson with unique id ${lessonUniqueId} not found.`);
     return false;
   }
 
-  // override the (inverted) availability flag by directly comparing timestamps
-  const nowUnix = Math.floor(Date.now() / 1000);
-  // lesson.openDateUnix comes from your existing determineAvailability()
-  if (lesson.openDateUnix == null) {
-    return false;
-  }
-  return nowUnix >= lesson.openDateUnix;
+  // A lesson is available exactly when its module is available
+  return moduleFound.availability;
 }
+
 
 
 function onLessonUrlClick(url) {
