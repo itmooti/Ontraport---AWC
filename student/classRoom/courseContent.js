@@ -619,3 +619,10 @@ document.addEventListener("DOMContentLoaded", function () {
   );
   addEventListenerIfExists("finalMessageButton", "click", renderUnifiedModules);
 });
+window.addEventListener('load', () => {
+  const m = window.location.pathname.match(/\/content\/([^?/]+)/);
+  if (m) {
+    updatePrevNextLessons(m[1]);
+    showPrevNextLessons();
+  }
+});
