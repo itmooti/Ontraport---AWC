@@ -578,7 +578,7 @@ async function renderUnifiedModules() {
 // ── updatePrevNextLessons ────────────────────────────────────────────────────
 function updatePrevNextLessons(currentLessonUniqueId) {
   // only lessons from modules that are available
-  const entries = unifiedModules
+  const entries = unifiedNewModules
     .filter(mod => mod.availability)
     .flatMap(mod => mod.lessons);
 
