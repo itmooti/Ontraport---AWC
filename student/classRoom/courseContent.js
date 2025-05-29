@@ -613,19 +613,20 @@ document.addEventListener("DOMContentLoaded", function () {
     renderUnifiedModules
   );
   addEventListenerIfExists("finalMessageButton", "click", renderUnifiedModules);
-	  const m = window.location.pathname.match(/\/content\/([^?/]+)/);
-  if (m) {
-    updatePrevNextLessons(m[1]);
-  }
+	
 
-	 document.querySelectorAll('.lesson-link').forEach(el => {
+
+
+  
+ document.querySelectorAll('.lesson-link').forEach(el => {
     el.addEventListener('click', e => {
-      const url     = e.currentTarget.dataset.lessonUrl;
-      const uniqueId = url.match(/\/content\/([^?]+)/)[1];
-      updatePrevNextLessons(uniqueId);
-      onLessonUrlClick(url);
-	      console.log('Previous Lesson:', prevLesson);
-  console.log('Next Lesson:', nextLesson);
+      const m = window.location.pathname.match(/\/content\/([^?/]+)/);	
+      if (m) {
+	updatePrevNextLessons(m[1]);
+      }
+      console.log("Current Lesson is", m);	    
+      console.log('Previous Lesson:', prevLesson);
+      console.log('Next Lesson:', nextLesson);
     });
   });
 });
