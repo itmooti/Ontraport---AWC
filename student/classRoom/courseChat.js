@@ -1145,6 +1145,17 @@ $(document).on("submit", ".commentForm", function (event) {
 
   function submitComment(finalPayload) {
     ForumAPI.createComment(finalPayload)
+
+      .then((created) => {
+        const mentionIds = payload.Mentions.map((m) => m.id);
+        return Promise.all(
+          mentionIds.map((id) =>
+            ForumAPI.updateContact(id, { has__new__notification: true })
+          )
+        ).then(() => created);
+      })
+      .then((created) => ForumAPI.fetchPostById(forumPostId))
+
       .then((data) => {
         responseMessage.text("Comment created successfully!");
         form.removeClass("state-disabled");
