@@ -752,7 +752,7 @@ mutation deleteMemberCommentUpvotesForumCommentUpvotes($id: AwcMemberCommentUpvo
     createCommentVote,
     deleteCommentVote,
     fetchMyPosts,
-    updateContact
+    updateContact,
   };
 })();
 
@@ -990,18 +990,10 @@ $(document).ready(function () {
     function submitNewPost(finalPayload) {
       ForumAPI.createPost(finalPayload)
         .then((data) => {
-            // bump 'has__new__notification' for each mentioned contact
-            const mentionIds = finalPayload.Mentions.map(m => m.id);
-            return Promise
-            .all(mentionIds.map(id =>
-                ForumAPI.updateContact(id, { has__new__notification: true })
-            ))
-            .then(() => data);
-        })
-        .then((data) => {
-            responseMessage.text("Post created successfully!");
-            resetFileAttachmentUI();
-            return ForumAPI.fetchPostById(data.id);
+          const mentionIds = finalPayload.Mentions.map((m) => m.id);
+          responseMessage.text("Post created successfully!");
+          resetFileAttachmentUI();
+          return ForumAPI.fetchPostById(data.id);
         })
         .then((post) => {
           if (uploadedFileInfo && post.file) {
@@ -1144,24 +1136,13 @@ $(document).on("submit", ".commentForm", function (event) {
 
   function submitComment(finalPayload) {
     ForumAPI.createComment(finalPayload)
-    
-    .then((data) => {
-          form.removeClass("state-disabled");
-    const mentionIds = payload.Mentions.map(m => m.id);
-    return Promise
-      .all(mentionIds.map(id =>
-        ForumAPI.updateContact(id, { has__new__notification: true })
-      ))
-      .then(() => data);
-  })
-    .then((data) => {
+      .then((data) => {
         responseMessage.text("Comment created successfully!");
+        form.removeClass("state-disabled");
         createdCommentId = data.id;
         // Fetch only the updated post data for the specific forum post
         return ForumAPI.fetchPostById(forumPostId);
       })
-
-
       .then((post) => {
         // Update file info for the new comment if applicable
         if (uploadedFileInfo) {
@@ -1265,9 +1246,9 @@ function handleVote(button) {
         post_upvote_id: recordId,
       };
       ForumAPI.createPostVote(payload)
-      let count = parseInt($voteCount.text(), 10);
-      .then((data) => {
+        .then((data) => {
           let $voteCount = $btn.find(".vote-count");
+          let count = parseInt($voteCount.text(), 10);
           $voteCount.text(count + 1);
           $btn.data("vote-id", data.id);
           $btn.addClass("upVoted").removeClass("state-disabled");
@@ -1302,9 +1283,9 @@ function handleVote(button) {
         forum_comment_upvote_id: recordId,
       };
       ForumAPI.createCommentVote(payload)
-      let count = parseInt($voteCount.text(), 10);
-      .then((data) => {
+        .then((data) => {
           let $voteCount = $btn.find(".vote-count");
+          let count = parseInt($voteCount.text(), 10);
           $voteCount.text(count + 1);
           $btn.data("vote-id", data.id);
           $btn.addClass("upVoted").removeClass("state-disabled");
