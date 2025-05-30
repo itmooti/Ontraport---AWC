@@ -312,8 +312,6 @@ async function combineUnifiedData() {
     completedLessons: enr.completedLessons,
     classInfo: enr.classInfo
       ? {
-	       class_id:enr.Class.id,
-      	      class_unique_id:enr.Class.unique_id,
           startDate: enr.classInfo.startDate,
           endDate: enr.classInfo.endDate,
         }
