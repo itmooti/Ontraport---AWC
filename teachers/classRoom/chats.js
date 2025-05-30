@@ -403,6 +403,28 @@ const ForumAPI = (function () {
         throw error;
       });
   }
+
+    const updateContactMutation = `
+        mutation updateContact($id: AwcContactID!, $payload: ContactUpdateInput!) {
+        updateContact(
+            query: [{ where: { id: $id } }]
+            payload: $payload
+        ) {
+            has__new__notification
+        }
+        }
+    `;
+
+  function updateContact(id, payload) {
+    return apiCall(updateContactMutation, { id, payload }).then((data) => {
+      if (data.data && data.data.updateContact) {
+        return data.data.updateContact;
+      } else {
+        throw new Error("Error updating contact");
+      }
+    });
+  }
+  
   const myPostsQuery = `
   query getForumPosts{
     getForumPosts(
@@ -556,7 +578,6 @@ mutation createForumPost($payload: ForumPostCreateInput!) {
     id 
     Mentions { 
     id 
-    has__new__notification 
     } 
     post_status
     class_id
@@ -610,7 +631,6 @@ mutation createForumComment($payload: ForumCommentCreateInput = null) {
   id 
   Mentions { 
   id 
-  has__new__notification 
   } 
   }
 }
@@ -728,6 +748,7 @@ mutation deleteMemberCommentUpvotesForumCommentUpvotes($id: AwcMemberCommentUpvo
     createCommentVote,
     deleteCommentVote,
     fetchMyPosts,
+    updateContact         
   };
 })();
 
@@ -964,6 +985,15 @@ $(document).ready(function () {
     }
     function submitNewPost(finalPayload) {
       ForumAPI.createPost(finalPayload)
+        .then((created) => {
+          const mentionIds = finalPayload.Mentions.map((m) => m.id);
+          return Promise.all(
+            mentionIds.map((id) =>
+              ForumAPI.updateContact(id, { has__new__notification: true })
+            )
+          ).then(() => created);
+        })
+        .then((created) => ForumAPI.fetchPostById(created.id))
         .then((data) => {
           responseMessage.text("Post created successfully!");
           resetFileAttachmentUI();
@@ -1110,12 +1140,19 @@ $(document).on("submit", ".commentForm", function (event) {
 
   function submitComment(finalPayload) {
     ForumAPI.createComment(finalPayload)
+      .then((created) => {
+        const mentionIds = payload.Mentions.map((m) => m.id);
+        return Promise.all(
+          mentionIds.map((id) =>
+            ForumAPI.updateContact(id, { has__new__notification: true })
+          )
+        ).then(() => created);
+      })
+      .then((created) => ForumAPI.fetchPostById(forumPostId))
       .then((data) => {
         responseMessage.text("Comment created successfully!");
         form.removeClass("state-disabled");
         createdCommentId = data.id;
-        // Fetch only the updated post data for the specific forum post
-        return ForumAPI.fetchPostById(forumPostId);
       })
       .then((post) => {
         // Update file info for the new comment if applicable
