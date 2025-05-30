@@ -1191,8 +1191,6 @@ $(document).on("submit", ".commentForm", function (event) {
         });
       })
       .catch((error) => {
-        console.error("Error creating comment:", error);
-        alert("Error creating comment.");
       })
       .finally(() => {
         submitButton.prop("disabled", false);
