@@ -403,6 +403,27 @@ const ForumAPI = (function () {
         throw error;
       });
   }
+  const updateContactMutation = `
+mutation updateContact($id: AwcContactID!, $payload: ContactUpdateInput!) {
+  updateContact(
+    query: [{ where: { id: $id } }]
+    payload: $payload
+  ) {
+    has__new__notification
+  }
+}
+`;
+
+  function updateContact(id, payload) {
+    return apiCall(updateContactMutation, { id, payload }).then((data) => {
+      if (data.data && data.data.updateContact) {
+        return data.data.updateContact;
+      } else {
+        throw new Error("Error updating contact");
+      }
+    });
+  }
+
   const myPostsQuery = `
   query getForumPosts{
     getForumPosts(
@@ -731,6 +752,7 @@ mutation deleteMemberCommentUpvotesForumCommentUpvotes($id: AwcMemberCommentUpvo
     createCommentVote,
     deleteCommentVote,
     fetchMyPosts,
+    updateContact
   };
 })();
 
@@ -968,9 +990,18 @@ $(document).ready(function () {
     function submitNewPost(finalPayload) {
       ForumAPI.createPost(finalPayload)
         .then((data) => {
-          responseMessage.text("Post created successfully!");
-          resetFileAttachmentUI();
-          return ForumAPI.fetchPostById(data.id);
+            // bump 'has__new__notification' for each mentioned contact
+            const mentionIds = finalPayload.Mentions.map(m => m.id);
+            return Promise
+            .all(mentionIds.map(id =>
+                ForumAPI.updateContact(id, { has__new__notification: true })
+            ))
+            .then(() => data);
+        })
+        .then((data) => {
+            responseMessage.text("Post created successfully!");
+            resetFileAttachmentUI();
+            return ForumAPI.fetchPostById(data.id);
         })
         .then((post) => {
           if (uploadedFileInfo && post.file) {
@@ -1113,13 +1144,24 @@ $(document).on("submit", ".commentForm", function (event) {
 
   function submitComment(finalPayload) {
     ForumAPI.createComment(finalPayload)
-      .then((data) => {
+    
+    .then((data) => {
+          form.removeClass("state-disabled");
+    const mentionIds = payload.Mentions.map(m => m.id);
+    return Promise
+      .all(mentionIds.map(id =>
+        ForumAPI.updateContact(id, { has__new__notification: true })
+      ))
+      .then(() => data);
+  })
+    .then((data) => {
         responseMessage.text("Comment created successfully!");
-        form.removeClass("state-disabled");
         createdCommentId = data.id;
         // Fetch only the updated post data for the specific forum post
         return ForumAPI.fetchPostById(forumPostId);
       })
+
+
       .then((post) => {
         // Update file info for the new comment if applicable
         if (uploadedFileInfo) {
@@ -1223,9 +1265,9 @@ function handleVote(button) {
         post_upvote_id: recordId,
       };
       ForumAPI.createPostVote(payload)
-        .then((data) => {
+      let count = parseInt($voteCount.text(), 10);
+      .then((data) => {
           let $voteCount = $btn.find(".vote-count");
-          let count = parseInt($voteCount.text(), 10);
           $voteCount.text(count + 1);
           $btn.data("vote-id", data.id);
           $btn.addClass("upVoted").removeClass("state-disabled");
@@ -1260,9 +1302,9 @@ function handleVote(button) {
         forum_comment_upvote_id: recordId,
       };
       ForumAPI.createCommentVote(payload)
-        .then((data) => {
+      let count = parseInt($voteCount.text(), 10);
+      .then((data) => {
           let $voteCount = $btn.find(".vote-count");
-          let count = parseInt($voteCount.text(), 10);
           $voteCount.text(count + 1);
           $btn.data("vote-id", data.id);
           $btn.addClass("upVoted").removeClass("state-disabled");
