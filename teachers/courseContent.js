@@ -126,6 +126,8 @@ LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
     certificate__link
     completed__lessons
     Class {
+      id
+      unique_id
       start_date
       end_date
     }
@@ -244,6 +246,8 @@ async function fetchLmsUnifiedData() {
         completedLessons: enr.completed__lessons,
         classInfo: enr.Class
           ? {
+	      class_id:enr.Class.id,
+      	      class_unique_id:enr.Class.unique_id,
               startDate: enr.Class.start_date,
               endDate: enr.Class.end_date,
             }
@@ -308,6 +312,8 @@ async function combineUnifiedData() {
     completedLessons: enr.completedLessons,
     classInfo: enr.classInfo
       ? {
+	       class_id:enr.Class.id,
+      	      class_unique_id:enr.Class.unique_id,
           startDate: enr.classInfo.startDate,
           endDate: enr.classInfo.endDate,
         }
