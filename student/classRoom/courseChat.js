@@ -162,6 +162,7 @@ class MentionManager {
     return `<span class="mention" data-contact-id="${item.original.id}">@${item.original.value}</span>`;
   }
 }
+
 $(".comment-editor").each(function () {
   MentionManager.initEditor(this);
 });
@@ -403,16 +404,17 @@ const ForumAPI = (function () {
         throw error;
       });
   }
+
   const updateContactMutation = `
-mutation updateContact($id: AwcContactID!, $payload: ContactUpdateInput!) {
-  updateContact(
-    query: [{ where: { id: $id } }]
-    payload: $payload
-  ) {
-    has__new__notification
-  }
-}
-`;
+        mutation updateContact($id: AwcContactID!, $payload: ContactUpdateInput!) {
+        updateContact(
+            query: [{ where: { id: $id } }]
+            payload: $payload
+        ) {
+            has__new__notification
+        }
+        }
+    `;
 
   function updateContact(id, payload) {
     return apiCall(updateContactMutation, { id, payload }).then((data) => {
@@ -578,7 +580,6 @@ mutation createForumPost($payload: ForumPostCreateInput!) {
     id 
     Mentions { 
         id
-        has__new__notification 
     } 
     post_status
     class_id
@@ -633,7 +634,6 @@ mutation createForumComment($payload: ForumCommentCreateInput = null) {
   id 
   Mentions { 
   id 
-  has__new__notification 
   } 
   }
 }
@@ -977,7 +977,6 @@ $(document).ready(function () {
       author_id: visitorContactID,
       Mentions: mentionedIds.map((id) => ({
         id: id,
-        has__new__notification: true,
       })),
       post_status: "Published - Not flagged",
       class_id: classId,
@@ -989,8 +988,16 @@ $(document).ready(function () {
     }
     function submitNewPost(finalPayload) {
       ForumAPI.createPost(finalPayload)
+
         .then((data) => {
           const mentionIds = finalPayload.Mentions.map((m) => m.id);
+          return Promise.all(
+            mentionIds.map((id) =>
+              ForumAPI.updateContact(id, { has__new__notification: true })
+            )
+          ).then(() => data);
+        })
+        .then((data) => {
           responseMessage.text("Post created successfully!");
           resetFileAttachmentUI();
           return ForumAPI.fetchPostById(data.id);
