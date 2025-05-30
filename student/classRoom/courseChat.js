@@ -986,17 +986,19 @@ $(document).ready(function () {
       const file = fileInput.files[0];
       uploadedFileInfo = { name: file.name, type: file.type };
     }
+
     function submitNewPost(finalPayload) {
       ForumAPI.createPost(finalPayload)
 
-        .then((data) => {
+        .then((created) => {
           const mentionIds = finalPayload.Mentions.map((m) => m.id);
           return Promise.all(
             mentionIds.map((id) =>
               ForumAPI.updateContact(id, { has__new__notification: true })
             )
-          ).then(() => data);
+          ).then(() => created);
         })
+        .then((created) => ForumAPI.fetchPostById(created.id))
         .then((data) => {
           responseMessage.text("Post created successfully!");
           resetFileAttachmentUI();
