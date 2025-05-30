@@ -639,7 +639,7 @@ mutation createForumComment($payload: ForumCommentCreateInput = null) {
     return apiCall(createCommentMutation, { payload }).then((data) => {
       if (data.data && data.data.createForumComment)
         return data.data.createForumComment;
-      else throw new Error("Error creating comment");
+      else {}
     });
   }
 
