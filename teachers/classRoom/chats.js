@@ -1138,6 +1138,8 @@ $(document).on("submit", ".commentForm", function (event) {
   }
   let createdCommentId = null;
 
+  
+
   function submitComment(finalPayload) {
     ForumAPI.createComment(finalPayload)
       .then((created) => {
@@ -1149,10 +1151,13 @@ $(document).on("submit", ".commentForm", function (event) {
         ).then(() => created);
       })
       .then((created) => ForumAPI.fetchPostById(forumPostId))
+
       .then((data) => {
         responseMessage.text("Comment created successfully!");
         form.removeClass("state-disabled");
         createdCommentId = data.id;
+        // Fetch only the updated post data for the specific forum post
+        return ForumAPI.fetchPostById(forumPostId);
       })
       .then((post) => {
         // Update file info for the new comment if applicable
