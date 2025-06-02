@@ -1,3 +1,44 @@
+const updateContactMutation = `
+  mutation updateContact($id: AwcContactID!, $payload: ContactUpdateInput!) {
+    updateContact(query: [{ where: { id: $id } }], payload: $payload) {
+      has__new__notification
+    }
+  }
+`;
+
+function updateContact(id, payload) {
+  return fetch(apiUrlForAnouncement, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Api-Key": apiKeyForAnouncement,
+    },
+    body: JSON.stringify({
+      query: updateContactMutation,
+      variables: { id, payload },
+    }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data?.data?.updateContact) {
+        return data.data.updateContact;
+      } else {
+        throw new Error("Error updating contact");
+      }
+    });
+}
+
+async function updateMentionedContacts(mentionedIds) {
+  for (const id of mentionedIds) {
+    try {
+      await updateContact(id, { has__new__notification: true });
+    } catch (e) {
+      console.error("Failed to update contact:", id, e);
+    }
+  }
+}
+
+
 const query = `
 query getAnnouncements {
   getAnnouncements(
@@ -291,9 +332,8 @@ async function createForumComment(
     reply_to_comment_id: parentCommentID,
     comment: comments,
     author_id: currentPageUserID,
-    Mentions: mentionedIds.map((id) => ({ 
-        id: id,
-        has__new__notification: true
+    Mentions: mentionedIds.map((id) => ({
+      id: id
     })),
   };
   const mutation = `
@@ -306,7 +346,6 @@ mutation createForumComment($payload: ForumCommentCreateInput) {
     reply_to_comment_id 
     Mentions {
       id
-      has__new__notification 
     }
   }
 }
@@ -321,6 +360,8 @@ mutation createForumComment($payload: ForumCommentCreateInput) {
   });
   const result = await response.json();
   const newCommentId = result.data.createForumComment.id;
+  await updateMentionedContacts(mentionedIds);
+
 
   const newComment = await fetchCommentById(newCommentId);
   if (parentCommentID === null) {
