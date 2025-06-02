@@ -207,7 +207,7 @@ async function loadAssignments() {
             assignmentDiv.setAttribute("data-module-name", lesson.Module_Module_Name);
             assignmentDiv.setAttribute("data-date-added", lesson.created_at);
             assignmentDiv.setAttribute("data-due-date", dueDate ? formatDueString(dueDate) : "No Due Date");
-            assignmentDiv.href = (lesson.Assessments_AWC_Teacher_s_Portal_Class_Assignment_Details_Page_URL || "#") + "?duedate=" + encodeURIComponent(dueDate ? formatDueString(dueDate) : "No Due Date") + `&classNameAdmin=${encodeURIComponent(classNameAdmin)}`+ `&classUIDAdmin=${encodeURIComponent(classUIDAdmin)}`;
+            assignmentDiv.href = (lesson.Assessments_AWC_Teacher_s_Portal_Class_Assignment_Details_Page_URL || "#") + "?duedate=" + encodeURIComponent(dueDate ? formatDueString(dueDate) : "No Due Date") + `&classNameAdmin=${encodeURIComponent(classNameAdmin)}`+ `&classUIDAdmin=${encodeURIComponent(classUIDAdmin)}` + `&classUniqueIDAdmin=${encodeURIComponent(classUniqueIDAdmin)}`;
 
 
             // SVG icon based on AssessmentsType
