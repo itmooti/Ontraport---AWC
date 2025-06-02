@@ -2,20 +2,57 @@ const DEFAULT_AVATAR =
   "https://file.ontraport.com/media/41ca85f5cdde4c12bf72c2c73747633f.phpkeya0n?Expires=4884400377&Signature=SnfrlziQIcYSbZ98OrH2guVWpO4BRcxatgk3lM~-mKaAencWy7e1yIuxDT4hQjz0hFn-fJ118InfvymhaoqgGxn63rJXeqJKB4JTkYauub5Jh5UO3z6S0o~RVMj8AMzoiImsvQoPuRK7KnuOAsGiVEmSsMHEiM69IWzi4dW~6pryIMSHQ9lztg1powm8b~iXUNG8gajRaQWxlTiSyhh-CV-7zkF-MCP5hf-3FAKtGEo79TySr5SsZApLjfOo-8W~F8aeXK8BGD3bX6T0U16HsVeu~y9gDCZ1lBbLZFh8ezPL~4gktRbgP59Us8XLyV2EKn6rVcQCsVVUk5tUVnaCJw__&Key-Pair-Id=APKAJVAAMVW6XQYWSTNA";
 const announcementWrapper = document.querySelector("#announcementWrapper");
 
-//==========GLOBAL VARIABLE ENDS HERE====================//
+const updateContactMutation = `
+  mutation updateContact($id: AwcContactID!, $payload: ContactUpdateInput!) {
+    updateContact(
+      query: [{ where: { id: $id } }]
+      payload: $payload
+    ) {
+      has__new__notification
+    }
+  }
+`;
 
-//==========FORMAT TIME FUNCTIONS=======================//
+function updateContact(id, payload) {
+  return fetch(apiUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Api-Key": apiKey,
+    },
+    body: JSON.stringify({
+      query: updateContactMutation,
+      variables: { id, payload },
+    }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data?.data?.updateContact) {
+        return data.data.updateContact;
+      } else {
+        throw new Error("Error updating contact");
+      }
+    });
+}
 
-//=========GATHER MENTIONS FR0M MENTIONABLE =======//
+async function updateMentionedContacts(mentionedIds) {
+  for (const id of mentionedIds) {
+    try {
+      await updateContact(id, { has__new__notification: true });
+    } catch (e) {
+      console.error("Failed to update contact:", id, e);
+    }
+  }
+}
+
+
 function gatherMentionsFromElementt(el) {
   const mentionEls = el.querySelectorAll(".mention-handle[data-mention-id]");
   return [...mentionEls].map((m) => ({
     id: Number(m.getAttribute("data-mention-id")),
   }));
 }
-///===============================================//
 
-//==========FORMAT TIME FUNCTIONS=======================//
 function formatUnixTimestamp(unixTimestamp) {
   if (!unixTimestamp || isNaN(unixTimestamp)) return "Invalid Date";
   const date = new Date(unixTimestamp * 1000);
@@ -50,7 +87,6 @@ async function createAnnouncement(payload) {
 				notification__type 
  			Mentions {
      			 id 
-                 has__new__notification 
     				}
                 Instructor {
                   First_Name: first_name 
@@ -100,6 +136,7 @@ async function loadAnnouncements(id) {
     console.error("Error fetching announcements:", error);
   }
 }
+
 document
   .getElementById("announcementForm")
   .addEventListener("submit", async (e) => {
@@ -127,7 +164,6 @@ document
         mentionedIds.push(Number(id));
     });
 
-    console.log(mentionedIds);
     // Use Tailwind classes to disable the form
     announcementForm.classList.add(
       "opacity-50",
@@ -175,7 +211,6 @@ document
       attachment: fileData,
       Mentions: mentionedIds.map((id) => ({
         id: id,
-        has__new__notification: true,
       })),
       notification__type: "Announcements",
     };
@@ -184,6 +219,7 @@ document
     document.getElementById("scheduleOptions").classList.add("hidden");
     const createdAnnouncement = await createAnnouncement(payload);
     const createdAnnouncementId = createdAnnouncement.ID;
+    await updateMentionedContacts(mentionedIds);
     loadAnnouncements(createdAnnouncementId);
     document.getElementById("announcementContent").innerHTML = "";
     announcementForm.classList.remove(
@@ -291,13 +327,14 @@ document
       status: "Draft",
       post_later_date_time: scheduledTimestamp,
       Mentions: mentionedIds.map((id) => ({
-        id: id
+        id: id,
       })),
     };
     document.getElementById("announcementForm").reset();
     document.getElementById("scheduleOptions").classList.add("hidden");
     const createdAnnouncementss = await createAnnouncement(payload);
     const createdAnnouncementId = createdAnnouncementss.ID;
+    await updateMentionedContacts(mentionedIds);
     loadAnnouncements(createdAnnouncementId);
     document.getElementById("announcementContent").innerHTML = "";
     announcementForm.classList.remove(
@@ -306,8 +343,7 @@ document
       "cursor-not-allowed"
     );
   });
-//=======================================================//
-// ====== FUNCTION TO CANCEL A SCHEDULED ANNOUNCEMENT ======
+
 async function cancelScheduledPost(id) {
   const announcementEl = document.querySelector(
     `[data-announcement-template-id="${id}"]`
@@ -337,8 +373,6 @@ async function cancelScheduledPost(id) {
   }
 }
 
-// ====== FUNCTION TO POST SCHEDULED ANNOUNCEMENT NOW ======
-
 async function postScheduledAnnouncementNow(id) {
   const announcementForms = document.getElementById("announcementForm");
   announcementForms.classList.add(
@@ -352,17 +386,17 @@ async function postScheduledAnnouncementNow(id) {
   if (announcementEl) announcementEl.style.opacity = 0.5;
 
   const updateMutation = `
-mutation updateAnnouncement($id: AwcAnnouncementID, $payload: AnnouncementUpdateInput = null) {
-        updateAnnouncement(
-          query: [{ where: { id: $id } }]
-          payload: $payload
-        ) {
-          when_to_post
-          post_later_date_time
-          status 
-		  created_at 
-        }
-      }`;
+        mutation updateAnnouncement($id: AwcAnnouncementID, $payload: AnnouncementUpdateInput = null) {
+            updateAnnouncement(
+                query: [{ where: { id: $id } }]
+                payload: $payload
+            ) {
+                when_to_post
+                post_later_date_time
+                status 
+                created_at 
+            }
+        }`;
 
   const payload = {
     when_to_post: "Post Now",
@@ -450,7 +484,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
-// ====== EVENT LISTENERS FOR NEW BUTTONS ======
 document.addEventListener("click", (e) => {
   if (e.target.closest("#cancelPost")) {
     const announcementID = e.target
@@ -467,7 +500,6 @@ document.addEventListener("click", (e) => {
   }
 });
 
-// Event listener for deleting replies
 document.addEventListener("click", (e) => {
   if (!e.target.closest(".deleteReply")) return;
   const replyID = e.target
@@ -481,7 +513,6 @@ async function renderAnnouncementOnTabClick() {
   await renderAnnouncements(announcements);
 }
 
-//=======================================================//
 document.addEventListener("DOMContentLoaded", function () {
   const checkbox = document.getElementById("postCheck");
   const unCheckedSVG = document.querySelector(".unChecked");
@@ -498,15 +529,12 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-// --- NEW TAB CLICK EVENT HANDLERS ---
-// "All" tab: default filtering.
 document.getElementById("allTabs").addEventListener("click", async () => {
   document.getElementById("allTabs").classList.add("activeTab");
   document.getElementById("scheduledTabs").classList.remove("activeTab");
   fetchAnnouncements();
 });
 
-// "Scheduled" tab: fetch only announcements where status is "Draft".
 document.getElementById("scheduledTabs").addEventListener("click", async () => {
   document.getElementById("scheduledTabs").classList.add("activeTab");
   document.getElementById("allTabs").classList.remove("activeTab");
