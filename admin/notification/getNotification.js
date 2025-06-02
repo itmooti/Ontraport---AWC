@@ -409,7 +409,7 @@ function createNotificationCard(notification, isRead) {
       window.location.href = `https://courses.writerscentre.com.au/admin/class/${classIDForADmin}?selectedTab=chats?current-post-id=${notification.Notification_Type === 'Posts' ? notification.Post_ID : commentIdForNoti}`;
     } else if ((type === "Submissions" || type === "Submission Comments") && notification.Submissions?.Assessment?.Lesson?.unique_id) {
       const lessonUid = notification.Submissions.Assessment.Lesson.unique_id;
-    window.location.href = `https://courses.writerscentre.com.au/course-details/content/${lessonUid}?submissionPostIs=${notification.Notification_Type === 'Submissions' ? notification.Submissions_ID : commentIdForNoti}${assessmentType === "File Submission" ? `&subUID=${subUID}&commentScrollId=${commentScrollID}` : ""}`
+    window.location.href = `https://courses.writerscentre.com.au/course-details/content/${lessonUid}?submissionPostIs=${notification.Notification_Type === 'Submissions' ? notification.Submissions_ID : commentIdForNoti}${assessmentType === "File Submission" ? `&subUID=${subUID}&commentScrollId=${commentScrollID}` : ""}?classUID=${classIDForADmin}`
     } else {
       window.location.href = `https://courses.writerscentre.com.au/admin/class/${classIDForADmin}?selectedTab=announcements?data-announcement-template-id=${notification.Notification_Type === 'Announcements' ? anouncementScrollId : commentIdForNoti}`;
     }
