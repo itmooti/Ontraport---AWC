@@ -454,7 +454,10 @@ const ForumAPI = (function () {
       }
     });
   }
-  const myPostsQuery = `
+ 
+
+  function fetchMyPosts() {
+     const myPostsQuery = `
   query getForumPosts{
     getForumPosts(
       orderBy: [{ path: ["created_at"], type: desc }]
@@ -485,8 +488,6 @@ const ForumAPI = (function () {
     }
   }
 `;
-
-  function fetchMyPosts() {
     return apiCall(myPostsQuery).then((data) => {
       let posts = data.data.getForumPosts || [];
       posts.forEach((post) => {
@@ -501,37 +502,7 @@ const ForumAPI = (function () {
     });
   }
   
-  const forumQuery = `
-    query getForumPosts{
-        getForumPosts(
-            orderBy: [{ path: ["created_at"], type: desc }]
-            query: [
-                    { where: { post_status: "Published - Not flagged" } }
-                    { andWhere: { class_id: "${classIdForForumChat}" } }
-                ]
-            ) {
-            created_at
-            post_copy
-            author_id
-            file
-            id
-            Member_Post_Upvotes_Data { id member_post_upvote_id post_upvote_id }
-            Author { profile_image display_name last_name first_name is_instructor is_admin }
-            Class { id }
-            ForumComments {
-            file author_id created_at comment reply_to_comment_id id
-            Member_Comment_Upvotes_Data { id forum_comment_upvote_id member_comment_upvote_id }
-            Author { display_name last_name first_name profile_image is_instructor is_admin }
-            ForumComments {
-                file author_id created_at comment reply_to_comment_id id
-                Member_Comment_Upvotes_Data { id forum_comment_upvote_id member_comment_upvote_id }
-                Author { display_name last_name first_name profile_image is_instructor is_admin }
-            }
-            }
-        }
-    }
-`;
-
+  
   function flattenComments(comments) {
     let flat = [];
     comments.forEach((comment) => {
@@ -585,6 +556,37 @@ const ForumAPI = (function () {
   }
 
   function fetchPosts() {
+    const forumQuery = `
+    query getForumPosts{
+        getForumPosts(
+            orderBy: [{ path: ["created_at"], type: desc }]
+            query: [
+                    { where: { post_status: "Published - Not flagged" } }
+                    { andWhere: { class_id: "${classIdForForumChat}" } }
+                ]
+            ) {
+            created_at
+            post_copy
+            author_id
+            file
+            id
+            Member_Post_Upvotes_Data { id member_post_upvote_id post_upvote_id }
+            Author { profile_image display_name last_name first_name is_instructor is_admin }
+            Class { id }
+            ForumComments {
+            file author_id created_at comment reply_to_comment_id id
+            Member_Comment_Upvotes_Data { id forum_comment_upvote_id member_comment_upvote_id }
+            Author { display_name last_name first_name profile_image is_instructor is_admin }
+            ForumComments {
+                file author_id created_at comment reply_to_comment_id id
+                Member_Comment_Upvotes_Data { id forum_comment_upvote_id member_comment_upvote_id }
+                Author { display_name last_name first_name profile_image is_instructor is_admin }
+            }
+            }
+        }
+    }
+`;
+
     return apiCall(forumQuery).then((data) => {
       let posts = data.data.getForumPosts || [];
       posts.forEach((post) => {
@@ -904,6 +906,25 @@ function renderPosts(posts) {
 }
 
 function loadPosts(filter = "all") {
+
+    if (!classIdForForumChat) {
+    const eid = getEidFromUrl();
+    if (!eid) {
+      console.error("No eid found in URL");
+      $("#forumContainer").html("<div class='text-red-500'>Invalid EID</div>");
+      return;
+    }
+
+    const fetchedClassID = await fetchClassId(eid);
+    if (!fetchedClassID) {
+      console.error("Failed to fetch class ID");
+      $("#forumContainer").html("<div class='text-red-500'>Class ID not found</div>");
+      return;
+    }
+
+    classIdForForumChat = fetchedClassID;
+  }
+  
   let promise;
   if (filter === "mine") {
     promise = ForumAPI.fetchMyPosts(visitorContactID);
