@@ -1,4 +1,3 @@
-let classIdForChats='';
 class MentionManager {
   static allContacts = [];
 
@@ -432,7 +431,7 @@ const ForumAPI = (function () {
       orderBy: [{ path: ["created_at"], type: desc }]
       query: [
         { where: { post_status: "Published - Not flagged" } },
-        { andWhere: { class_id: "${classIdForChats}" } },
+        { andWhere: { class_id: "${classID}" } },
         { andWhere: { author_id: ${visitorContactID} } }
       ]
     ) {
@@ -479,7 +478,7 @@ const ForumAPI = (function () {
             orderBy: [{ path: ["created_at"], type: desc }]
             query: [
                     { where: { post_status: "Published - Not flagged" } }
-                    { andWhere: { class_id: "${classIdForChats}" } }
+                    { andWhere: { class_id: "${classID}" } }
                 ]
             ) {
             created_at
@@ -908,12 +907,7 @@ async function classIdUrlAsync() {
 }
 
 $(document).ready(async function () {
-     classIdForChats = await classIdUrlAsync();
-    if (classIdForChats) {
   MentionManager.initContacts();
-    }else {
-        console.error("classIDIs not found in URL.");
-    }
   MentionManager.initEditor(document.getElementById("post-editor"));
 
   $("#postFile").on("change", function () {
@@ -991,7 +985,7 @@ $(document).ready(async function () {
         id: id,
       })),
       post_status: "Published - Not flagged",
-      class_id: classIdForChats,
+      class_id: classID,
     };
     let uploadedFileInfo = null;
     if (fileInput.files && fileInput.files[0]) {
