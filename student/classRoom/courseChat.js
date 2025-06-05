@@ -1,3 +1,4 @@
+let classIdForChats='';
 class MentionManager {
   static allContacts = [];
 
@@ -431,7 +432,7 @@ const ForumAPI = (function () {
       orderBy: [{ path: ["created_at"], type: desc }]
       query: [
         { where: { post_status: "Published - Not flagged" } },
-        { andWhere: { class_id: "${classID}" } },
+        { andWhere: { class_id: "${classIdForChats}" } },
         { andWhere: { author_id: ${visitorContactID} } }
       ]
     ) {
@@ -478,7 +479,7 @@ const ForumAPI = (function () {
             orderBy: [{ path: ["created_at"], type: desc }]
             query: [
                     { where: { post_status: "Published - Not flagged" } }
-                    { andWhere: { class_id: "${classID}" } }
+                    { andWhere: { class_id: "${classIdForChats}" } }
                 ]
             ) {
             created_at
@@ -898,9 +899,21 @@ function loadPosts(filter = "all") {
       );
     });
 }
+async function classIdUrlAsync() {
+    return new Promise((resolve) => {
+        var match = window.location.href.match(/[?&]classIDIs=([^&#]*)/);
+        var id = match && match[1] ? decodeURIComponent(match[1]) : null;
+        resolve(id);
+    });
+}
 
-$(document).ready(function () {
+$(document).ready(async function () {
+     classIdForChats = await classIdUrlAsync();
+    if (classIdForChats) {
   MentionManager.initContacts();
+    }else {
+        console.error("classIDIs not found in URL.");
+    }
   MentionManager.initEditor(document.getElementById("post-editor"));
 
   $("#postFile").on("change", function () {
@@ -978,7 +991,7 @@ $(document).ready(function () {
         id: id,
       })),
       post_status: "Published - Not flagged",
-      class_id: classId,
+      class_id: classIdForChats,
     };
     let uploadedFileInfo = null;
     if (fileInput.files && fileInput.files[0]) {
