@@ -1,10 +1,38 @@
+function getEidFromUrl() {
+  const match = window.location.href.match(/[?&]eid=([^&#]*)/);
+  return match && match[1] ? decodeURIComponent(match[1]) : null;
+}
+
+async function fetchClassId(eid) {
+  const query = `
+    query {
+      calcEnrolments(query: [{ where: { id: ${eid} } }]) {
+        Class_ID: field(arg: ["class_id"])
+      }
+    }
+  `;
+
+  const response = await fetch(graphqlApiEndpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Api-Key": apiAccessKey,
+    },
+    body: JSON.stringify({ query }),
+  });
+
+  const json = await response.json();
+  return json.data?.calcEnrolments?.[0]?.Class_ID || null;
+}
+
+
 class MentionManager {
   static allContacts = [];
 
   static initContacts() {
     const classQuery = `
       query {
-        getClasses(query: [{ where: { id: "${classID}" } }]) {
+        getClasses(query: [{ where: { id: "${window.classID}" } }]) {
           Teacher {
             first_name
             last_name
@@ -431,7 +459,7 @@ const ForumAPI = (function () {
       orderBy: [{ path: ["created_at"], type: desc }]
       query: [
         { where: { post_status: "Published - Not flagged" } },
-        { andWhere: { class_id: "${classID}" } },
+        { andWhere: { class_id: "${window.classID}" } },
         { andWhere: { author_id: ${visitorContactID} } }
       ]
     ) {
@@ -478,7 +506,7 @@ const ForumAPI = (function () {
             orderBy: [{ path: ["created_at"], type: desc }]
             query: [
                     { where: { post_status: "Published - Not flagged" } }
-                    { andWhere: { class_id: "${classID}" } }
+                    { andWhere: { class_id: "${window.classID}" } }
                 ]
             ) {
             created_at
@@ -898,15 +926,19 @@ function loadPosts(filter = "all") {
       );
     });
 }
-async function classIdUrlAsync() {
-    return new Promise((resolve) => {
-        var match = window.location.href.match(/[?&]classIDIs=([^&#]*)/);
-        var id = match && match[1] ? decodeURIComponent(match[1]) : null;
-        resolve(id);
-    });
-}
 
 $(document).ready(async function () {
+  const eid = getEidFromUrl();
+  if (!eid) {
+    console.error("No eid found in URL");
+    return;
+  }
+  const fetchedClassID = await fetchClassId(eid);
+  if (!fetchedClassID) {
+    console.error("Failed to fetch class ID");
+    return;
+  }
+  window.classID = fetchedClassID;
   MentionManager.initContacts();
   MentionManager.initEditor(document.getElementById("post-editor"));
 
@@ -985,7 +1017,7 @@ $(document).ready(async function () {
         id: id,
       })),
       post_status: "Published - Not flagged",
-      class_id: classID,
+      class_id: window.classID,
     };
     let uploadedFileInfo = null;
     if (fileInput.files && fileInput.files[0]) {
