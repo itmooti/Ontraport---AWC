@@ -473,14 +473,14 @@ let classIdForForum= classIdUrl();
       return posts;
     });
   }
-
+let classIdForForums= classIdUrl();
   const forumQuery = `
     query getForumPosts{
         getForumPosts(
             orderBy: [{ path: ["created_at"], type: desc }]
             query: [
                     { where: { post_status: "Published - Not flagged" } }
-                    { andWhere: { class_id: "${classIdForForum}" } }
+                    { andWhere: { class_id: "${classIdForForums}" } }
                 ]
             ) {
             created_at
