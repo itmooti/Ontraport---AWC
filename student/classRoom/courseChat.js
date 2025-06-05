@@ -426,14 +426,14 @@ const ForumAPI = (function () {
       }
     });
   }
-
+let classIdForForum= classIdUrl();
   const myPostsQuery = `
   query getForumPosts{
     getForumPosts(
       orderBy: [{ path: ["created_at"], type: desc }]
       query: [
         { where: { post_status: "Published - Not flagged" } },
-        { andWhere: { class_id: ${classId} } },
+        { andWhere: { class_id: "${classIdForForum}" } },
         { andWhere: { author_id: ${visitorContactID} } }
       ]
     ) {
@@ -480,7 +480,7 @@ const ForumAPI = (function () {
             orderBy: [{ path: ["created_at"], type: desc }]
             query: [
                     { where: { post_status: "Published - Not flagged" } }
-                    { andWhere: { class_id: ${classId} } }
+                    { andWhere: { class_id: "${classIdForForum}" } }
                 ]
             ) {
             created_at
