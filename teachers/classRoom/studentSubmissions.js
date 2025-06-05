@@ -330,10 +330,8 @@ async function waitForDueDates() {
     if (searchQuery) {
       filtered = filtered.filter(sub => 
         (sub.Contact_First_Name || "").toLowerCase().includes(searchQuery) ||
-		(sub.Submission_Note || "").toLowerCase().includes(searchQuery) || 
 	        (sub.Contact_Display_Name || "").toLowerCase().includes(searchQuery) || 
-        (sub.Contact_Last_Name || "").toLowerCase().includes(searchQuery) ||
-        (sub.File_Name || "").toLowerCase().includes(searchQuery)
+        (sub.Contact_Last_Name || "").toLowerCase().includes(searchQuery)
       );
     }
     filtered.sort((a, b) => {
