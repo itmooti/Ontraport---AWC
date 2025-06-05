@@ -1,3 +1,4 @@
+let classIdForForumChat='';
 function getEidFromUrl() {
   const match = window.location.href.match(/[?&]eid=([^&#]*)/);
   return match && match[1] ? decodeURIComponent(match[1]) : null;
@@ -459,7 +460,7 @@ const ForumAPI = (function () {
       orderBy: [{ path: ["created_at"], type: desc }]
       query: [
         { where: { post_status: "Published - Not flagged" } },
-        { andWhere: { class_id: "${window.classID}" } },
+        { andWhere: { class_id: "${classIdForForumChat}" } },
         { andWhere: { author_id: ${visitorContactID} } }
       ]
     ) {
@@ -506,7 +507,7 @@ const ForumAPI = (function () {
             orderBy: [{ path: ["created_at"], type: desc }]
             query: [
                     { where: { post_status: "Published - Not flagged" } }
-                    { andWhere: { class_id: "${window.classID}" } }
+                    { andWhere: { class_id: "${classIdForForumChat}" } }
                 ]
             ) {
             created_at
@@ -939,6 +940,7 @@ $(document).ready(async function () {
     return;
   }
   window.classID = fetchedClassID;
+  classIdForForumChat=window.classID;
   MentionManager.initContacts();
   MentionManager.initEditor(document.getElementById("post-editor"));
 
@@ -1017,7 +1019,7 @@ $(document).ready(async function () {
         id: id,
       })),
       post_status: "Published - Not flagged",
-      class_id: window.classID,
+      class_id: classIdForForumChat,
     };
     let uploadedFileInfo = null;
     if (fileInput.files && fileInput.files[0]) {
