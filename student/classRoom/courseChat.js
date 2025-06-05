@@ -2,10 +2,9 @@ class MentionManager {
   static allContacts = [];
 
   static initContacts() {
-    let classIfForChat=classIdUrl();
     const classQuery = `
       query {
-        getClasses(query: [{ where: { id: "${classIfForChat}" } }]) {
+        getClasses(query: [{ where: { id: "${classID}" } }]) {
           Teacher {
             first_name
             last_name
@@ -426,14 +425,13 @@ const ForumAPI = (function () {
       }
     });
   }
-let classIdForForum= classIdUrl();
   const myPostsQuery = `
   query getForumPosts{
     getForumPosts(
       orderBy: [{ path: ["created_at"], type: desc }]
       query: [
         { where: { post_status: "Published - Not flagged" } },
-        { andWhere: { class_id: "${classIdForForum}" } },
+        { andWhere: { class_id: "${classID}" } },
         { andWhere: { author_id: ${visitorContactID} } }
       ]
     ) {
@@ -473,14 +471,14 @@ let classIdForForum= classIdUrl();
       return posts;
     });
   }
-let classIdForForums= classIdUrl();
+  
   const forumQuery = `
     query getForumPosts{
         getForumPosts(
             orderBy: [{ path: ["created_at"], type: desc }]
             query: [
                     { where: { post_status: "Published - Not flagged" } }
-                    { andWhere: { class_id: "${classIdForForums}" } }
+                    { andWhere: { class_id: "${classID}" } }
                 ]
             ) {
             created_at
