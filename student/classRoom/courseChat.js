@@ -905,7 +905,7 @@ function renderPosts(posts) {
   applyLinkPreviewsAndLinkify();
 }
 
-function loadPosts(filter = "all") {
+async function loadPosts(filter = "all") {
 
     if (!classIdForForumChat) {
     const eid = getEidFromUrl();
