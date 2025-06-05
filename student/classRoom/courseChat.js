@@ -2,9 +2,10 @@ class MentionManager {
   static allContacts = [];
 
   static initContacts() {
+    let classIfForChat=classIdUrl();
     const classQuery = `
       query {
-        getClasses(query: [{ where: { id: ${classId} } }]) {
+        getClasses(query: [{ where: { id: ${classIfForChat} } }]) {
           Teacher {
             first_name
             last_name
