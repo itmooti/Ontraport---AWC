@@ -5,7 +5,7 @@ class MentionManager {
     let classIfForChat=classIdUrl();
     const classQuery = `
       query {
-        getClasses(query: [{ where: { id: ${classIfForChat} } }]) {
+        getClasses(query: [{ where: { id: "${classIfForChat}" } }]) {
           Teacher {
             first_name
             last_name
