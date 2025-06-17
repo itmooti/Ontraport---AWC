@@ -205,16 +205,8 @@ openDateUnix = Math.floor(openDateMidnight.getTime() / 1000);
 //Added end
 	
   const isAvailable = todayUnix <= openDateUnix;
-//  const openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
-	const openDateText = `Unlocks on ${openDateMidnight.toLocaleString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-    timeZone: "UTC",
-  })}`;
+  const openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
+
 
   // return { isAvailable, openDateText };
  return { isAvailable, openDateText, openDateUnix };
