@@ -174,8 +174,8 @@ function determineAvailability(startDateUnix, weekOpen, customisations = []) {
 
   const SECONDS_IN_DAY = 86400;
   const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
-  //const todayUnix = Math.floor(Date.now() / 1000);
-const todayUnix = Math.floor(new Date().setHours(0, 0, 0, 0) / 1000);
+  const todayUnix = Math.floor(Date.now() / 1000);
+//const todayUnix = Math.floor(new Date().setHours(0, 0, 0, 0) / 1000);
 
   let openDateUnix;
 
