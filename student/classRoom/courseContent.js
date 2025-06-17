@@ -198,7 +198,12 @@ function determineAvailability(startDateUnix, weekOpen, customisations = []) {
       openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY;
     }
   }
-
+//Added start
+const openDateMidnight = new Date(openDateUnix * 1000);
+openDateMidnight.setUTCHours(0, 0, 0, 0);
+openDateUnix = Math.floor(openDateMidnight.getTime() / 1000);
+//Added end
+	
   const isAvailable = todayUnix <= openDateUnix;
   const openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
 
