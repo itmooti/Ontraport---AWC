@@ -550,6 +550,13 @@ document.addEventListener("DOMContentLoaded", async () => {
           ]
         }
       }
+      {
+        andWhere: {
+          Student: [
+            { where: { Class: [{ where: { id: "${classID}" } }] } }
+          ]
+        }
+      }
     ]
     limit: 50000
     offset: 0
