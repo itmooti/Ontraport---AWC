@@ -788,7 +788,7 @@ async function buildSubmissionsQueryClass() {
           "Content-Type": "application/json",
           "Api-Key": apiKeyForComment,
         },
-        body: JSON.stringify({ querySub }),
+        body: JSON.stringify({ queyr: querySub }),
       });
       const { data } = await res.json();
       return data.getSubmissions;
