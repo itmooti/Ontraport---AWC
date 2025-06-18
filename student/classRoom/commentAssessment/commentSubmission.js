@@ -612,8 +612,57 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
+async function buildSubmissionsQuery() {
+  const match = window.location.href.match(/[?&]eid=(\d+)/);
+  const eid = match ? match[1] : null;
 
-    const query = ` query getSubmissions {
+  let resolvedClassId = classID;
+
+  if (eid) {
+    const query = `
+      query calcClasses {
+        calcClasses(
+          query: [
+            {
+              where: {
+                Enrolments: [
+                  { where: { status: "Active" } }
+                  { orWhere: { status: "New" } }
+                ]
+              }
+            }
+            {
+              andWhere: { Enrolments: [{ where: { id: ${eid} } }] }
+            }
+          ]
+        ) {
+          ID: field(arg: ["id"])
+        }
+      }
+    `;
+
+    try {
+      const response = await fetch("https://awc.vitalstats.app/api/v1/graphql", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Api-Key": "mMzQezxyIwbtSc85rFPs3",
+        },
+        body: JSON.stringify({ query }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const fetchedId = result.data?.calcClasses?.[0]?.ID;
+        if (fetchedId) resolvedClassId = fetchedId;
+      }
+    } catch (err) {
+      // fallback already set
+    }
+  }
+
+  const finalQuery = `
+    query getSubmissions {
   getSubmissions(
    query: [
       { where: { submission_hidden: false } }
@@ -635,7 +684,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       {
         andWhere: {
           Student: [
-            { where: { Class: [{ where: { id: "${classID}" } }] } }
+            { where: { Class: [{ where: { id: "${resolvedClassId}" } }] } }
           ]
         }
       }
@@ -710,7 +759,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 }
-`;
+  `;
+
+  return finalQuery;
+}
+
+//     const query = ` 
+// `;
   function highlightAndScrollSubmission() {
   const match = window.location.href.match(/[?&]submissionPostIs=(\d+)/);
   if (match) {
@@ -726,13 +781,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 }
     async function fetchSubmissions() {
+    const querySub = await  buildSubmissionsQuery();
       const res = await fetch(endpointForComment, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Api-Key": apiKeyForComment,
         },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ querySub }),
       });
       const { data } = await res.json();
       return data.getSubmissions;
