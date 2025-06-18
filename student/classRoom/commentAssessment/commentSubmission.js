@@ -13,7 +13,7 @@
       createForumComment(payload: $payload) {
         id
         comment 
-        author_id 
+        author_id i
         reply_to_comment_id 
         submissions_id  
         file  
@@ -356,8 +356,90 @@
     });
  
 
+// async function fetchClassMembers(classIdForComment) {
+//   const query = `
+//     query getClasses {
+//       getClasses(query: [{ where: { id: ${classIdForComment} } }]) {
+//         Teacher {
+//           display_name
+//           first_name
+//           last_name
+//           profile_image
+//           id 
+//           unique_id
+//         }
+//         Enrolments {
+//           Student {
+//             unique_id
+//             display_name
+//             first_name
+//             last_name
+//             profile_image
+//           }
+//         }
+//       }
+//     }
+//   `;
+
+//   const res = await fetch(endpointForComment, {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//       "Api-Key": apiKeyForComment,
+//     },
+//     body: JSON.stringify({ query }),
+//   });
+
+//   const json = await res.json();
+//   return json.data.getClasses?.[0];
+// }
 async function fetchClassMembers(classIdForComment) {
-  const query = `
+  const match = window.location.href.match(/[?&]eid=(\d+)/);
+  const eid = match ? match[1] : null;
+
+  if (eid) {
+    const calcClassesQuery = `
+      query calcClasses {
+        calcClasses(
+          query: [
+            {
+              where: {
+                Enrolments: [
+                  { where: { status: "Active" } }
+                  { orWhere: { status: "New" } }
+                ]
+              }
+            }
+            {
+              andWhere: { Enrolments: [{ where: { id: ${eid} } }] }
+            }
+          ]
+        ) {
+          ID: field(arg: ["id"])
+        }
+      }
+    `;
+
+    const calcRes = await fetch(endpointForComment, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Api-Key": apiKeyForComment,
+      },
+      body: JSON.stringify({ query: calcClassesQuery }),
+    });
+
+    const calcJson = await calcRes.json();
+    const queriedClassId = calcJson.data.calcClasses?.[0]?.ID;
+
+    if (queriedClassId) {
+      classIdForComment = queriedClassId;
+    }
+  }
+
+ // if (!classIdForComment) return null;
+
+  const getClassesQuery = `
     query getClasses {
       getClasses(query: [{ where: { id: ${classIdForComment} } }]) {
         Teacher {
@@ -387,7 +469,7 @@ async function fetchClassMembers(classIdForComment) {
       "Content-Type": "application/json",
       "Api-Key": apiKeyForComment,
     },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ query: getClassesQuery }),
   });
 
   const json = await res.json();
