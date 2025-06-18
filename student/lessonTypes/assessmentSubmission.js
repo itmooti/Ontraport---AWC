@@ -122,7 +122,59 @@ query calcContacts($class_id: AwcClassID, $id: AwcClassID) {
     });
   } catch (e) {}
 }
-fetchContactsAndInitializeTribute(classIdFromSubmission);
+
+async function resolveClassId(originalClassId) {
+  const match = window.location.href.match(/[?&]eid=(\d+)/);
+  const eid = match ? match[1] : null;
+
+  if (!eid) return originalClassId;
+
+  const query = `
+    query calcClasses {
+      calcClasses(
+        query: [
+          {
+            where: {
+              Enrolments: [
+                { where: { status: "Active" } }
+                { orWhere: { status: "New" } }
+              ]
+            }
+          }
+          {
+            andWhere: { Enrolments: [{ where: { id: ${eid} } }] }
+          }
+        ]
+      ) {
+        ID: field(arg: ["id"])
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch("https://awc.vitalstats.app/api/v1/graphql", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Api-Key": "mMzQezxyIwbtSc85rFPs3",
+      },
+      body: JSON.stringify({ query }),
+    });
+
+    if (!response.ok) return originalClassId;
+
+    const result = await response.json();
+    const resolvedId = result.data?.calcClasses?.[0]?.ID;
+    return resolvedId || originalClassId;
+  } catch (e) {
+    return originalClassId;
+  }
+}
+
+resolveClassId(classIdFromSubmission).then((finalClassId) => {
+  fetchContactsAndInitializeTribute(finalClassId);
+});
+
 document.addEventListener("focusin", (e) => {
   const m = e.target.closest(".mentionable");
   if (m && !m.dataset.tributeAttached && globalTribute) {
