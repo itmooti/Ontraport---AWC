@@ -612,7 +612,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-async function buildSubmissionsQuery() {
+async function buildSubmissionsQueryClass() {
   const match = window.location.href.match(/[?&]eid=(\d+)/);
   const eid = match ? match[1] : null;
 
@@ -642,11 +642,11 @@ async function buildSubmissionsQuery() {
     `;
 
     try {
-      const response = await fetch("https://awc.vitalstats.app/api/v1/graphql", {
+      const response = await fetch(endpointForComment, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Api-Key": "mMzQezxyIwbtSc85rFPs3",
+          "Api-Key": apiKeyForComment,
         },
         body: JSON.stringify({ query }),
       });
@@ -781,7 +781,7 @@ async function buildSubmissionsQuery() {
   }
 }
     async function fetchSubmissions() {
-    const querySub = await  buildSubmissionsQuery();
+    const querySub = await buildSubmissionsQueryClass();
       const res = await fetch(endpointForComment, {
         method: "POST",
         headers: {
