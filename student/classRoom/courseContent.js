@@ -90,6 +90,7 @@ $.views.helpers({
   getToday: function () {
     let today = new Date();
     return today.toLocaleDateString("en-US", {
+      timeZone: "Australia/Sydney",
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -160,6 +161,7 @@ function formatDate(unixTimestamp) {
   if (!unixTimestamp) return "Invalid Date";
   const date = new Date(unixTimestamp * 1000);
   return date.toLocaleDateString("en-US", {
+    timeZone: "Australia/Sydney",
     year: "numeric",
     month: "long",
     day: "numeric",
