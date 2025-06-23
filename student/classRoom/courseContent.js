@@ -5,9 +5,9 @@ let lessonDateProgress;
 let getEnrollmentFormat;
 let globalClassId = null;
 let showDripFed = false;
-let prevLesson = '';
-let nextLesson = '';
-let unifiedNewModules=[];
+let prevLesson = "";
+let nextLesson = "";
+let unifiedNewModules = [];
 
 function defineQuery() {
   getEnrollmentFormat = `
@@ -73,12 +73,10 @@ document.addEventListener("DOMContentLoaded", function () {
   eid = match ? parseInt(match[1]) : null;
 
   if (!eid) {
-   
     return;
-  } 
+  }
   defineQuery();
 });
-
 
 $.views.helpers({
   formatNewLines: function (text) {
@@ -127,7 +125,7 @@ function checkLearningOutcomes() {
     const svgElement = document.getElementById(outcome.svgId);
 
     if (!textElement || !textElement.textContent.trim()) {
-      if(svgElement){
+      if (svgElement) {
         svgElement.style.display = "none";
       }
     }
@@ -168,7 +166,6 @@ function formatDate(unixTimestamp) {
   });
 }
 
-
 function determineAvailability(startDateUnix, weekOpen, customisations = []) {
   if (!startDateUnix) {
     return { isAvailable: false, openDateText: "No Start Date" };
@@ -176,8 +173,36 @@ function determineAvailability(startDateUnix, weekOpen, customisations = []) {
 
   const SECONDS_IN_DAY = 86400;
   const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
-  const todayUnix = Math.floor(Date.now() / 1000);
-//const todayUnix = Math.floor(new Date().setHours(0, 0, 0, 0) / 1000);
+  //   const todayUnix = Math.floor(Date.now() / 1000);
+  //const todayUnix = Math.floor(new Date().setHours(0, 0, 0, 0) / 1000);
+
+  const now = new Date();
+
+  const sydneyParts = new Intl.DateTimeFormat("en-AU", {
+    timeZone: "Australia/Sydney",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(now);
+
+  let year, month, day, hour, minute, second;
+  sydneyParts.forEach(({ type, value }) => {
+    if (type === "year") year = value;
+    if (type === "month") month = value;
+    if (type === "day") day = value;
+    if (type === "hour") hour = value;
+    if (type === "minute") minute = value;
+    if (type === "second") second = value;
+  });
+
+  const todayUnix = Math.floor(
+    new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}`).getTime() /
+      1000
+  );
 
   let openDateUnix;
 
@@ -185,12 +210,15 @@ function determineAvailability(startDateUnix, weekOpen, customisations = []) {
     (a, b) => new Date(b.created_at) - new Date(a.created_at)
   );
 
-  const latestWithDate = sortedCustomisations.find(c => c.specific_date);
-  const latestWithOffset = sortedCustomisations.find(c => c.days_to_offset !== null && c.days_to_offset !== undefined);
+  const latestWithDate = sortedCustomisations.find((c) => c.specific_date);
+  const latestWithOffset = sortedCustomisations.find(
+    (c) => c.days_to_offset !== null && c.days_to_offset !== undefined
+  );
   if (latestWithDate) {
-    openDateUnix = latestWithDate.specific_date > 9999999999
-      ? Math.floor(latestWithDate.specific_date / 1000)
-      : latestWithDate.specific_date;
+    openDateUnix =
+      latestWithDate.specific_date > 9999999999
+        ? Math.floor(latestWithDate.specific_date / 1000)
+        : latestWithDate.specific_date;
   } else if (weekOpen === 0) {
     return { isAvailable: true, openDateText: "Available anytime" };
   } else {
@@ -200,23 +228,27 @@ function determineAvailability(startDateUnix, weekOpen, customisations = []) {
       openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY;
     }
   }
-//Added start
-const openDateMidnight = new Date(openDateUnix * 1000);
-openDateMidnight.setUTCHours(0, 0, 0, 0);
-openDateUnix = Math.floor(openDateMidnight.getTime() / 1000);
-//Added end
-	
+  //Added start
+  const openDateMidnight = new Date(openDateUnix * 1000);
+  openDateMidnight.setUTCHours(0, 0, 0, 0);
+  openDateUnix = Math.floor(openDateMidnight.getTime() / 1000);
+  //Added end
+
   const isAvailable = todayUnix <= openDateUnix;
   const openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
 
-
   // return { isAvailable, openDateText };
- return { isAvailable, openDateText, openDateUnix };
+  return { isAvailable, openDateText, openDateUnix };
 }
 
-function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisations = []) {
+function determineAssessmentDueDateUnified(
+  lesson,
+  moduleStartDateUnix,
+  customisations = []
+) {
   const dueWeek = lesson.assessmentDueEndOfWeek;
-  let dueDateUnix = null, dueDateText = null;
+  let dueDateUnix = null,
+    dueDateText = null;
 
   if (dueWeek === 0 || dueWeek === null) {
     return { dueDateUnix: null, dueDateText: null };
@@ -226,14 +258,19 @@ function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customis
   baseDate.setUTCHours(0, 0, 0, 0);
   const normalizedStartUnix = Math.floor(baseDate.getTime() / 1000);
 
-  const sorted = [...customisations].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  const latestWithDate = sorted.find(c => c.specific_date);
-  const latestWithOffset = sorted.find(c => c.days_to_offset !== null && c.days_to_offset !== undefined);
+  const sorted = [...customisations].sort(
+    (a, b) => new Date(b.created_at) - new Date(a.created_at)
+  );
+  const latestWithDate = sorted.find((c) => c.specific_date);
+  const latestWithOffset = sorted.find(
+    (c) => c.days_to_offset !== null && c.days_to_offset !== undefined
+  );
 
   if (latestWithDate) {
-    dueDateUnix = latestWithDate.specific_date > 9999999999
-      ? Math.floor(latestWithDate.specific_date / 1000)
-      : latestWithDate.specific_date;
+    dueDateUnix =
+      latestWithDate.specific_date > 9999999999
+        ? Math.floor(latestWithDate.specific_date / 1000)
+        : latestWithDate.specific_date;
     dueDateText = `Due on ${formatDate(dueDateUnix)}`;
     return { dueDateUnix, dueDateText };
   }
@@ -244,10 +281,11 @@ function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customis
     return { dueDateUnix, dueDateText };
   }
 
-const secondsInADay = 86400;
-const endOfDayOffset = 23 * 3600 + 59 * 60;
-dueDateUnix = normalizedStartUnix + (dueWeek - 1) * secondsInADay + endOfDayOffset;
-dueDateText = `Due on ${formatDate(dueDateUnix)}`;
+  const secondsInADay = 86400;
+  const endOfDayOffset = 23 * 3600 + 59 * 60;
+  dueDateUnix =
+    normalizedStartUnix + (dueWeek - 1) * secondsInADay + endOfDayOffset;
+  dueDateText = `Due on ${formatDate(dueDateUnix)}`;
 
   return { dueDateUnix, dueDateText };
 }
@@ -369,12 +407,13 @@ async function fetchLmsUnifiedData() {
     const classId = course.Enrolments_As_Course?.[0]?.Class?.id ?? null;
     globalClassId = classId;
 
-   const dripFad = course.Enrolments_As_Course?.[0]?.Class?.show_modules_drop_fed  ?? null;
+    const dripFad =
+      course.Enrolments_As_Course?.[0]?.Class?.show_modules_drop_fed ?? null;
     showDripFed = dripFad;
     const mappedData = {
       courseName: course.course_name,
       courseAccessType: course.course_access_type,
-      classId, 
+      classId,
       dripFad,
       enrolments: (course.Enrolments_As_Course ?? []).map((enr) => ({
         id: enr.id,
@@ -391,8 +430,8 @@ async function fetchLmsUnifiedData() {
       })),
       modules: (course.Modules ?? []).map((mod) => ({
         id: mod.id,
-	classId,
-	dripFad,
+        classId,
+        dripFad,
         uniqueId: mod.unique_id,
         order: mod.order,
         moduleName: mod.module_name,
@@ -452,10 +491,43 @@ async function combineUnifiedData() {
     classInfo: enr.classInfo,
   }));
 
+  //   const defaultClassStartDate =
+  //     enrolments.length && enrolments[0].classInfo?.startDate
+  //       ? Number(enrolments[0].classInfo.startDate)
+  //       : Math.floor(Date.now() / 1000);
+
+  const now = new Date();
+
+  const sydneyParts = new Intl.DateTimeFormat("en-AU", {
+    timeZone: "Australia/Sydney",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(now);
+
+  let year, month, day, hour, minute, second;
+  sydneyParts.forEach(({ type, value }) => {
+    if (type === "year") year = value;
+    if (type === "month") month = value;
+    if (type === "day") day = value;
+    if (type === "hour") hour = value;
+    if (type === "minute") minute = value;
+    if (type === "second") second = value;
+  });
+
+  const todayUnix = Math.floor(
+    new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}`).getTime() /
+      1000
+  );
+
   const defaultClassStartDate =
     enrolments.length && enrolments[0].classInfo?.startDate
       ? Number(enrolments[0].classInfo.startDate)
-      : Math.floor(Date.now() / 1000);
+      : todayUnix;
 
   const modules = await Promise.all(
     data.modules.map(async (module) => {
@@ -478,12 +550,11 @@ async function combineUnifiedData() {
           let dueDateInfo = { dueDateUnix: null, dueDateText: "No Due Date" };
           if (lesson.type === "Assessment") {
             const lessonCustomisations = lesson.lessonCustomisations || [];
- dueDateInfo = determineAssessmentDueDateUnified(
-    lesson,
-    availability.openDateUnix, 
-    lessonCustomisations
-);
-
+            dueDateInfo = determineAssessmentDueDateUnified(
+              lesson,
+              availability.openDateUnix,
+              lessonCustomisations
+            );
           }
 
           return {
@@ -544,10 +615,6 @@ async function combineUnifiedData() {
   };
 }
 
-
-
-
-
 async function renderUnifiedModules() {
   const skeletonHTML = `
     <div class="skeleton-container">
@@ -564,7 +631,7 @@ async function renderUnifiedModules() {
   const unifiedData = await combineUnifiedData();
   if (!unifiedData || !Array.isArray(unifiedData.modules)) return;
 
-   unifiedNewModules = unifiedData.modules;
+  unifiedNewModules = unifiedData.modules;
   const template = $.templates("#modulesTemplate");
   const htmlOutput = template.render({
     modules: unifiedData.modules,
@@ -579,36 +646,37 @@ async function renderUnifiedModules() {
 
   $("#modulesContainer").html(htmlOutput);
   $("#progressModulesContainer").html(progressOutput);
-	  
-	  
 }
 
-
-document.addEventListener('DOMContentLoaded', function() {
-  document.body.addEventListener('click',function(event) {
-    var anchor = event.target.closest('a.nextLessonUrl');
+document.addEventListener("DOMContentLoaded", function () {
+  document.body.addEventListener("click", function (event) {
+    var anchor = event.target.closest("a.nextLessonUrl");
     if (!anchor) return;
     event.preventDefault();
-    var href = anchor.getAttribute('href');
+    var href = anchor.getAttribute("href");
     var match = href.match(/content\/([^?\/]+)/);
     if (!match) return;
     var lessonUid = match[1];
-    var module = unifiedNewModules.find(function(mod) {
-      return Array.isArray(mod.lessons) &&
-             mod.lessons.some(function(lesson) {
-               return lesson.awcLessonContentPageUrl &&
-                      lesson.awcLessonContentPageUrl.indexOf(lessonUid) !== -1;
-             });
+    var module = unifiedNewModules.find(function (mod) {
+      return (
+        Array.isArray(mod.lessons) &&
+        mod.lessons.some(function (lesson) {
+          return (
+            lesson.awcLessonContentPageUrl &&
+            lesson.awcLessonContentPageUrl.indexOf(lessonUid) !== -1
+          );
+        })
+      );
     });
     if (module && module.availability === false) {
       window.location.href = href;
     } else {
-      document.querySelector('.unavailableLessonModal').classList.remove('hidden');
+      document
+        .querySelector(".unavailableLessonModal")
+        .classList.remove("hidden");
     }
   });
 });
-
-
 
 // Helper to add event listeners if element exists
 function addEventListenerIfExists(id, event, handler) {
@@ -619,7 +687,6 @@ function addEventListenerIfExists(id, event, handler) {
     });
   }
 }
-
 
 // Attach events on DOM load
 document.addEventListener("DOMContentLoaded", function () {
@@ -634,13 +701,12 @@ document.addEventListener("DOMContentLoaded", function () {
     renderUnifiedModules
   );
   addEventListenerIfExists("finalMessageButton", "click", renderUnifiedModules);
-	
 });
-document.addEventListener('DOMContentLoaded', function() {
-  const basePath = 'https://courses.writerscentre.com.au/course-details/content/';
+
+document.addEventListener("DOMContentLoaded", function () {
+  const basePath =
+    "https://courses.writerscentre.com.au/course-details/content/";
   if (window.location.href.includes(basePath)) {
     renderUnifiedModules();
-  } 
+  }
 });
-
-
