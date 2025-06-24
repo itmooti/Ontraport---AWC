@@ -10,6 +10,17 @@
     let unifiedNewModules = [];
 
 function getSydneyUnixFromLocalNow() {
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    // If user is already in Australia/Sydney timezone, return current timestamp
+    if (userTimeZone === "Australia/Sydney") {
+        const sydneyNow = Date.now(); // Already Sydney time
+        console.log("User is already in Sydney timezone.");
+        console.log("Sydney Unix Timestamp (ms):", sydneyNow);
+        return sydneyNow;
+    }
+
+    // Otherwise, convert current time to Sydney timezone
     const now = new Date();
 
     const options = {
@@ -34,24 +45,20 @@ function getSydneyUnixFromLocalNow() {
         second: parts.find(p => p.type === "second").value
     };
 
-    // Format to ISO-style string
+    // Use ISO 8601 format and convert to Date object
     const sydneyDateStr = `${sydney.year}-${sydney.month}-${sydney.day}T${sydney.hour}:${sydney.minute}:${sydney.second}`;
 
-    // Create date using correct timezone offset (Sydney)
-    // Use UTC base and manually apply timezone offset (ugly workaround, but native JS lacks tz awareness)
-    const utcDate = new Date(now.toISOString()); // use current UTC time
-    const offsetMinutes = -utcDate.getTimezoneOffset(); // current local offset in minutes
+    // Use UTC date parsing (assumes Sydney local time)
+    const sydneyDate = new Date(sydneyDateStr + "+11:00"); // use +11:00 or +10:00 based on DST if you want to fine-tune
 
-    // Offset in Sydney (hardcoded for now, better with Intl if needed dynamically)
-    const sydneyOffsetMinutes = new Date().toLocaleTimeString('en-US', { timeZone: 'Australia/Sydney', timeZoneName: 'short' }).includes('AEDT') ? 660 : 600;
-    const timezoneOffset = sydneyOffsetMinutes - offsetMinutes;
+    const sydneyUnixMs = sydneyDate.getTime();
 
-    const adjustedDate = new Date(new Date().getTime() + timezoneOffset * 60000);
-
-    const sydneyUnixMs = adjustedDate.getTime();
+    console.log("User timezone is:", userTimeZone);
     console.log("Sydney Unix Timestamp (ms):", sydneyUnixMs);
     return sydneyUnixMs;
 }
+
+
 
 
     function defineQuery() {
