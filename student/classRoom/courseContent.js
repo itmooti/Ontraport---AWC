@@ -211,8 +211,19 @@
         }
     }
 
+    function formatDate(unixTimestamp) {
+        if (!unixTimestamp) return "Invalid Date";
+        const date = new Date(unixTimestamp * 1000);
+        return date.toLocaleDateString("en-US", {
+            timeZone: "Australia/Sydney",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        });
+    }
+
     // Format a unix timestamp to a human-readable date
-function formatDate(unixTimestamp) {
+function formatDateNew(unixTimestamp) {
     if (!unixTimestamp) return "Invalid Date";
     const date = new Date(unixTimestamp); // Treat it as milliseconds
     return date.toLocaleDateString("en-US", {
@@ -267,9 +278,9 @@ function formatDate(unixTimestamp) {
 
         getRemainingTime(openDateUnix, todayUnix);
 
-        const openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
+        const openDateText = `Unlocks on ${formatDateNew(openDateUnix)}`;
 
-	    console.log(`Unlocks on ${formatDate(openDateUnix)}`);
+	    console.log(`Unlocks on ${formatDateNew(openDateUnix)}`);
         // return { isAvailable, openDateText };
         return { isAvailable, openDateText, openDateUnix };
     }
