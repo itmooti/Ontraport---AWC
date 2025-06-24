@@ -10,15 +10,17 @@
     let nextLesson = "";
     let unifiedNewModules = [];
 
-    function getSydneyUnixFromLocalNow() {
+    function getSydneyUnixFromLocalNow(currentUnix) {
         const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         if (userTimeZone === "Australia/Sydney") {
-            const sydneyNow = Date.now(); // Already Sydney time
+            const sydneyNow = currentUnix; // Already Sydney time
             console.log("User is already in Sydney timezone.");
             console.log("Sydney Unix Timestamp (ms):", sydneyNow);
             return sydneyNow;
         }
+
         const now = new Date();
+
         const options = {
             timeZone: "Australia/Sydney",
             year: "numeric",
@@ -224,7 +226,8 @@
     }
 
     function determineAvailability(startDateUnix, weekOpen, customisations = []) {
-        const todayUnix = getSydneyUnixFromLocalNow();
+        let toCheckDate = Date.now();
+        const todayUnix = getSydneyUnixFromLocalNow(toCheckDate);
         if (!startDateUnix) {
             return { isAvailable: false, openDateText: "No Start Date" };
         }
@@ -259,18 +262,19 @@
         //Added start
         const openDateMidnight = new Date(openDateUnix * 1000);
         openDateMidnight.setUTCHours(0, 0, 0, 0);
-        openDateUnix = Math.floor(openDateMidnight.getTime() / 1000);
+        let openDateMidnightUnix = Math.floor(openDateMidnight.getTime() / 1000);
+
+        openDateUnix = getSydneyUnixFromLocalNow(openDateMidnightUnix);
         //Added end
 
         const isAvailable = todayUnix <= openDateUnix;
-	            console.log("today unix is", todayUnix);
+        console.log("today unix is", todayUnix);
         console.log("open unix is", openDateUnix);
 
         getRemainingTime(openDateUnix, todayUnix);
 
         const openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
 
-	    console.log(`Unlocks on ${formatDate(openDateUnix)}`);
         // return { isAvailable, openDateText };
         return { isAvailable, openDateText, openDateUnix };
     }
@@ -526,7 +530,8 @@ Lessons(
         }));
 
 
-        const todayUnix = getSydneyUnixFromLocalNow();
+        let toCheckDate = Date.now();
+        const todayUnix = getSydneyUnixFromLocalNow(toCheckDate);
 
         const defaultClassStartDate =
             enrolments.length && enrolments[0].classInfo?.startDate
