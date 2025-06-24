@@ -34,17 +34,25 @@ function getSydneyUnixFromLocalNow() {
         second: parts.find(p => p.type === "second").value
     };
 
-    // Construct ISO-like datetime string (in Sydney time)
+    // Format to ISO-style string
     const sydneyDateStr = `${sydney.year}-${sydney.month}-${sydney.day}T${sydney.hour}:${sydney.minute}:${sydney.second}`;
 
-    // Create Date object and get milliseconds
-    const sydneyDate = new Date(sydneyDateStr + " GMT+1100"); // +1100 or +1000 depending on DST
+    // Create date using correct timezone offset (Sydney)
+    // Use UTC base and manually apply timezone offset (ugly workaround, but native JS lacks tz awareness)
+    const utcDate = new Date(now.toISOString()); // use current UTC time
+    const offsetMinutes = -utcDate.getTimezoneOffset(); // current local offset in minutes
 
-    const sydneyUnixMs = sydneyDate.getTime();
+    // Offset in Sydney (hardcoded for now, better with Intl if needed dynamically)
+    const sydneyOffsetMinutes = new Date().toLocaleTimeString('en-US', { timeZone: 'Australia/Sydney', timeZoneName: 'short' }).includes('AEDT') ? 660 : 600;
+    const timezoneOffset = sydneyOffsetMinutes - offsetMinutes;
 
+    const adjustedDate = new Date(new Date().getTime() + timezoneOffset * 60000);
+
+    const sydneyUnixMs = adjustedDate.getTime();
     console.log("Sydney Unix Timestamp (ms):", sydneyUnixMs);
     return sydneyUnixMs;
 }
+
 
     function defineQuery() {
         getEnrollmentFormat = `
