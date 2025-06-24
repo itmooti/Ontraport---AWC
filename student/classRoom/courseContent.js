@@ -262,25 +262,16 @@ function formatDateNew(unixTimestamp) {
             return { isAvailable: true, openDateText: "Available anytime" };
         } else {
             openDateUnix = (startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000;
-
             if (latestWithOffset) {
                 openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
+		const openDateMidnight = new Date(openDateUnix);
+		openDateMidnight.setUTCHours(0, 0, 0, 0);
+		openDateUnix = openDateMidnight.getTime();
             }
         }
-        const openDateMidnight = new Date(openDateUnix);
-	openDateMidnight.setUTCHours(0, 0, 0, 0);
-	openDateUnix = openDateMidnight.getTime();
 
         const isAvailable = todayUnix <= openDateUnix;
-	            console.log("today unix is", todayUnix);
-        console.log("open unix is", openDateUnix);
-
-        getRemainingTime(openDateUnix, todayUnix);
-
         const openDateText = `Unlocks on ${formatDateNew(openDateUnix)}`;
-
-	    console.log(`Unlocks on ${formatDateNew(openDateUnix)}`);
-        // return { isAvailable, openDateText };
         return { isAvailable, openDateText, openDateUnix };
     }
 
