@@ -1,4 +1,4 @@
-<script>
+
     let completedQuery;
     let inProgressQuery;
     let enrollmentCourseProgressQuery;
@@ -711,4 +711,3 @@ Lessons(
             renderUnifiedModules();
         }
     });
-</script>
