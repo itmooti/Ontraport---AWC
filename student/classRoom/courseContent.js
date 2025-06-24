@@ -263,6 +263,8 @@
         //Added end
 
         const isAvailable = todayUnix <= openDateUnix;
+	            console.log("today unix is", todayUnix);
+        console.log("open unix is", openDateUnix);
 
         getRemainingTime(openDateUnix, todayUnix);
 
