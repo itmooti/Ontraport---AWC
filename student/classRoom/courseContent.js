@@ -256,11 +256,9 @@
                 openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
             }
         }
-        //Added start
-        const openDateMidnight = new Date(openDateUnix * 1000);
-        openDateMidnight.setUTCHours(0, 0, 0, 0);
-        openDateUnix = Math.floor(openDateMidnight.getTime() / 1000);
-        //Added end
+        const openDateMidnight = new Date(openDateUnix);
+	openDateMidnight.setUTCHours(0, 0, 0, 0);
+	openDateUnix = openDateMidnight.getTime();
 
         const isAvailable = todayUnix <= openDateUnix;
 	            console.log("today unix is", todayUnix);
