@@ -1,4 +1,5 @@
- let completedQuery;
+<script>
+    let completedQuery;
     let inProgressQuery;
     let enrollmentCourseProgressQuery;
     let lessonDateProgress;
@@ -9,54 +10,73 @@
     let nextLesson = "";
     let unifiedNewModules = [];
 
-function getSydneyUnixFromLocalNow() {
-    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (userTimeZone === "Australia/Sydney") {
-        const sydneyNow = Date.now(); // Already Sydney time
-        console.log("User is already in Sydney timezone.");
-        console.log("Sydney Unix Timestamp (ms):", sydneyNow);
-        return sydneyNow;
+    function getSydneyUnixFromLocalNow() {
+        const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (userTimeZone === "Australia/Sydney") {
+            const sydneyNow = Date.now(); // Already Sydney time
+            console.log("User is already in Sydney timezone.");
+            console.log("Sydney Unix Timestamp (ms):", sydneyNow);
+            return sydneyNow;
+        }
+        const now = new Date();
+        const options = {
+            timeZone: "Australia/Sydney",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false
+        };
+        const parts = new Intl.DateTimeFormat("en-CA", options).formatToParts(now);
+
+        const sydney = {
+            year: parts.find(p => p.type === "year").value,
+            month: parts.find(p => p.type === "month").value,
+            day: parts.find(p => p.type === "day").value,
+            hour: parts.find(p => p.type === "hour").value,
+            minute: parts.find(p => p.type === "minute").value,
+            second: parts.find(p => p.type === "second").value
+        };
+
+        // Format to ISO-style string
+        const sydneyDateStr = `${sydney.year}-${sydney.month}-${sydney.day}T${sydney.hour}:${sydney.minute}:${sydney.second}`;
+
+        // Create date using correct timezone offset (Sydney)
+        // Use UTC base and manually apply timezone offset (ugly workaround, but native JS lacks tz awareness)
+        const utcDate = new Date(now.toISOString()); // use current UTC time
+        const offsetMinutes = -utcDate.getTimezoneOffset(); // current local offset in minutes
+
+        // Offset in Sydney (hardcoded for now, better with Intl if needed dynamically)
+        const sydneyOffsetMinutes = new Date().toLocaleTimeString('en-US', { timeZone: 'Australia/Sydney', timeZoneName: 'short' }).includes('AEDT') ? 660 : 600;
+        const timezoneOffset = sydneyOffsetMinutes - offsetMinutes;
+
+        const adjustedDate = new Date(new Date().getTime() + timezoneOffset * 60000);
+
+        const sydneyUnixMs = adjustedDate.getTime();
+        console.log("Sydney Unix Timestamp (ms):", sydneyUnixMs);
+        return sydneyUnixMs;
     }
-    const now = new Date();
-    const options = {
-        timeZone: "Australia/Sydney",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false
-    };
-    const parts = new Intl.DateTimeFormat("en-CA", options).formatToParts(now);
 
-    const sydney = {
-        year: parts.find(p => p.type === "year").value,
-        month: parts.find(p => p.type === "month").value,
-        day: parts.find(p => p.type === "day").value,
-        hour: parts.find(p => p.type === "hour").value,
-        minute: parts.find(p => p.type === "minute").value,
-        second: parts.find(p => p.type === "second").value
-    };
+    function getRemainingTime(openDateUnixMs, todayUnixMs) {
+        if (todayUnixMs > openDateUnixMs) {
+            console.log("Already unlocked");
+            return;
+        }
 
-    // Format to ISO-style string
-    const sydneyDateStr = `${sydney.year}-${sydney.month}-${sydney.day}T${sydney.hour}:${sydney.minute}:${sydney.second}`;
+        let diffMs = openDateUnixMs - todayUnixMs;
 
-    // Create date using correct timezone offset (Sydney)
-    // Use UTC base and manually apply timezone offset (ugly workaround, but native JS lacks tz awareness)
-    const utcDate = new Date(now.toISOString()); // use current UTC time
-    const offsetMinutes = -utcDate.getTimezoneOffset(); // current local offset in minutes
+        let seconds = Math.floor((diffMs / 1000) % 60);
+        let minutes = Math.floor((diffMs / (1000 * 60)) % 60);
+        let hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
+        let days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    // Offset in Sydney (hardcoded for now, better with Intl if needed dynamically)
-    const sydneyOffsetMinutes = new Date().toLocaleTimeString('en-US', { timeZone: 'Australia/Sydney', timeZoneName: 'short' }).includes('AEDT') ? 660 : 600;
-    const timezoneOffset = sydneyOffsetMinutes - offsetMinutes;
+        let formatted = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+        console.log("Remaining to unlock:", formatted);
 
-    const adjustedDate = new Date(new Date().getTime() + timezoneOffset * 60000);
-
-    const sydneyUnixMs = adjustedDate.getTime();
-    console.log("Sydney Unix Timestamp (ms):", sydneyUnixMs);
-    return sydneyUnixMs;
-}
+        return formatted;
+    }
 
 
 
@@ -243,6 +263,9 @@ function getSydneyUnixFromLocalNow() {
         //Added end
 
         const isAvailable = todayUnix <= openDateUnix;
+
+        getRemainingTime(openDateUnix, todayUnix);
+
         const openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
 
         // return { isAvailable, openDateText };
@@ -688,3 +711,4 @@ Lessons(
             renderUnifiedModules();
         }
     });
+</script>
