@@ -212,16 +212,17 @@
     }
 
     // Format a unix timestamp to a human-readable date
-    function formatDate(unixTimestamp) {
-        if (!unixTimestamp) return "Invalid Date";
-        const date = new Date(unixTimestamp * 1000);
-        return date.toLocaleDateString("en-US", {
-            timeZone: "Australia/Sydney",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-        });
-    }
+function formatDate(unixTimestamp) {
+    if (!unixTimestamp) return "Invalid Date";
+    const date = new Date(unixTimestamp); // Treat it as milliseconds
+    return date.toLocaleDateString("en-US", {
+        timeZone: "Australia/Sydney",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    });
+}
+
 
     function determineAvailability(startDateUnix, weekOpen, customisations = []) {
         const todayUnix = getSydneyUnixFromLocalNow();
