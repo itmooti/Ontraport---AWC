@@ -9,47 +9,42 @@
     let nextLesson = "";
     let unifiedNewModules = [];
 
-    function getSydneyUnixFromLocalNow() {
-        // 1. Get user's current local time as Date object
-        let localDate = new Date();
+function getSydneyUnixFromLocalNow() {
+    const now = new Date();
 
-        // 2. Convert local time to Unix timestamp (seconds)
-        let localUnix = Math.floor(localDate.getTime() / 1000);
+    const options = {
+        timeZone: "Australia/Sydney",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false
+    };
 
-        // 3. Format local time as string in "YYYY-MM-DDTHH:mm:ss"
-        let localISO = localDate.toISOString().split(".")[0]; // UTC time in ISO string
+    const parts = new Intl.DateTimeFormat("en-CA", options).formatToParts(now);
 
-        // 4. Use Intl.DateTimeFormat to get Sydney components
-        let options = {
-            timeZone: "Australia/Sydney",
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-            hour12: false
-        };
+    const sydney = {
+        year: parts.find(p => p.type === "year").value,
+        month: parts.find(p => p.type === "month").value,
+        day: parts.find(p => p.type === "day").value,
+        hour: parts.find(p => p.type === "hour").value,
+        minute: parts.find(p => p.type === "minute").value,
+        second: parts.find(p => p.type === "second").value
+    };
 
-        let parts = new Intl.DateTimeFormat("en-CA", options).formatToParts(localDate);
-        let sydneyFormatted = {
-            year: parts.find(p => p.type === "year").value,
-            month: parts.find(p => p.type === "month").value,
-            day: parts.find(p => p.type === "day").value,
-            hour: parts.find(p => p.type === "hour").value,
-            minute: parts.find(p => p.type === "minute").value,
-            second: parts.find(p => p.type === "second").value
-        };
+    // Construct ISO-like datetime string (in Sydney time)
+    const sydneyDateStr = `${sydney.year}-${sydney.month}-${sydney.day}T${sydney.hour}:${sydney.minute}:${sydney.second}`;
 
-        // 5. Construct a Date string and convert it to Unix (in Sydney time)
-        let sydneyDateStr = `${sydneyFormatted.year}-${sydneyFormatted.month}-${sydneyFormatted.day}T${sydneyFormatted.hour}:${sydneyFormatted.minute}:${sydneyFormatted.second}`;
-        let sydneyUnix = Math.floor(new Date(sydneyDateStr + "+11:00").getTime() / 1000); // Use +10:00 or +11:00 depending on DST
+    // Create Date object and get milliseconds
+    const sydneyDate = new Date(sydneyDateStr + " GMT+1100"); // +1100 or +1000 depending on DST
 
-        console.log("localunix", localUnix);
-        console.log("sydneyUnix", sydneyUnix);
-        return sydneyUnix;
-    }
+    const sydneyUnixMs = sydneyDate.getTime();
 
+    console.log("Sydney Unix Timestamp (ms):", sydneyUnixMs);
+    return sydneyUnixMs;
+}
 
     function defineQuery() {
         getEnrollmentFormat = `
