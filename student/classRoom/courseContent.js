@@ -268,6 +268,7 @@
 
         const openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
 
+	    console.log(`Unlocks on ${formatDate(openDateUnix)}`);
         // return { isAvailable, openDateText };
         return { isAvailable, openDateText, openDateUnix };
     }
