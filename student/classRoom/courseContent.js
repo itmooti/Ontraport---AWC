@@ -245,15 +245,15 @@
         if (latestWithDate) {
             openDateUnix =
                 latestWithDate.specific_date > 9999999999
-                    ? Math.floor(latestWithDate.specific_date / 1000)
-                    : latestWithDate.specific_date;
+                    ? latestWithDate.specific_date
+            	    : latestWithDate.specific_date * 1000; 
         } else if (weekOpen === 0) {
             return { isAvailable: true, openDateText: "Available anytime" };
         } else {
-            openDateUnix = startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK;
+            openDateUnix = (startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000;
 
             if (latestWithOffset) {
-                openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY;
+                openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
             }
         }
         //Added start
