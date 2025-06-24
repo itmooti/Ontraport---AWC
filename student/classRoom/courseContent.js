@@ -211,16 +211,15 @@
         }
     }
 
-    function formatDate(unixTimestamp) {
-        if (!unixTimestamp) return "Invalid Date";
-        const date = new Date(unixTimestamp * 1000);
-        return date.toLocaleDateString("en-US", {
-            timeZone: "Australia/Sydney",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-        });
-    }
+function formatDate(unixTimestamp) {
+  if (!unixTimestamp) return "Invalid Date";
+  const date = new Date(unixTimestamp * 1000);
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
 
     // Format a unix timestamp to a human-readable date
 function formatDateNew(unixTimestamp) {
@@ -285,54 +284,43 @@ function formatDateNew(unixTimestamp) {
         return { isAvailable, openDateText, openDateUnix };
     }
 
-    function determineAssessmentDueDateUnified(
-        lesson,
-        moduleStartDateUnix,
-        customisations = []
-    ) {
-        const dueWeek = lesson.assessmentDueEndOfWeek;
-        let dueDateUnix = null,
-            dueDateText = null;
+    function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisations = []) {
+  const dueWeek = lesson.assessmentDueEndOfWeek;
+  let dueDateUnix = null, dueDateText = null;
 
-        if (dueWeek === 0 || dueWeek === null) {
-            return { dueDateUnix: null, dueDateText: null };
-        }
+  if (dueWeek === 0 || dueWeek === null) {
+    return { dueDateUnix: null, dueDateText: null };
+  }
 
-        const baseDate = new Date(moduleStartDateUnix * 1000);
-        baseDate.setUTCHours(0, 0, 0, 0);
-        const normalizedStartUnix = Math.floor(baseDate.getTime() / 1000);
+  const baseDate = new Date(moduleStartDateUnix * 1000);
+  baseDate.setUTCHours(0, 0, 0, 0);
+  const normalizedStartUnix = Math.floor(baseDate.getTime() / 1000);
 
-        const sorted = [...customisations].sort(
-            (a, b) => new Date(b.created_at) - new Date(a.created_at)
-        );
-        const latestWithDate = sorted.find((c) => c.specific_date);
-        const latestWithOffset = sorted.find(
-            (c) => c.days_to_offset !== null && c.days_to_offset !== undefined
-        );
+  const sorted = [...customisations].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const latestWithDate = sorted.find(c => c.specific_date);
+  const latestWithOffset = sorted.find(c => c.days_to_offset !== null && c.days_to_offset !== undefined);
 
-        if (latestWithDate) {
-            dueDateUnix =
-                latestWithDate.specific_date > 9999999999
-                    ? Math.floor(latestWithDate.specific_date / 1000)
-                    : latestWithDate.specific_date;
-            dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-            return { dueDateUnix, dueDateText };
-        }
+  if (latestWithDate) {
+    dueDateUnix = latestWithDate.specific_date > 9999999999
+      ? Math.floor(latestWithDate.specific_date / 1000)
+      : latestWithDate.specific_date;
+    dueDateText = `Due on ${formatDate(dueDateUnix)}`;
+    return { dueDateUnix, dueDateText };
+  }
 
-        if (latestWithOffset) {
-            dueDateUnix = normalizedStartUnix + latestWithOffset.days_to_offset * 86400;
-            dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-            return { dueDateUnix, dueDateText };
-        }
+  if (latestWithOffset) {
+    dueDateUnix = normalizedStartUnix + latestWithOffset.days_to_offset * 86400;
+    dueDateText = `Due on ${formatDate(dueDateUnix)}`;
+    return { dueDateUnix, dueDateText };
+  }
 
-        const secondsInADay = 86400;
-        const endOfDayOffset = 23 * 3600 + 59 * 60;
-        dueDateUnix =
-            normalizedStartUnix + (dueWeek - 1) * secondsInADay + endOfDayOffset;
-        dueDateText = `Due on ${formatDate(dueDateUnix)}`;
+const secondsInADay = 86400;
+const endOfDayOffset = 23 * 3600 + 59 * 60;
+dueDateUnix = normalizedStartUnix + (dueWeek - 1) * secondsInADay + endOfDayOffset;
+dueDateText = `Due on ${formatDate(dueDateUnix)}`;
 
-        return { dueDateUnix, dueDateText };
-    }
+  return { dueDateUnix, dueDateText };
+}
 
     const lmsQuery = `
     query LMSQuery {
