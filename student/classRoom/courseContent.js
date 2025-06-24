@@ -285,42 +285,44 @@ function formatDateNew(unixTimestamp) {
     }
 
     function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisations = []) {
-  const dueWeek = lesson.assessmentDueEndOfWeek;
-  let dueDateUnix = null, dueDateText = null;
+    const dueWeek = lesson.assessmentDueEndOfWeek;
+    let dueDateUnix = null, dueDateText = null;
 
-  if (dueWeek === 0 || dueWeek === null) {
-    return { dueDateUnix: null, dueDateText: null };
-  }
+    if (dueWeek === 0 || dueWeek === null) {
+        return { dueDateUnix: null, dueDateText: null };
+    }
 
-  const baseDate = new Date(moduleStartDateUnix * 1000);
-  baseDate.setUTCHours(0, 0, 0, 0);
-  const normalizedStartUnix = Math.floor(baseDate.getTime() / 1000);
+    const baseDate = new Date(moduleStartDateUnix);
+    baseDate.setUTCHours(0, 0, 0, 0);
+    const normalizedStartUnix = baseDate.getTime();
 
-  const sorted = [...customisations].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  const latestWithDate = sorted.find(c => c.specific_date);
-  const latestWithOffset = sorted.find(c => c.days_to_offset !== null && c.days_to_offset !== undefined);
+    const sorted = [...customisations].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    const latestWithDate = sorted.find(c => c.specific_date);
+    const latestWithOffset = sorted.find(c => c.days_to_offset !== null && c.days_to_offset !== undefined);
 
-  if (latestWithDate) {
-    dueDateUnix = latestWithDate.specific_date > 9999999999
-      ? Math.floor(latestWithDate.specific_date / 1000)
-      : latestWithDate.specific_date;
-    dueDateText = `Due on ${formatDate(dueDateUnix)}`;
+    if (latestWithDate) {
+        dueDateUnix = latestWithDate.specific_date > 9999999999
+            ? latestWithDate.specific_date
+            : latestWithDate.specific_date * 1000;
+        dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
+        return { dueDateUnix, dueDateText };
+    }
+
+    if (latestWithOffset) {
+        dueDateUnix = normalizedStartUnix + latestWithOffset.days_to_offset * 86400 * 1000;
+        dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
+        return { dueDateUnix, dueDateText };
+    }
+
+    const msInADay = 86400 * 1000;
+    const endOfDayOffsetMs = (23 * 3600 + 59 * 60) * 1000;
+
+    dueDateUnix = normalizedStartUnix + (dueWeek - 1) * msInADay + endOfDayOffsetMs;
+    dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
+    
     return { dueDateUnix, dueDateText };
-  }
-
-  if (latestWithOffset) {
-    dueDateUnix = normalizedStartUnix + latestWithOffset.days_to_offset * 86400;
-    dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-    return { dueDateUnix, dueDateText };
-  }
-
-const secondsInADay = 86400;
-const endOfDayOffset = 23 * 3600 + 59 * 60;
-dueDateUnix = normalizedStartUnix + (dueWeek - 1) * secondsInADay + endOfDayOffset;
-dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-
-  return { dueDateUnix, dueDateText };
 }
+
 
     const lmsQuery = `
     query LMSQuery {
