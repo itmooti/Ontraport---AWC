@@ -84,21 +84,21 @@ $.views.helpers({
   },
 });
 
-$.views.helpers({
-  getToday: function () {
-    let today = new Date();
-    return today.toLocaleDateString("en-US", {
-      timeZone: "Australia/Sydney",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  },
-  extractDate: function (text) {
-    let dateMatch = text.match(/([A-Za-z]+ \d{1,2}, \d{4})/);
-    return dateMatch ? dateMatch[0] : "";
-  },
-});
+// $.views.helpers({
+//   getToday: function () {
+//     let today = new Date();
+//     return today.toLocaleDateString("en-US", {
+//       timeZone: "Australia/Sydney",
+//       year: "numeric",
+//       month: "long",
+//       day: "numeric",
+//     });
+//   },
+//   extractDate: function (text) {
+//     let dateMatch = text.match(/([A-Za-z]+ \d{1,2}, \d{4})/);
+//     return dateMatch ? dateMatch[0] : "";
+//   },
+// });
 
 //helper jsrender function to count the number of lessons inside the module that is completed
 $.views.helpers({
