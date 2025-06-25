@@ -1,3 +1,51 @@
+  function getSydneyUnixFromLocalNow() {
+        const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (userTimeZone === "Australia/Sydney") {
+            const sydneyNow = Date.now(); // Already Sydney time
+            console.log("User is already in Sydney timezone.");
+            console.log("Sydney Unix Timestamp (ms):", sydneyNow);
+            return sydneyNow;
+        }
+        const now = new Date();
+        const options = {
+            timeZone: "Australia/Sydney",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false
+        };
+        const parts = new Intl.DateTimeFormat("en-CA", options).formatToParts(now);
+
+        const sydney = {
+            year: parts.find(p => p.type === "year").value,
+            month: parts.find(p => p.type === "month").value,
+            day: parts.find(p => p.type === "day").value,
+            hour: parts.find(p => p.type === "hour").value,
+            minute: parts.find(p => p.type === "minute").value,
+            second: parts.find(p => p.type === "second").value
+        };
+
+        // Format to ISO-style string
+        const sydneyDateStr = `${sydney.year}-${sydney.month}-${sydney.day}T${sydney.hour}:${sydney.minute}:${sydney.second}`;
+
+        // Create date using correct timezone offset (Sydney)
+        // Use UTC base and manually apply timezone offset (ugly workaround, but native JS lacks tz awareness)
+        const utcDate = new Date(now.toISOString()); // use current UTC time
+        const offsetMinutes = -utcDate.getTimezoneOffset(); // current local offset in minutes
+
+        // Offset in Sydney (hardcoded for now, better with Intl if needed dynamically)
+        const sydneyOffsetMinutes = new Date().toLocaleTimeString('en-US', { timeZone: 'Australia/Sydney', timeZoneName: 'short' }).includes('AEDT') ? 660 : 600;
+        const timezoneOffset = sydneyOffsetMinutes - offsetMinutes;
+
+        const adjustedDate = new Date(new Date().getTime() + timezoneOffset * 60000);
+
+        const sydneyUnixMs = adjustedDate.getTime();
+        console.log("Sydney Unix Timestamp (ms):", sydneyUnixMs);
+        return sydneyUnixMs;
+    }
 async function fetchGraphQL(query) {
   try {
     const response = await fetch("https://awc.vitalstats.app/api/v1/graphql", {
@@ -16,6 +64,15 @@ async function fetchGraphQL(query) {
 }
 
 // Format a unix timestamp to a human-readable date
+// function formatDate(unixTimestamp) {
+//   if (!unixTimestamp) return "Invalid Date";
+//   const date = new Date(unixTimestamp * 1000);
+//   return date.toLocaleDateString("en-US", {
+//     year: "numeric",
+//     month: "long",
+//     day: "numeric",
+//   });
+// }
 function formatDate(unixTimestamp) {
   if (!unixTimestamp) return "Invalid Date";
   const date = new Date(unixTimestamp * 1000);
@@ -24,6 +81,17 @@ function formatDate(unixTimestamp) {
     month: "long",
     day: "numeric",
   });
+}
+    // Format a unix timestamp to a human-readable date
+function formatDateNew(unixTimestamp) {
+    if (!unixTimestamp) return "Invalid Date";
+    const date = new Date(unixTimestamp); // Treat it as milliseconds
+    return date.toLocaleDateString("en-US", {
+        timeZone: "Australia/Sydney",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    });
 }
 
 // Get the upcoming Sunday given a start date and a weeks offset
@@ -37,84 +105,162 @@ function getUpcomingSunday(startDateUnix, weeksOffset = 0) {
 }
 
 // Synchronously determine the due date for assessment lessons using customisation data from the unified query
-function determineAssessmentDueDateUnified(
-  lesson,
-  moduleStartDateUnix,
-  customisation
-) {
-  const dueWeek = lesson.assessmentDueEndOfWeek;
-  let dueDateUnix, dueDateText;
-  if (customisation) {
-    if (customisation.specific_date) {
-      dueDateUnix =
-        customisation.specific_date > 9999999999
-          ? Math.floor(customisation.specific_date / 1000)
-          : customisation.specific_date;
-      dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-    } else if (
-      customisation.days_to_offset !== null &&
-      customisation.days_to_offset !== undefined
-    ) {
-      if (customisation.days_to_offset === 0) {
-        dueDateUnix = moduleStartDateUnix;
-      } else if (customisation.days_to_offset === -1) {
-        dueDateUnix = getUpcomingSunday(moduleStartDateUnix, 0) - 24 * 60 * 60;
-      } else if (customisation.days_to_offset === 1) {
-        dueDateUnix = getUpcomingSunday(moduleStartDateUnix, 1) + 24 * 60 * 60;
-      } else {
-        dueDateUnix = getUpcomingSunday(
-          moduleStartDateUnix,
-          customisation.days_to_offset
-        );
-      }
-      dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-    } else {
-      dueDateUnix = getUpcomingSunday(moduleStartDateUnix, dueWeek);
-      dueDateText = `Due on ${formatDate(dueDateUnix)}`;
+// function determineAssessmentDueDateUnified(
+//   lesson,
+//   moduleStartDateUnix,
+//   customisation
+// ) {
+//   const dueWeek = lesson.assessmentDueEndOfWeek;
+//   let dueDateUnix, dueDateText;
+//   if (customisation) {
+//     if (customisation.specific_date) {
+//       dueDateUnix =
+//         customisation.specific_date > 9999999999
+//           ? Math.floor(customisation.specific_date / 1000)
+//           : customisation.specific_date;
+//       dueDateText = `Due on ${formatDate(dueDateUnix)}`;
+//     } else if (
+//       customisation.days_to_offset !== null &&
+//       customisation.days_to_offset !== undefined
+//     ) {
+//       if (customisation.days_to_offset === 0) {
+//         dueDateUnix = moduleStartDateUnix;
+//       } else if (customisation.days_to_offset === -1) {
+//         dueDateUnix = getUpcomingSunday(moduleStartDateUnix, 0) - 24 * 60 * 60;
+//       } else if (customisation.days_to_offset === 1) {
+//         dueDateUnix = getUpcomingSunday(moduleStartDateUnix, 1) + 24 * 60 * 60;
+//       } else {
+//         dueDateUnix = getUpcomingSunday(
+//           moduleStartDateUnix,
+//           customisation.days_to_offset
+//         );
+//       }
+//       dueDateText = `Due on ${formatDate(dueDateUnix)}`;
+//     } else {
+//       dueDateUnix = getUpcomingSunday(moduleStartDateUnix, dueWeek);
+//       dueDateText = `Due on ${formatDate(dueDateUnix)}`;
+//     }
+//   } else {
+//     dueDateUnix =
+//       dueWeek === 0
+//         ? moduleStartDateUnix
+//         : getUpcomingSunday(moduleStartDateUnix, dueWeek);
+//     dueDateText = `Due on ${formatDate(dueDateUnix)}`;
+//   }
+//   return { dueDateUnix, dueDateText };
+// }
+  function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisations = []) {
+    const dueWeek = lesson.assessmentDueEndOfWeek;
+    let dueDateUnix = null, dueDateText = null;
+
+    if (dueWeek === 0 || dueWeek === null) {
+        return { dueDateUnix: null, dueDateText: null };
     }
-  } else {
-    dueDateUnix =
-      dueWeek === 0
-        ? moduleStartDateUnix
-        : getUpcomingSunday(moduleStartDateUnix, dueWeek);
-    dueDateText = `Due on ${formatDate(dueDateUnix)}`;
-  }
-  return { dueDateUnix, dueDateText };
-}
-// Determine lesson/module availability using the provided customisation data from the unified query
-function determineAvailability(startDateUnix, weeks, customisation) {
-  if (!startDateUnix) {
-    return { isAvailable: false, openDateText: "No Start Date" };
-  }
-  let openDateUnix, openDateText;
-  if (!customisation) {
-    openDateUnix = startDateUnix + weeks * 7 * 24 * 60 * 60;
-    openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
-  } else {
-    if (customisation.specific_date) {
-      openDateUnix =
-        customisation.specific_date > 9999999999
-          ? Math.floor(customisation.specific_date / 1000)
-          : customisation.specific_date;
-      openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
-    } else if (
-      customisation.days_to_offset !== null &&
-      customisation.days_to_offset !== undefined
-    ) {
-      openDateUnix =
-        startDateUnix + customisation.days_to_offset * 24 * 60 * 60;
-      openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
-    } else {
-      openDateUnix = startDateUnix + weeks * 7 * 24 * 60 * 60;
-      openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
+
+    const baseDate = new Date(moduleStartDateUnix);
+    baseDate.setUTCHours(0, 0, 0, 0);
+    const normalizedStartUnix = baseDate.getTime();
+
+    const sorted = [...customisations].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    const latestWithDate = sorted.find(c => c.specific_date);
+    const latestWithOffset = sorted.find(c => c.days_to_offset !== null && c.days_to_offset !== undefined);
+
+    if (latestWithDate) {
+        dueDateUnix = latestWithDate.specific_date > 9999999999
+            ? latestWithDate.specific_date
+            : latestWithDate.specific_date * 1000;
+        dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
+        return { dueDateUnix, dueDateText };
     }
-  }
-  const todayUnix = Math.floor(Date.now() / 1000);
-  // Original logic preserved: available if unlock date is greater than or equal to today
-  const isAvailable = openDateUnix >= todayUnix;
-  return { isAvailable, openDateText };
+
+    if (latestWithOffset) {
+        dueDateUnix = normalizedStartUnix + latestWithOffset.days_to_offset * 86400 * 1000;
+        dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
+        return { dueDateUnix, dueDateText };
+    }
+
+    const msInADay = 86400 * 1000;
+    const endOfDayOffsetMs = (23 * 3600 + 59 * 60) * 1000;
+
+    dueDateUnix = normalizedStartUnix + (dueWeek - 1) * msInADay + endOfDayOffsetMs;
+    dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
+    
+    return { dueDateUnix, dueDateText };
 }
 
+// Determine lesson/module availability using the provided customisation data from the unified query
+// function determineAvailability(startDateUnix, weeks, customisation) {
+//   if (!startDateUnix) {
+//     return { isAvailable: false, openDateText: "No Start Date" };
+//   }
+//   let openDateUnix, openDateText;
+//   if (!customisation) {
+//     openDateUnix = startDateUnix + weeks * 7 * 24 * 60 * 60;
+//     openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
+//   } else {
+//     if (customisation.specific_date) {
+//       openDateUnix =
+//         customisation.specific_date > 9999999999
+//           ? Math.floor(customisation.specific_date / 1000)
+//           : customisation.specific_date;
+//       openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
+//     } else if (
+//       customisation.days_to_offset !== null &&
+//       customisation.days_to_offset !== undefined
+//     ) {
+//       openDateUnix =
+//         startDateUnix + customisation.days_to_offset * 24 * 60 * 60;
+//       openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
+//     } else {
+//       openDateUnix = startDateUnix + weeks * 7 * 24 * 60 * 60;
+//       openDateText = `Unlocks on ${formatDate(openDateUnix)}`;
+//     }
+//   }
+//   const todayUnix = Math.floor(Date.now() / 1000);
+//   // Original logic preserved: available if unlock date is greater than or equal to today
+//   const isAvailable = openDateUnix >= todayUnix;
+//   return { isAvailable, openDateText };
+// }
+   function determineAvailability(startDateUnix, weekOpen, customisations = []) {
+        const todayUnix = getSydneyUnixFromLocalNow();
+        if (!startDateUnix) {
+            return { isAvailable: false, openDateText: "No Start Date" };
+        }
+
+        const SECONDS_IN_DAY = 86400;
+        const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
+
+        let openDateUnix;
+
+        const sortedCustomisations = [...customisations].sort(
+            (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        );
+
+        const latestWithDate = sortedCustomisations.find((c) => c.specific_date);
+        const latestWithOffset = sortedCustomisations.find(
+            (c) => c.days_to_offset !== null && c.days_to_offset !== undefined
+        );
+        if (latestWithDate) {
+            openDateUnix =
+                latestWithDate.specific_date > 9999999999
+                    ? latestWithDate.specific_date
+            	    : latestWithDate.specific_date * 1000; 
+        } else if (weekOpen === 0) {
+            return { isAvailable: true, openDateText: "Available anytime" };
+        } else {
+            openDateUnix = (startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000;
+            if (latestWithOffset) {
+                openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
+		const openDateMidnight = new Date(openDateUnix);
+		openDateMidnight.setUTCHours(0, 0, 0, 0);
+		openDateUnix = openDateMidnight.getTime();
+            }
+        }
+
+        const isAvailable = todayUnix <= openDateUnix;
+        const openDateText = `Unlocks on ${formatDateNew(openDateUnix)}`;
+        return { isAvailable, openDateText, openDateUnix };
+    }
 // Unified GraphQL query (includes all customisations)
 const lmsQuery = `
         query LMSQuery {
