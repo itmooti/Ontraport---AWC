@@ -341,7 +341,13 @@ async function getClassId() {
         const queryWithClass = `
         query LMSQuery {
 LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
-  
+      Enrolments_As_Course:Classes_As_Course(query: [{ where: { id: ${classIdOfTeacher} } }]) {
+      start_date
+      end_date
+      id
+      show_modules_drop_fed
+    }
+    
   course_name
   course_access_type
   Modules (
@@ -453,6 +459,12 @@ LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
                 courseAccessType: course.course_access_type,
                 classId,
                 dripFad,
+enrolments: (course.Enrolments_As_Course ?? []).map((cls) => ({
+    id: cls.id,
+    startDate: cls.start_date,
+    endDate: cls.end_date,
+    showModulesDropFed: cls.show_modules_drop_fed
+})),
                 // enrolments: (course.Enrolments_As_Course ?? []).map((enr) => ({
                 //     id: enr.id,
                 //     resumeLessonUniqueId: enr.resume_lesson_unique_id,
