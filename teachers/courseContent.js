@@ -452,7 +452,7 @@ LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
 		        endDate: cls.end_date,
 		        showModulesDropFed: cls.show_modules_drop_fed
 		    }
-		}))
+		})),
                 // enrolments: (course.Enrolments_As_Course ?? []).map((enr) => ({
                 //     id: enr.id,
                 //     resumeLessonUniqueId: enr.resume_lesson_unique_id,
