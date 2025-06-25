@@ -37,14 +37,14 @@ async function updateMentionedContacts(mentionedIds) {
     }
   }
 }
-
+//{ where: { class_id: ${currentPageClassID} } }
 
 const query = `
 query getAnnouncements {
   getAnnouncements(
     query: [
       
-      { where: { class_id: ${currentPageClassID} } }
+      { where: { class_id: ${classIdForForumChat} } }
         { andWhere: { status: "Published" } }
         
     ]
