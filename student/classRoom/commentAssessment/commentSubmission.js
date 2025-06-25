@@ -159,7 +159,7 @@ async function createForumCommentRequest(
           fileName
         );
 
-        const comment = result.data.createForumComment;
+        const comment = result.data.createForumCommentRequest;
 
         const commentData = {
           ...comment,
