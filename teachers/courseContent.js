@@ -1,3 +1,19 @@
+async function getClassId() {
+    const classQuery = `
+        query calcClasses {
+            calcClasses(
+                query: [
+                    { where: { teacher_id: ${teachersIdVisitor} } }
+                    { andWhere: { course_id: ${COURSE_ID} } }
+                ]
+            ) {
+                ID: field(arg: ["id"])
+            }
+        }
+    `;
+    const response = await fetchGraphQL(classQuery);
+    return response?.calcClasses?.[0]?.ID || null;
+}
 
 
     let completedQuery;
@@ -315,8 +331,15 @@
         return { dueDateUnix, dueDateText };
     }
 
+       
 
-   const lmsQuery = `
+    // Fetch and map the unified data from the new query
+    async function fetchLmsUnifiedData() {
+        try {
+		 const classIdOfTeacher = await getClassId();
+        if (!classIdOfTeacher) return null;
+
+        const queryWithClass = `
         query LMSQuery {
 LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
   Enrolments_As_Course
@@ -358,6 +381,7 @@ LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
     lesson__count__progress
     don_t_track_progress
     ClassCustomisations(
+    query: [{ where: {class_to_modify_id: ${classIdOfTeacher}} }]
       limit: 1
       offset: 0
       orderBy: [{ path: ["created_at"], type: desc }]
@@ -411,9 +435,9 @@ LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
         }
       }
       ClassCustomisations(
-        query: [
-          { where: { type: "Assessment" } }
-        ]
+         query: [
+        { where: { class_to_modify_id: ${classIdOfTeacher} } }
+      ]
         limit: 1
         offset: 0
         orderBy: [{ path: ["created_at"], type: desc }]
@@ -428,11 +452,7 @@ LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
 }
 }
       `;
-
-    // Fetch and map the unified data from the new query
-    async function fetchLmsUnifiedData() {
-        try {
-            const response = await fetchGraphQL(lmsQuery);
+            const response = await fetchGraphQL(queryWithClass);
 
             if (!response || !response.LMSQuery || !response.LMSQuery.length) {
                 return null;
