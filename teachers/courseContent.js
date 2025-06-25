@@ -294,71 +294,45 @@ async function getClassId() {
         return { isAvailable, openDateText, openDateUnix };
     }
 
-    function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisations = []) {
-        const dueWeek = lesson.assessmentDueEndOfWeek;
-        let dueDateUnix = null, dueDateText = null;
+     function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisations = []) {
+    const dueWeek = lesson.assessmentDueEndOfWeek;
+    let dueDateUnix = null, dueDateText = null;
 
-        if (dueWeek === 0 || dueWeek === null) {
-            return { dueDateUnix: null, dueDateText: null };
-        }
+    if (dueWeek === 0 || dueWeek === null) {
+        return { dueDateUnix: null, dueDateText: null };
+    }
 
-        const baseDate = new Date(moduleStartDateUnix);
-        baseDate.setUTCHours(0, 0, 0, 0);
-        const normalizedStartUnix = baseDate.getTime();
+    const baseDate = new Date(moduleStartDateUnix);
+    baseDate.setUTCHours(0, 0, 0, 0);
+    const normalizedStartUnix = baseDate.getTime();
 
-        const sorted = [...customisations].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        const latestWithDate = sorted.find(c => c.specific_date);
-        const latestWithOffset = sorted.find(c => c.days_to_offset !== null && c.days_to_offset !== undefined);
+    const sorted = [...customisations].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    const latestWithDate = sorted.find(c => c.specific_date);
+    const latestWithOffset = sorted.find(c => c.days_to_offset !== null && c.days_to_offset !== undefined);
 
-       //  if (latestWithDate) {
-       //     dueDateUnix = String(latestWithDate.specific_date).length > 10
-   			 // ? latestWithDate.specific_date
-   			 // : latestWithDate.specific_date * 1000;
-       //      dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
-       //      return { dueDateUnix, dueDateText };
-       //  }
-	if (latestWithDate) {
-	    const rawDate = latestWithDate.specific_date;
-	    dueDateUnix = Number(rawDate) < 1e12 ? rawDate * 1000 : rawDate;
-	    dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
-	    return { dueDateUnix, dueDateText };
-	}
-
-        if (latestWithOffset) {
-            dueDateUnix = normalizedStartUnix + latestWithOffset.days_to_offset * 86400 * 1000;
-            dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
-            return { dueDateUnix, dueDateText };
-        }
-
-        const msInADay = 86400 * 1000;
-        const endOfDayOffsetMs = (23 * 3600 + 59 * 60) * 1000;
-
-        dueDateUnix = normalizedStartUnix + (dueWeek - 1) * msInADay + endOfDayOffsetMs;
+    if (latestWithDate) {
+        dueDateUnix = latestWithDate.specific_date > 9999999999
+            ? latestWithDate.specific_date
+            : latestWithDate.specific_date * 1000;
         dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
-
         return { dueDateUnix, dueDateText };
     }
 
-       
+    if (latestWithOffset) {
+        dueDateUnix = normalizedStartUnix + latestWithOffset.days_to_offset * 86400 * 1000;
+        dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
+        return { dueDateUnix, dueDateText };
+    }
 
-    // Fetch and map the unified data from the new query
-// Enrolments_As_Course
-//   (
-//    query: [{ where: { Class: { where: { teacher_id: ${teachersIdVisitor} } } } }]
-//   )
-//   { 
-//     resume_lesson_unique_id           
-//     id
-//     date_completion
-//     certificate__link
-//     completed__lessons
-//     Class {
-//       id
-//       unique_id
-//       start_date
-//       end_date
-//     }
-//   }
+    const msInADay = 86400 * 1000;
+    const endOfDayOffsetMs = (23 * 3600 + 59 * 60) * 1000;
+
+    dueDateUnix = normalizedStartUnix + (dueWeek - 1) * msInADay + endOfDayOffsetMs;
+    dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
+    
+    return { dueDateUnix, dueDateText };
+}
+
     async function fetchLmsUnifiedData() {
         try {
 		 const classIdOfTeacher = await getClassId();
