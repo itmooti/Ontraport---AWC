@@ -1,5 +1,9 @@
     // create commenrts
-    async function createForumCommentRequest(
+    async function getClassIdForTeacherUrl() {
+    const params = new URL(window.location.href).searchParams;
+    return params.get("classIdFromUrl")?.replace(/'/g, "") || null;
+}   
+async function createForumCommentRequest(
       file,
       comment,
       reply_to_comment_id,
@@ -356,43 +360,7 @@
     });
  
 
-// async function fetchClassMembers(classIdForComment) {
-//   const query = `
-//     query getClasses {
-//       getClasses(query: [{ where: { id: ${classIdForComment} } }]) {
-//         Teacher {
-//           display_name
-//           first_name
-//           last_name
-//           profile_image
-//           id 
-//           unique_id
-//         }
-//         Enrolments {
-//           Student {
-//             unique_id
-//             display_name
-//             first_name
-//             last_name
-//             profile_image
-//           }
-//         }
-//       }
-//     }
-//   `;
 
-//   const res = await fetch(endpointForComment, {
-//     method: "POST",
-//     headers: {
-//       "Content-Type": "application/json",
-//       "Api-Key": apiKeyForComment,
-//     },
-//     body: JSON.stringify({ query }),
-//   });
-
-//   const json = await res.json();
-//   return json.data.getClasses?.[0];
-// }
 async function fetchClassMembers(classIdForComment) {
   const match = window.location.href.match(/[?&]eid=(\d+)/);
   const eid = match ? match[1] : null;
@@ -659,6 +627,8 @@ async function buildSubmissionsQueryClass() {
     } catch (err) {
       // fallback already set
     }
+  }else{
+      resolvedClassId = await getClassIdForTeacherUrl();
   }
 
   const finalQuery = `
