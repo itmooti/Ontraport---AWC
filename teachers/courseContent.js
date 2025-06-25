@@ -479,19 +479,19 @@ LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
                 courseAccessType: course.course_access_type,
                 classId,
                 dripFad,
-                enrolments: (course.Enrolments_As_Course ?? []).map((enr) => ({
-                    id: enr.id,
-                    resumeLessonUniqueId: enr.resume_lesson_unique_id,
-                    dateCompletion: enr.date_completion,
-                    certificateLink: enr.certificate__link,
-                    completedLessons: enr.completed__lessons,
-                    classInfo: enr.Class
-                        ? {
-                            startDate: enr.Class.start_date,
-                            endDate: enr.Class.end_date,
-                        }
-                        : null,
-                })),
+                // enrolments: (course.Enrolments_As_Course ?? []).map((enr) => ({
+                //     id: enr.id,
+                //     resumeLessonUniqueId: enr.resume_lesson_unique_id,
+                //     dateCompletion: enr.date_completion,
+                //     certificateLink: enr.certificate__link,
+                //     completedLessons: enr.completed__lessons,
+                //     classInfo: enr.Class
+                //         ? {
+                //             startDate: enr.Class.start_date,
+                //             endDate: enr.Class.end_date,
+                //         }
+                //         : null,
+                // })),
                 modules: (course.Modules ?? []).map((mod) => ({
                     id: mod.id,
                     classId,
