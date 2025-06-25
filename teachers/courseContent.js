@@ -196,9 +196,9 @@ async function getClassId() {
 
     window.onload = checkLearningOutcomes;
 
-    const courseContenturl = window.location.href;
-    const urlParams = new URLSearchParams(window.location.search);
-    const studentseid = urlParams.get("eid");
+    const courseContenturlTeacher = window.location.href;
+    const urlParamsTeacher = new URLSearchParams(window.location.search);
+    const studentseidTeacher = urlParamsTeacher.get("eid");
     async function fetchGraphQL(query) {
         try {
             const response = await fetch("https://awc.vitalstats.app/api/v1/graphql", {
