@@ -4,16 +4,16 @@ async function getClassId() {
 }
 
 
-    let completedQuery;
-    let inProgressQuery;
-    let enrollmentCourseProgressQuery;
-    let lessonDateProgress;
-    let getEnrollmentFormat;
-    let globalClassId = null;
-    let showDripFed = false;
-    let prevLesson = "";
+    let completedQueryForTeacher;
+    let inProgressQueryForTeacher;
+    let enrollmentCourseProgressQueryForTeacher;
+    let lessonDateProgressTeacher;
+    let getEnrollmentFormatTeacher;
+    let globalClassIdTeacher = null;
+    let showDripFedTeacher = false;
+    let prevLessonTeacher = "";
     let nextLesson = "";
-    let unifiedNewModules = [];
+    let unifiedNewModulesTeacher = [];
 
     function getSydneyUnixFromLocalNow() {
         const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -87,7 +87,7 @@ async function getClassId() {
 
 
     function defineQuery() {
-        getEnrollmentFormat = `
+        getEnrollmentFormatTeacher = `
         query calcEnrolments {
           calcEnrolments(query: [{ where: { id: ${eid} } }]) {
             Format: field(arg: ["format"])
@@ -95,7 +95,7 @@ async function getClassId() {
         }
         `;
 
-        completedQuery = `
+        completedQueryForTeacher = `
         query {
             calcOEnrolmentLessonCompletionLessonCompletions(
                 query: [{ where: { enrolment_lesson_completion_id: ${eid} } }]
@@ -105,7 +105,7 @@ async function getClassId() {
         }
     	`;
 
-        inProgressQuery = `
+        inProgressQueryForTeacher = `
         query {
             calcOLessonInProgressLessonEnrolmentinProgresses(
                 query: [{ where: { lesson_enrolment_in_progress_id: ${eid} } }]
@@ -115,7 +115,7 @@ async function getClassId() {
         }
     `;
 
-        enrollmentCourseProgressQuery = `query calcEnrolments {
+        enrollmentCourseProgressQueryForTeacher = `query calcEnrolments {
   calcEnrolments(query: [{ where: { id: ${eid} } }]) {
     Course_Course_Name: field(
       arg: ["Course", "course_name"]
@@ -127,7 +127,7 @@ async function getClassId() {
   }
 }`;
 
-        lessonDateProgress = `query calcEnrolments {
+        lessonDateProgressTeacher = `query calcEnrolments {
   calcEnrolments(query: [{ where: { id: ${eid} } }]) {
     Class_Start_Date: field(arg: ["Class", "start_date"]) 
     Class_End_Date: field(arg: ["Class", "end_date"]) 
@@ -435,11 +435,11 @@ LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
 
             const course = response.LMSQuery[0];
             const classId = course.Enrolments_As_Course?.[0]?.Class?.id ?? null;
-            globalClassId = classId;
+            globalClassIdTeacher = classId;
 
             const dripFad =
                 course.Enrolments_As_Course?.[0]?.Class?.show_modules_drop_fed ?? null;
-            showDripFed = dripFad;
+            showDripFedTeacher = dripFad;
             const mappedData = {
                 courseName: course.course_name,
                 courseAccessType: course.course_access_type,
@@ -639,7 +639,7 @@ LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
         const unifiedData = await combineUnifiedData();
         if (!unifiedData || !Array.isArray(unifiedData.modules)) return;
 
-        unifiedNewModules = unifiedData.modules;
+        unifiedNewModulesTeacher = unifiedData.modules;
         const template = $.templates("#modulesTemplate");
         const htmlOutput = template.render({
             modules: unifiedData.modules,
@@ -665,7 +665,7 @@ LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
             var match = href.match(/content\/([^?\/]+)/);
             if (!match) return;
             var lessonUid = match[1];
-            var module = unifiedNewModules.find(function (mod) {
+            var module = unifiedNewModulesTeacher.find(function (mod) {
                 return (
                     Array.isArray(mod.lessons) &&
                     mod.lessons.some(function (lesson) {
