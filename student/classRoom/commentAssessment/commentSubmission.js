@@ -17,7 +17,7 @@ async function createForumCommentRequest(
       createForumComment(payload: $payload) {
         id
         comment 
-        author_id i
+        author_id
         reply_to_comment_id 
         submissions_id  
         file  
