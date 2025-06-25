@@ -317,12 +317,12 @@ async function getClassId() {
        //      dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
        //      return { dueDateUnix, dueDateText };
        //  }
-	    if (latestWithDate) {
-		    const rawDate = latestWithDate.specific_date;
-		    dueDateUnix = String(rawDate).length > 10 ? rawDate : rawDate * 1000;
-		    dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
-		    return { dueDateUnix, dueDateText };
-		}
+	if (latestWithDate) {
+	    const rawDate = latestWithDate.specific_date;
+	    dueDateUnix = Number(rawDate) < 1e12 ? rawDate * 1000 : rawDate;
+	    dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
+	    return { dueDateUnix, dueDateText };
+	}
 
         if (latestWithOffset) {
             dueDateUnix = normalizedStartUnix + latestWithOffset.days_to_offset * 86400 * 1000;
