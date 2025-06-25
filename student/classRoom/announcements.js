@@ -40,11 +40,11 @@ async function updateMentionedContacts(mentionedIds) {
 //{ where: { class_id: ${currentPageClassID} } }
 let classIdFromEidForAnnouncement = '';
 
-(async function getAnnouncementClassId() {
+async function getAnnouncementClassId() {
   const match = window.location.href.match(/[?&]eid=([^&#]*)/);
   const eid = match && match[1] ? decodeURIComponent(match[1]) : null;
 
-  if (!eid) return;
+  if (!eid) return null;
 
   const query = `
     query {
@@ -65,11 +65,12 @@ let classIdFromEidForAnnouncement = '';
     });
 
     const json = await response.json();
-    classIdFromEidForAnnouncement = json.data?.calcEnrolments?.[0]?.Class_ID || '';
+    return json.data?.calcEnrolments?.[0]?.Class_ID || null;
   } catch (error) {
     console.error("Error fetching class ID:", error);
+    return null;
   }
-})();
+}
 
 async function getAnnouncementQuery() {
   const classId = await getAnnouncementClassId();
