@@ -1,18 +1,4 @@
 async function getClassId() {
-    // const classQuery = `
-    //     query calcClasses {
-    //         calcClasses(
-    //             query: [
-    //                 { where: { teacher_id: ${teachersIdVisitor} } }
-    //                 { andWhere: { course_id: ${COURSE_ID} } }
-    //             ]
-    //         ) {
-    //             ID: field(arg: ["id"])
-    //         }
-    //     }
-    // `;
-    // const response = await fetchGraphQL(classQuery);
-    // return response?.calcClasses?.[0]?.ID || null;
     const params = new URL(window.location.href).searchParams;
     return params.get("classId")?.replace(/'/g, "") || null;
 }
@@ -459,12 +445,14 @@ LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
                 courseAccessType: course.course_access_type,
                 classId,
                 dripFad,
-enrolments: (course.Enrolments_As_Course ?? []).map((cls) => ({
-    id: cls.id,
-    startDate: cls.start_date,
-    endDate: cls.end_date,
-    showModulesDropFed: cls.show_modules_drop_fed
-})),
+		enrolments: (course.Enrolments_As_Course ?? []).map((cls) => ({
+		    id: cls.id,
+		    classInfo: {
+		        startDate: cls.start_date,
+		        endDate: cls.end_date,
+		        showModulesDropFed: cls.show_modules_drop_fed
+		    }
+		}))
                 // enrolments: (course.Enrolments_As_Course ?? []).map((enr) => ({
                 //     id: enr.id,
                 //     resumeLessonUniqueId: enr.resume_lesson_unique_id,
