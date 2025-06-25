@@ -310,13 +310,19 @@ async function getClassId() {
         const latestWithDate = sorted.find(c => c.specific_date);
         const latestWithOffset = sorted.find(c => c.days_to_offset !== null && c.days_to_offset !== undefined);
 
-        if (latestWithDate) {
-            dueDateUnix = latestWithDate.specific_date > 9999999999
-                ? latestWithDate.specific_date
-                : latestWithDate.specific_date * 1000;
-            dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
-            return { dueDateUnix, dueDateText };
-        }
+       //  if (latestWithDate) {
+       //     dueDateUnix = String(latestWithDate.specific_date).length > 10
+   			 // ? latestWithDate.specific_date
+   			 // : latestWithDate.specific_date * 1000;
+       //      dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
+       //      return { dueDateUnix, dueDateText };
+       //  }
+	    if (latestWithDate) {
+		    const rawDate = latestWithDate.specific_date;
+		    dueDateUnix = String(rawDate).length > 10 ? rawDate : rawDate * 1000;
+		    dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
+		    return { dueDateUnix, dueDateText };
+		}
 
         if (latestWithOffset) {
             dueDateUnix = normalizedStartUnix + latestWithOffset.days_to_offset * 86400 * 1000;
