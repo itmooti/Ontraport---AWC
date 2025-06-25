@@ -89,7 +89,7 @@ async function getClassId() {
     function defineQuery() {
         getEnrollmentFormatTeacher = `
         query calcEnrolments {
-          calcEnrolments(query: [{ where: { id: ${eid} } }]) {
+          calcEnrolments(query: [{ where: { id: ${eidTeacher} } }]) {
             Format: field(arg: ["format"])
           }
         }
@@ -98,7 +98,7 @@ async function getClassId() {
         completedQueryForTeacher = `
         query {
             calcOEnrolmentLessonCompletionLessonCompletions(
-                query: [{ where: { enrolment_lesson_completion_id: ${eid} } }]
+                query: [{ where: { enrolment_lesson_completion_id: ${eidTeacher} } }]
             ) {
                 Lesson_Completion_ID: field(arg: ["lesson_completion_id"])
             }
@@ -108,7 +108,7 @@ async function getClassId() {
         inProgressQueryForTeacher = `
         query {
             calcOLessonInProgressLessonEnrolmentinProgresses(
-                query: [{ where: { lesson_enrolment_in_progress_id: ${eid} } }]
+                query: [{ where: { lesson_enrolment_in_progress_id: ${eidTeacher} } }]
             ) {
                 Lesson_In_Progress_ID: field(arg: ["lesson_in_progress_id"])
             }
@@ -116,7 +116,7 @@ async function getClassId() {
     `;
 
         enrollmentCourseProgressQueryForTeacher = `query calcEnrolments {
-  calcEnrolments(query: [{ where: { id: ${eid} } }]) {
+  calcEnrolments(query: [{ where: { id: ${eidTeacher} } }]) {
     Course_Course_Name: field(
       arg: ["Course", "course_name"]
     ) 
@@ -128,7 +128,7 @@ async function getClassId() {
 }`;
 
         lessonDateProgressTeacher = `query calcEnrolments {
-  calcEnrolments(query: [{ where: { id: ${eid} } }]) {
+  calcEnrolments(query: [{ where: { id: ${eidTeacher} } }]) {
     Class_Start_Date: field(arg: ["Class", "start_date"]) 
     Class_End_Date: field(arg: ["Class", "end_date"]) 
   }
@@ -142,14 +142,14 @@ async function getClassId() {
         return matchs ? parseInt(matchs[1]) : null;
     }
 
-    let eid = null;
+    let eidTeacher = null;
 
     document.addEventListener("DOMContentLoaded", function () {
         let currentUrl = window.location.href;
         let match = currentUrl.match(/[\?&]eid=(\d+)/);
-        eid = match ? parseInt(match[1]) : null;
+        eidTeacher = match ? parseInt(match[1]) : null;
 
-        if (!eid) {
+        if (!eidTeacher) {
             return;
         }
         defineQuery();
