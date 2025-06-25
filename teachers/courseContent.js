@@ -1,18 +1,20 @@
 async function getClassId() {
-    const classQuery = `
-        query calcClasses {
-            calcClasses(
-                query: [
-                    { where: { teacher_id: ${teachersIdVisitor} } }
-                    { andWhere: { course_id: ${COURSE_ID} } }
-                ]
-            ) {
-                ID: field(arg: ["id"])
-            }
-        }
-    `;
-    const response = await fetchGraphQL(classQuery);
-    return response?.calcClasses?.[0]?.ID || null;
+    // const classQuery = `
+    //     query calcClasses {
+    //         calcClasses(
+    //             query: [
+    //                 { where: { teacher_id: ${teachersIdVisitor} } }
+    //                 { andWhere: { course_id: ${COURSE_ID} } }
+    //             ]
+    //         ) {
+    //             ID: field(arg: ["id"])
+    //         }
+    //     }
+    // `;
+    // const response = await fetchGraphQL(classQuery);
+    // return response?.calcClasses?.[0]?.ID || null;
+    const params = new URL(window.location.href).searchParams;
+    return params.get("classId")?.replace(/'/g, "") || null;
 }
 
 
