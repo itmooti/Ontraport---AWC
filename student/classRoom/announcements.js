@@ -348,23 +348,25 @@ $.views.helpers({
 async function fetchAnnouncements() {
   $("#announcementsContainer").html(`
     <div class="skeleton-container w-full">
-<div class="skeleton-card skeleton-shimmer"></div>
-<div class="skeleton-card skeleton-shimmer"></div>
-<div class="skeleton-card skeleton-shimmer"></div>
-</div>`);
+      <div class="skeleton-card skeleton-shimmer"></div>
+      <div class="skeleton-card skeleton-shimmer"></div>
+      <div class="skeleton-card skeleton-shimmer"></div>
+    </div>`);
+
   try {
+    const query = await getAnnouncementQuery();
+
     const response = await fetch(apiUrlForAnouncement, {
-      const query  = await getAnnouncementQuery();
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Api-Key": apiKeyForAnouncement,
       },
-      body: JSON.stringify({ query: query }),
+      body: JSON.stringify({ query }),
     });
+
     const jsonData = await response.json();
     let announcements = jsonData.data.getAnnouncements || [];
-    // Sanitize the data to avoid null errors
     announcements = sanitizeAnnouncements(announcements);
     renderAnnouncements(announcements);
   } catch (error) {
