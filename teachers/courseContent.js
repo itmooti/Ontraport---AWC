@@ -716,4 +716,6 @@ LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
         }
     });
 
-    
+ document.addEventListener("DOMContentLoaded", function () {
+  renderUnifiedModules();
+});
