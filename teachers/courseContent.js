@@ -342,6 +342,23 @@ async function getClassId() {
        
 
     // Fetch and map the unified data from the new query
+// Enrolments_As_Course
+//   (
+//    query: [{ where: { Class: { where: { teacher_id: ${teachersIdVisitor} } } } }]
+//   )
+//   { 
+//     resume_lesson_unique_id           
+//     id
+//     date_completion
+//     certificate__link
+//     completed__lessons
+//     Class {
+//       id
+//       unique_id
+//       start_date
+//       end_date
+//     }
+//   }
     async function fetchLmsUnifiedData() {
         try {
 		 const classIdOfTeacher = await getClassId();
@@ -350,23 +367,7 @@ async function getClassId() {
         const queryWithClass = `
         query LMSQuery {
 LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
-  Enrolments_As_Course
-  (
-   query: [{ where: { Class: { where: { teacher_id: ${teachersIdVisitor} } } } }]
-  )
-  { 
-    resume_lesson_unique_id           
-    id
-    date_completion
-    certificate__link
-    completed__lessons
-    Class {
-      id
-      unique_id
-      start_date
-      end_date
-    }
-  }
+  
   course_name
   course_access_type
   Modules (
