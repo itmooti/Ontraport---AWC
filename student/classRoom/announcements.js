@@ -38,69 +38,170 @@ async function updateMentionedContacts(mentionedIds) {
   }
 }
 //{ where: { class_id: ${currentPageClassID} } }
+let classIdFromEidForAnnouncement = '';
 
-const query = `
-query getAnnouncements {
-  getAnnouncements(
-    query: [
-      
-      { where: { class_id: ${classIdForForumChat} } }
-        { andWhere: { status: "Published" } }
-        
-    ]
-     orderBy: [{ path: ["created_at"], type: desc }] 
-  ) {
-    anouncementID: id
-    anouncementTitle: title
-    anouncementContent: content
-    anouncementDateAdded: created_at
-    anouncementInstructorID: instructor_id
-    anouncementDisableComments: disable_comments
-    anouncementStatus: status
-    anouncementPostLaterDateTime: post_later_date_time
-    anouncementAttachment: attachment
-    Instructor {
-      instructorFirstName: first_name
-      instructorLastName: last_name
-      instructorDisplayName: display_name
-      instructorProfileImage: profile_image
-    }
-    mainAnnouncementVotedContactID: Contact_Who_Up_Voted_This_Announcements {
-      likesInAnnouncementContactId: id
-    }
-    commentOnAnnouncement: ForumComments {
-      commentPostedDate: created_at
-      commentsId: id
-      commentsComment: comment
-      commentsAuthorId: author_id
-      Author {
-        commentsAuthorDisplayName: display_name
-        commentsAuthorFirstName: first_name
-        commentsAuthorLastName: last_name
-        commentsAuthorProfileImage: profile_image
-      }
-      Member_Comment_Upvotes {
-        likesInCommentContactId: id
-      }
-      repliesOnComments: ForumComments {
-        repliesPostedDate: created_at
-        repliesComment: comment
-        repliesId: id
-        repliesAuthorID :author_id
-        Author {
-          repliesAuthorDisplayName: display_name
-          repliesAuthorFirstName: first_name
-          repliesAuthorLastName: last_name
-          repliesAuthorProfileImage: profile_image
-        }
-        Member_Comment_Upvotes {
-          likesInReplyContactId: id
-        }
+(async function getAnnouncementClassId() {
+  const match = window.location.href.match(/[?&]eid=([^&#]*)/);
+  const eid = match && match[1] ? decodeURIComponent(match[1]) : null;
+
+  if (!eid) return;
+
+  const query = `
+    query {
+      calcEnrolments(query: [{ where: { id: ${eid} } }]) {
+        Class_ID: field(arg: ["class_id"])
       }
     }
+  `;
+
+  try {
+    const response = await fetch(graphqlApiEndpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Api-Key": apiAccessKey,
+      },
+      body: JSON.stringify({ query }),
+    });
+
+    const json = await response.json();
+    classIdFromEidForAnnouncement = json.data?.calcEnrolments?.[0]?.Class_ID || '';
+  } catch (error) {
+    console.error("Error fetching class ID:", error);
   }
+})();
+
+async function getAnnouncementQuery() {
+  const classId = await getAnnouncementClassId();
+  if (!classId) {
+    console.error("Class ID not found");
+    return null;
+  }
+
+  return `
+    query getAnnouncements {
+      getAnnouncements(
+        query: [
+          { where: { class_id: ${classId} } }
+          { andWhere: { status: "Published" } }
+        ]
+        orderBy: [{ path: ["created_at"], type: desc }]
+      ) {
+        anouncementID: id
+        anouncementTitle: title
+        anouncementContent: content
+        anouncementDateAdded: created_at
+        anouncementInstructorID: instructor_id
+        anouncementDisableComments: disable_comments
+        anouncementStatus: status
+        anouncementPostLaterDateTime: post_later_date_time
+        anouncementAttachment: attachment
+        Instructor {
+          instructorFirstName: first_name
+          instructorLastName: last_name
+          instructorDisplayName: display_name
+          instructorProfileImage: profile_image
+        }
+        mainAnnouncementVotedContactID: Contact_Who_Up_Voted_This_Announcements {
+          likesInAnnouncementContactId: id
+        }
+        commentOnAnnouncement: ForumComments {
+          commentPostedDate: created_at
+          commentsId: id
+          commentsComment: comment
+          commentsAuthorId: author_id
+          Author {
+            commentsAuthorDisplayName: display_name
+            commentsAuthorFirstName: first_name
+            commentsAuthorLastName: last_name
+            commentsAuthorProfileImage: profile_image
+          }
+          Member_Comment_Upvotes {
+            likesInCommentContactId: id
+          }
+          repliesOnComments: ForumComments {
+            repliesPostedDate: created_at
+            repliesComment: comment
+            repliesId: id
+            repliesAuthorID :author_id
+            Author {
+              repliesAuthorDisplayName: display_name
+              repliesAuthorFirstName: first_name
+              repliesAuthorLastName: last_name
+              repliesAuthorProfileImage: profile_image
+            }
+            Member_Comment_Upvotes {
+              likesInReplyContactId: id
+            }
+          }
+        }
+      }
+    }
+  `;
 }
-`;
+
+// const query = `
+// query getAnnouncements {
+//   getAnnouncements(
+//     query: [
+      
+//       { where: { class_id: ${classIdForForumChat} } }
+//         { andWhere: { status: "Published" } }
+        
+//     ]
+//      orderBy: [{ path: ["created_at"], type: desc }] 
+//   ) {
+//     anouncementID: id
+//     anouncementTitle: title
+//     anouncementContent: content
+//     anouncementDateAdded: created_at
+//     anouncementInstructorID: instructor_id
+//     anouncementDisableComments: disable_comments
+//     anouncementStatus: status
+//     anouncementPostLaterDateTime: post_later_date_time
+//     anouncementAttachment: attachment
+//     Instructor {
+//       instructorFirstName: first_name
+//       instructorLastName: last_name
+//       instructorDisplayName: display_name
+//       instructorProfileImage: profile_image
+//     }
+//     mainAnnouncementVotedContactID: Contact_Who_Up_Voted_This_Announcements {
+//       likesInAnnouncementContactId: id
+//     }
+//     commentOnAnnouncement: ForumComments {
+//       commentPostedDate: created_at
+//       commentsId: id
+//       commentsComment: comment
+//       commentsAuthorId: author_id
+//       Author {
+//         commentsAuthorDisplayName: display_name
+//         commentsAuthorFirstName: first_name
+//         commentsAuthorLastName: last_name
+//         commentsAuthorProfileImage: profile_image
+//       }
+//       Member_Comment_Upvotes {
+//         likesInCommentContactId: id
+//       }
+//       repliesOnComments: ForumComments {
+//         repliesPostedDate: created_at
+//         repliesComment: comment
+//         repliesId: id
+//         repliesAuthorID :author_id
+//         Author {
+//           repliesAuthorDisplayName: display_name
+//           repliesAuthorFirstName: first_name
+//           repliesAuthorLastName: last_name
+//           repliesAuthorProfileImage: profile_image
+//         }
+//         Member_Comment_Upvotes {
+//           likesInReplyContactId: id
+//         }
+//       }
+//     }
+//   }
+// }
+// `;
 
 // For Unix timestamps in seconds, multiply by 1000.
 // Helper function to return relative time or Australian date format (dd/mm/yyyy)
@@ -253,12 +354,13 @@ async function fetchAnnouncements() {
 </div>`);
   try {
     const response = await fetch(apiUrlForAnouncement, {
+      const query  = await getAnnouncementQuery();
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Api-Key": apiKeyForAnouncement,
       },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({ query: query }),
     });
     const jsonData = await response.json();
     let announcements = jsonData.data.getAnnouncements || [];
