@@ -12,7 +12,7 @@ async function getClassId() {
     let globalClassIdTeacher = null;
     let showDripFedTeacher = false;
     let prevLessonTeacher = "";
-    let nextLesson = "";
+    let nextLessonTeacher = "";
     let unifiedNewModulesTeacher = [];
 
     function getSydneyUnixFromLocalNow() {
@@ -658,7 +658,7 @@ LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
 
     document.addEventListener("DOMContentLoaded", function () {
         document.body.addEventListener("click", function (event) {
-            var anchor = event.target.closest("a.nextLessonUrl");
+            var anchor = event.target.closest("a.nextLessonTeacherUrl");
             if (!anchor) return;
             event.preventDefault();
             var href = anchor.getAttribute("href");
