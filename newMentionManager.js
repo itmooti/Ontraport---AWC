@@ -106,7 +106,7 @@ class NewMentionManager {
           });
         }
 
-        MentionManager.allContacts = contacts;
+        NewMentionManager.allContacts = contacts;
       })
       .catch((error) => {});
   }
@@ -116,16 +116,16 @@ class NewMentionManager {
       trigger: "@",
       allowSpaces: true,
       lookup: "name",
-      values: MentionManager.fetchMentionContacts.bind(MentionManager),
-      menuItemTemplate: MentionManager.mentionTemplate,
-      selectTemplate: MentionManager.selectTemplate,
+      values: NewMentionManager.fetchMentionContacts.bind(NewMentionManager),
+      menuItemTemplate: NewMentionManager.mentionTemplate,
+      selectTemplate: NewMentionManager.selectTemplate,
       menuContainer: document.body,
     }).attach(editor);
   }
 
   static fetchMentionContacts(text, cb) {
     const searchText = text.toLowerCase();
-    const filtered = MentionManager.allContacts.filter((contact) =>
+    const filtered = NewMentionManager.allContacts.filter((contact) =>
       contact.value.toLowerCase().includes(searchText)
     );
     cb(filtered);
@@ -161,12 +161,12 @@ class NewMentionManager {
 }
 
 $(".comment-editor").each(function () {
-  MentionManager.initEditor(this);
+  NewMentionManager.initEditor(this);
 });
 
 if ($("#announcementContent").length > 0) {
   $("#announcementContent").each(function () {
-    MentionManager.initEditor(this);
+    NewMentionManager.initEditor(this);
   });
 }
 
