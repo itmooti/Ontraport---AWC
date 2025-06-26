@@ -4,7 +4,7 @@
 //     return params.get("classIdFromUrl")?.replace(/'/g, "") || null;
 // }   
 
-async function getClassId() {
+async function getClassIdForTeacherUrl() {
     const params = new URL(window.location.href).searchParams;
     return params.get("classIdFromUrl")?.replace(/'/g, "") || 
            params.get("classUIDAdmin")?.replace(/'/g, "") || 
