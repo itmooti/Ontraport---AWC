@@ -29,100 +29,6 @@ function downloadFile(fileLink, button, fileNames) {
     });
 }
 
-let globalTribute = null;
-async function fetchContactsAndInitializeTribute(classId) {
-  const combinedQueryForAdminTeacherAndStudents = `
-query calcContacts($class_id: AwcClassID, $id: AwcClassID) {
-  calcContacts(
-    query: [
-      {
-        where: {
-          Enrolments: [{ where: { class_id: $class_id } }]
-        }
-      }
-      { orWhere: { Classes: [{ where: { id: $id } }] } }
-      { orWhere: { email: "courses@writerscentre.com.au" } }
-    ]
-    limit: 50000
-    offset: 0
-  ) {
-    Display_Name: field(arg: ["display_name"]) 
-    First_Name: field(arg: ["first_name"])
-    Last_Name: field(arg: ["last_name"]) 
-    Contact_ID: field(arg: ["id"])
-    Profile_Image: field(arg: ["profile_image"])
-    Is_Instructor: field(arg: ["is_instructor"])
-    Is_Admin: field(arg: ["is_admin"])
-  }
-}
-`;
-  const variables = { class_id: classId, id: classId };
-  const defaultImageUrl =
-    "https://file.ontraport.com/media/d297d307c0b44ab987c4c3ea6ce4f4d1.phpn85eue?Expires=4894682981&Signature=ITOEXhMnfN8RhJFBAPNE1r88KEv0EiFdNUDs1XFJWHGM-VHUgvnRlmbUxX6NrMESiC0IcQBi~Ev-jWHzgWDaUhEQOkljQgB2uLQHrxc2wlH~coXW8ZHT0aOWH160uZd5a6gUgnZWzNoIFU01RQZsxHjvc4Ds~lUpCiIeAKycYgwvZsPv5ir1tKuH~o7HUjfmCNdbStVMhSzfmyvsgP6uDCFspM19KtePjXy~rWteI8vFqltP28VLVNhUVCJ3jT29DiHdZRMYMeDUWVdYFBgebh~cCepChYOMG1ZGlfun9YtYDLuA7O93C2COEScR~gfomDrBDU5dgFXspiXnbTp58w__&Key-Pair-Id=APKAJVAAMVW6XQYWSTNA";
-  try {
-    const response = await fetch("https://awc.vitalstats.app/api/v1/graphql", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Api-Key": "mMzQezxyIwbtSc85rFPs3",
-      },
-      body: JSON.stringify({
-        query: combinedQueryForAdminTeacherAndStudents,
-        variables,
-      }),
-    });
-    if (!response.ok) throw new Error("HTTP Error");
-    const result = await response.json();
-    if (!result?.data?.calcContacts) {
-      return;
-    }
-     const finalContacts = Array.from(
-      new Map(
-        result.data.calcContacts
-          // .filter((contact) => contact.Display_Name)
-          .map((contact) => { 
-            let displayName = contact.Display_Name;
-            if (!displayName && (contact.First_Name || contact.Last_Name)) {
-              displayName = `${contact.First_Name || ""} ${contact.Last_Name || ""}`.trim();
-            }
-            if (!displayName) return null;
-              
-            let userType = "(Student)";
-            if (contact.Is_Admin) {
-              userType = "(Admin)";
-            } else if (contact.Is_Instructor) {
-              userType = "(Tutor)";
-            }
-            return [
-              contact.Contact_ID,
-              {
-                // key: `${contact.Display_Name} ${userType}`,
-                  key: `${displayName}`,
-                value: String(contact.Contact_ID),
-                image: !contact.Profile_Image || contact.Profile_Image === "https://i.ontraport.com/abc.jpg" ? defaultImageUrl : contact.Profile_Image,
-                //image: contact.Profile_Image || defaultImageUrl,
-              },
-            ];
-          })
-      ).values()
-    );
-    globalTribute = new Tribute({
-      values: finalContacts,
-      menuItemTemplate: function (item) {
-        return `
-              <div class="cursor-pointer inline-flex items-center gap-x-1">
-                <img src="${item.original.image}" style="object-fit:cover;height:20px;width:20px;border-radius:50%">
-                <span>${item.string}</span>
-              </div>
-            `;
-      },
-      selectTemplate: function (item) {
-        return `<span class="mention-handle label bg-[#C7E6E6] py-1 px-2 rounded text-dark small-text" data-mention-id="${item.original.value}">@${item.original.key}</span>`;
-      },
-    });
-  } catch (e) {}
-}
-
 async function resolveClassId(originalClassId) {
   const match = window.location.href.match(/[?&]eid=(\d+)/);
   const eid = match ? match[1] : null;
@@ -171,17 +77,6 @@ async function resolveClassId(originalClassId) {
   }
 }
 
-resolveClassId(classIdFromSubmission).then((finalClassId) => {
-  fetchContactsAndInitializeTribute(finalClassId);
-});
-
-document.addEventListener("focusin", (e) => {
-  const m = e.target.closest(".mentionable");
-  if (m && !m.dataset.tributeAttached && globalTribute) {
-    globalTribute.attach(m);
-    m.dataset.tributeAttached = "true";
-  }
-});
 
 window.addEventListener("message", function (event) {
   const iframes = document.querySelectorAll(".submission-frame");
@@ -258,10 +153,12 @@ document.addEventListener("DOMContentLoaded", function () {
         changeDateDue.innerText = storedDueDate;
       });
     }
-  }else{
-  const mainwrapperforDueTop = document.querySelector('.mainwrapperforDueTop');
-    if(mainwrapperforDueTop){
-      mainwrapperforDueTop.classList.add('hidden');
+  } else {
+    const mainwrapperforDueTop = document.querySelector(
+      ".mainwrapperforDueTop"
+    );
+    if (mainwrapperforDueTop) {
+      mainwrapperforDueTop.classList.add("hidden");
     }
   }
   const iframes = document.querySelectorAll("iframe");
@@ -355,5 +252,49 @@ assessmentAudioContainer.forEach((container) => {
     container.classList.add("hidden");
   } else {
     container.classList.remove("hidden");
+  }
+});
+
+
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    await NewMentionManager.initContacts(); // Fetch contacts once
+
+    document.querySelectorAll(".mentionable").forEach((editor) => {
+      if (!editor.hasAttribute("data-tribute-attached")) {
+        NewMentionManager.initEditor(editor);
+        editor.setAttribute("data-tribute-attached", "true");
+      }
+
+      function setPlaceholder() {
+        if (!editor.textContent.trim()) {
+          const span = document.createElement("span");
+          span.className =
+            "mention-placeholder text-[#586a80] text-base font-normal leading-normal pointer-events-none select-none";
+          span.innerHTML = "Type @ to mention members";
+          editor.appendChild(span);
+        }
+      }
+
+      editor.addEventListener("focus", () => {
+        const placeholder = editor.querySelector(".mention-placeholder");
+        if (placeholder) placeholder.remove();
+      });
+
+      editor.addEventListener("blur", () => {
+        setTimeout(() => {
+          if (
+            !editor.textContent.trim() &&
+            !editor.querySelector(".mention-placeholder")
+          ) {
+            setPlaceholder();
+          }
+        }, 10);
+      });
+
+      setPlaceholder();
+    });
+  } catch (err) {
+    console.error("Failed to initialize mentions:", err);
   }
 });
