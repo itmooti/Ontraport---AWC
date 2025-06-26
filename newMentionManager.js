@@ -40,11 +40,11 @@ class NewMentionManager {
             }
         `;
 
-    const fetchClassContacts = fetch(graphqlApiEndpoint, {
+    const fetchClassContacts = fetch(useGloballyAPIEndPointURLGraphQL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Api-Key": apiAccessKey,
+        "Api-Key": useGloballyAPIKeyGraphQL,
       },
       body: JSON.stringify({ query: getClassQuery }),
     }).then((res) =>
@@ -108,8 +108,7 @@ class NewMentionManager {
 
         MentionManager.allContacts = contacts;
       })
-      .catch((error) => {
-      });
+      .catch((error) => {});
   }
 
   static initEditor(editor) {
