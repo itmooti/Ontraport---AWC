@@ -510,7 +510,8 @@ Lessons(
         const data = await fetchLmsUnifiedData();
         if (!data) return null;
 
-        const { classId, dripFad } = data;
+        //const { classId, dripFad } = data;
+	    const { classId, dripFad, classUidForStudent } = data; 
 
         const enrolments = (data.enrolments || []).map((enr) => ({
             id: enr.id,
