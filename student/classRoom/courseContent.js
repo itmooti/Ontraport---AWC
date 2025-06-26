@@ -460,6 +460,7 @@ Lessons(
                 modules: (course.Modules ?? []).map((mod) => ({
                     id: mod.id,
                     classId,
+		    classUidForStudent,
                     dripFad,
                     uniqueId: mod.unique_id,
                     order: mod.order,
@@ -560,6 +561,7 @@ Lessons(
                             ...lesson,
                             status,
                             classId,
+			    classUidForStudent,
                             dripFad,
                             eid: data.enrolments?.[0]?.id || null,
                             dueDateUnix: dueDateInfo.dueDateUnix,
@@ -587,6 +589,7 @@ Lessons(
                 return {
                     ...module,
                     classId,
+		    classUidForStudent,
                     dripFad,
                     lessons,
                     lessonID: module.lessons.map((lesson) => lesson.id),
@@ -608,6 +611,7 @@ Lessons(
             dateCompletion: data.enrolments?.[0]?.dateCompletion || null,
             eid: data.enrolments?.[0]?.id || null,
             classId,
+	    classUidForStudent,
             dripFad,
             modules,
             enrolments,
