@@ -613,7 +613,7 @@ $(async function () {
   }
 
   $("#submissionList").html(html);
-  initializeTribute();
+  // initializeTribute();
   requestAnimationFrame(() => {
     highlightAndScrollSubmission();
   });
