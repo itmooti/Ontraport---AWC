@@ -433,6 +433,7 @@ Lessons(
             const course = response.LMSQuery[0];
             const classId = course.Enrolments_As_Course?.[0]?.Class?.id ?? null;
 	    let classUidForStudent = course.Enrolments_As_Course?.[0]?.Class?.unique_id ?? null;
+	    let classNameForStudent = course.Enrolments_As_Course?.[0]?.Class?.class_name ?? null;
             globalClassId = classId;
 
             const dripFad =
@@ -443,6 +444,7 @@ Lessons(
                 courseAccessType: course.course_access_type,
                 classId,
 		classUidForStudent,
+		    classNameForStudent,
                 dripFad,
                 enrolments: (course.Enrolments_As_Course ?? []).map((enr) => ({
                     id: enr.id,
@@ -461,6 +463,7 @@ Lessons(
                     id: mod.id,
                     classId,
 		    classUidForStudent,
+			classNameForStudent,
                     dripFad,
                     uniqueId: mod.unique_id,
                     order: mod.order,
@@ -511,7 +514,7 @@ Lessons(
         if (!data) return null;
 
         //const { classId, dripFad } = data;
-	    const { classId, dripFad, classUidForStudent } = data; 
+	    const { classId, dripFad, classNameForStudent, classUidForStudent } = data; 
 
         const enrolments = (data.enrolments || []).map((enr) => ({
             id: enr.id,
@@ -562,7 +565,7 @@ Lessons(
                             ...lesson,
                             status,
                             classId,
-			    classUidForStudent,
+			    classUidForStudent,classNameForStudent,
                             dripFad,
                             eid: data.enrolments?.[0]?.id || null,
                             dueDateUnix: dueDateInfo.dueDateUnix,
@@ -590,7 +593,7 @@ Lessons(
                 return {
                     ...module,
                     classId,
-		    classUidForStudent,
+		    classUidForStudent,classNameForStudent,
                     dripFad,
                     lessons,
                     lessonID: module.lessons.map((lesson) => lesson.id),
@@ -612,7 +615,7 @@ Lessons(
             dateCompletion: data.enrolments?.[0]?.dateCompletion || null,
             eid: data.enrolments?.[0]?.id || null,
             classId,
-	    classUidForStudent,
+	    classUidForStudent,classNameForStudent,
             dripFad,
             modules,
             enrolments,
