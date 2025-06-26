@@ -362,49 +362,6 @@ $.views.helpers({
   },
 });
 
-document.addEventListener("DOMContentLoaded", async () => {
-  try {
-    // Initialize the contact list
-    NewMentionManager.initContacts();
-
-    // Attach Tribute to all editable fields
-    document.querySelectorAll(".mentionable").forEach((editor) => {
-      if (!editor.hasAttribute("data-tribute-attached")) {
-        NewMentionManager.initEditor(editor);
-        editor.setAttribute("data-tribute-attached", "true");
-      }
-
-      // Set placeholder logic
-      function setPlaceholder() {
-        if (!editor.textContent.trim()) {
-          const span = document.createElement("span");
-          span.className =
-            "mention-placeholder text-[#586a80] text-base font-normal leading-normal pointer-events-none select-none";
-          span.innerHTML = "Type @ to mention members";
-          editor.appendChild(span);
-        }
-      }
-
-      editor.addEventListener("focus", () => {
-        const placeholder = editor.querySelector(".mention-placeholder");
-        if (placeholder) placeholder.remove();
-      });
-
-      editor.addEventListener("blur", () => {
-        setTimeout(() => {
-          if (
-            !editor.textContent.trim() &&
-            !editor.querySelector(".mention-placeholder")
-          ) {
-            setPlaceholder();
-          }
-        }, 10);
-      });
-
-      setPlaceholder();
-    });
-  } catch (err) {}
-});
 
 async function buildSubmissionsQueryClass() {
   const match = window.location.href.match(/[?&]eid=(\d+)/);
