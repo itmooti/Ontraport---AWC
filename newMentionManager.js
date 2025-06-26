@@ -159,3 +159,13 @@ class NewMentionManager {
     return `<span class="mention" data-contact-id="${item.original.id}">@${item.original.value}</span>`;
   }
 }
+
+$(".comment-editor").each(function () {
+  MentionManager.initEditor(this);
+});
+
+if ($("#announcementContent").length > 0) {
+  $("#announcementContent").each(function () {
+    MentionManager.initEditor(this);
+  });
+}
