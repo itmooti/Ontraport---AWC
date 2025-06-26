@@ -51,11 +51,11 @@ class NewMentionManager {
       res.ok ? res.json() : Promise.reject("getClasses query failed")
     );
 
-    const fetchAdminContact = fetch(graphqlApiEndpoint, {
+    const fetchAdminContact = fetch(useGloballyAPIEndPointURLGraphQL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Api-Key": apiAccessKey,
+        "Api-Key": useGloballyAPIKeyGraphQL,
       },
       body: JSON.stringify({ query: getAdminQuery }),
     }).then((res) =>
