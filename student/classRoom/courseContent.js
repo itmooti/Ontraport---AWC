@@ -328,6 +328,8 @@ Class {
   start_date
   end_date
   id 
+  class_name 
+  unique_id
   show_modules_drop_fed 
 }
 }
@@ -427,7 +429,7 @@ Lessons(
             if (!response || !response.LMSQuery || !response.LMSQuery.length) {
                 return null;
             }
-
+	    let classUidForStudent = course.Enrolments_As_Course?.[0]?.Class?.unique_id ?? null;
             const course = response.LMSQuery[0];
             const classId = course.Enrolments_As_Course?.[0]?.Class?.id ?? null;
             globalClassId = classId;
