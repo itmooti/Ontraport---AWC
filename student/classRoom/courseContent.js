@@ -429,7 +429,7 @@ Lessons(
             if (!response || !response.LMSQuery || !response.LMSQuery.length) {
                 return null;
             }
-	    let classUidForStudent = course.Enrolments_As_Course?.[0]?.Class?.unique_id ?? null;
+	    //let classUidForStudent = course.Enrolments_As_Course?.[0]?.Class?.unique_id ?? null;
             const course = response.LMSQuery[0];
             const classId = course.Enrolments_As_Course?.[0]?.Class?.id ?? null;
             globalClassId = classId;
