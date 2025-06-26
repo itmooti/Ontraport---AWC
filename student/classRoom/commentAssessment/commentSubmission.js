@@ -1,3 +1,10 @@
+async function getClassIdForTeacherUrl() {
+    const params = new URL(window.location.href).searchParams;
+    return params.get("classIdFromUrl")?.replace(/'/g, "") || 
+           params.get("classUIDAdmin")?.replace(/'/g, "") || 
+           null;
+}
+
 async function createForumCommentRequest(
   file,
   comment,
