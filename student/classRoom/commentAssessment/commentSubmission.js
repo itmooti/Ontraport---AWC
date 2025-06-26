@@ -1,8 +1,16 @@
     // create commenrts
-    async function getClassIdForTeacherUrl() {
+// async function getClassIdForTeacherUrl() {
+//     const params = new URL(window.location.href).searchParams;
+//     return params.get("classIdFromUrl")?.replace(/'/g, "") || null;
+// }   
+
+async function getClassId() {
     const params = new URL(window.location.href).searchParams;
-    return params.get("classIdFromUrl")?.replace(/'/g, "") || null;
-}   
+    return params.get("classIdFromUrl")?.replace(/'/g, "") || 
+           params.get("classUIDAdmin")?.replace(/'/g, "") || 
+           null;
+}
+
 async function createForumCommentRequest(
       file,
       comment,
