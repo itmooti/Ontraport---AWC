@@ -10,48 +10,6 @@
     let nextLesson = "";
     let unifiedNewModules = [];
 
-    async function fetchClassIdFromUrl() {
-        const regex = /[?&]eid=([^&#]*)/;
-        const match = window.location.href.match(regex);
-
-        if (!match || !match[1]) return null;
-
-        const eidforEnroll = match[1];
-        const query = {
-            query: `
-      query calcEnrolments {
-        calcEnrolments(
-          query: [
-            { where: { id: "${eidforEnroll}" } }
-          ]
-        ) {
-          Class_ID: field(arg: ["class_id"])
-        }
-      }
-    `
-        };
-
-        const response = await fetch("https://awc.vitalstats.app/api/v1/graphql", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Api-Key": "mMzQezxyIwbtSc85rFPs3"
-            },
-            body: JSON.stringify(query)
-        });
-
-        const data = await response.json();
-        const enrolments = data?.data?.calcEnrolments;
-
-        if (Array.isArray(enrolments) && enrolments.length > 0) {
-            return enrolments[0].Class_ID;
-        }
-
-        return null;
-    }
-
-
-
     function getSydneyUnixFromLocalNow() {
         const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         if (userTimeZone === "Australia/Sydney") {
@@ -119,6 +77,9 @@
 
         return formatted;
     }
+
+
+
 
     function defineQuery() {
         getEnrollmentFormat = `
@@ -195,6 +156,7 @@
         },
     });
 
+
     //helper jsrender function to count the number of lessons inside the module that is completed
     $.views.helpers({
         countMatchingLessons: function (lessons) {
@@ -249,27 +211,27 @@
         }
     }
 
-    function formatDate(unixTimestamp) {
-        if (!unixTimestamp) return "Invalid Date";
-        const date = new Date(unixTimestamp * 1000);
-        return date.toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-        });
-    }
+function formatDate(unixTimestamp) {
+  if (!unixTimestamp) return "Invalid Date";
+  const date = new Date(unixTimestamp * 1000);
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
 
     // Format a unix timestamp to a human-readable date
-    function formatDateNew(unixTimestamp) {
-        if (!unixTimestamp) return "Invalid Date";
-        const date = new Date(unixTimestamp); // Treat it as milliseconds
-        return date.toLocaleDateString("en-US", {
-            timeZone: "Australia/Sydney",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-        });
-    }
+function formatDateNew(unixTimestamp) {
+    if (!unixTimestamp) return "Invalid Date";
+    const date = new Date(unixTimestamp); // Treat it as milliseconds
+    return date.toLocaleDateString("en-US", {
+        timeZone: "Australia/Sydney",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    });
+}
 
 
     function determineAvailability(startDateUnix, weekOpen, customisations = []) {
@@ -295,16 +257,16 @@
             openDateUnix =
                 latestWithDate.specific_date > 9999999999
                     ? latestWithDate.specific_date
-                    : latestWithDate.specific_date * 1000;
+            	    : latestWithDate.specific_date * 1000; 
         } else if (weekOpen === 0) {
             return { isAvailable: true, openDateText: "Available anytime" };
         } else {
             openDateUnix = (startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000;
             if (latestWithOffset) {
                 openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
-                const openDateMidnight = new Date(openDateUnix);
-                openDateMidnight.setUTCHours(0, 0, 0, 0);
-                openDateUnix = openDateMidnight.getTime();
+		const openDateMidnight = new Date(openDateUnix);
+		openDateMidnight.setUTCHours(0, 0, 0, 0);
+		openDateUnix = openDateMidnight.getTime();
             }
         }
 
@@ -314,169 +276,175 @@
     }
 
     function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisations = []) {
-        const dueWeek = lesson.assessmentDueEndOfWeek;
-        let dueDateUnix = null, dueDateText = null;
+    const dueWeek = lesson.assessmentDueEndOfWeek;
+    let dueDateUnix = null, dueDateText = null;
 
-        if (dueWeek === 0 || dueWeek === null) {
-            return { dueDateUnix: null, dueDateText: null };
-        }
+    if (dueWeek === 0 || dueWeek === null) {
+        return { dueDateUnix: null, dueDateText: null };
+    }
 
-        const baseDate = new Date(moduleStartDateUnix);
-        baseDate.setUTCHours(0, 0, 0, 0);
-        const normalizedStartUnix = baseDate.getTime();
+    const baseDate = new Date(moduleStartDateUnix);
+    baseDate.setUTCHours(0, 0, 0, 0);
+    const normalizedStartUnix = baseDate.getTime();
 
-        const sorted = [...customisations].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        const latestWithDate = sorted.find(c => c.specific_date);
-        const latestWithOffset = sorted.find(c => c.days_to_offset !== null && c.days_to_offset !== undefined);
+    const sorted = [...customisations].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    const latestWithDate = sorted.find(c => c.specific_date);
+    const latestWithOffset = sorted.find(c => c.days_to_offset !== null && c.days_to_offset !== undefined);
 
-        if (latestWithDate) {
-            dueDateUnix = latestWithDate.specific_date > 9999999999
-                ? latestWithDate.specific_date
-                : latestWithDate.specific_date * 1000;
-            dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
-            return { dueDateUnix, dueDateText };
-        }
-
-        if (latestWithOffset) {
-            dueDateUnix = normalizedStartUnix + latestWithOffset.days_to_offset * 86400 * 1000;
-            dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
-            return { dueDateUnix, dueDateText };
-        }
-
-        const msInADay = 86400 * 1000;
-        const endOfDayOffsetMs = (23 * 3600 + 59 * 60) * 1000;
-
-        dueDateUnix = normalizedStartUnix + (dueWeek - 1) * msInADay + endOfDayOffsetMs;
+    if (latestWithDate) {
+        dueDateUnix = latestWithDate.specific_date > 9999999999
+            ? latestWithDate.specific_date
+            : latestWithDate.specific_date * 1000;
         dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
-
         return { dueDateUnix, dueDateText };
     }
 
-
-    function generateLmsQuery(classID, studentseid, courseID) {
-        return `
-      query LMSQuery {
-        LMSQuery: getCourses(query: [{ where: { id: ${courseID} } }]) {
-          Enrolments_As_Course(query: [{ where: { id: ${studentseid} } }]) {
-            resume_lesson_unique_id
-            id
-            date_completion
-            certificate__link
-            completed__lessons
-            Class {
-              start_date
-              end_date
-              id
-              class_name
-              unique_id
-              show_modules_drop_fed
-            }
-          }
-          course_name
-          course_access_type
-          Modules(
-            limit: 1000
-            orderBy: [{ path: ["order"], type: asc }]
-          ) {
-            id
-            unique_id
-            order
-            module_name
-            description
-            week_open_from_start_date
-            don_t_track_progress
-            zoom_session
-            module_default_is_open
-            module_length_in_hour
-            module_length_in_minute
-            number_of_lessons_in_module
-            lesson__count__visible
-            lesson__count__progress
-            ClassCustomisations(
-              query: [{ where: { class_to_modify_id: ${classID} } }]
-              orderBy: [{ path: ["created_at"], type: desc }]
-            ) {
-              id
-              created_at
-              days_to_offset
-              specific_date
-            }
-            Lessons(
-              limit: 1000
-              orderBy: [{ path: ["order_in_module"], type: asc }]
-            ) {
-              id
-              unique_id
-              order_in_module
-              order_in_course
-              type
-              lesson_name
-              lesson_introduction_text
-              lesson_learning_outcome
-              time_to_complete
-              lesson_length_in_hour
-              lesson_length_in_minute
-              awc_lesson_content_page_url
-              custom__button__text
-              lesson__progress__not__tracked
-              Assessments {
-                name
-              }
-              due_days_after_module_open_date
-              assessment__due__date
-              Lesson_Enrolment_in_Progresses(
-                query: [{ where: { id: ${studentseid} } }]
-              ) {
-                id
-                Lesson_In_Progresses {
-                  id
-                }
-              }
-              Enrolment_Lesson_Completions(
-                query: [{ where: { id: ${studentseid} } }]
-              ) {
-                id
-                Lesson_Completions {
-                  id
-                }
-              }
-              ClassCustomisations(
-                query: [{ where: { class_to_modify_id: ${classID} } }]
-                orderBy: [{ path: ["created_at"], type: desc }]
-              ) {
-                id
-                created_at
-                days_to_offset
-                specific_date
-              }
-            }
-          }
-        }
-      }`;
+    if (latestWithOffset) {
+        dueDateUnix = normalizedStartUnix + latestWithOffset.days_to_offset * 86400 * 1000;
+        dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
+        return { dueDateUnix, dueDateText };
     }
+
+    const msInADay = 86400 * 1000;
+    const endOfDayOffsetMs = (23 * 3600 + 59 * 60) * 1000;
+
+    dueDateUnix = normalizedStartUnix + (dueWeek - 1) * msInADay + endOfDayOffsetMs;
+    dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
+    
+    return { dueDateUnix, dueDateText };
+}
+
+
+    const lmsQuery = `
+    query LMSQuery {
+LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
+Enrolments_As_Course(query: [{ where: {id: ${studentseid}} }]) { 
+resume_lesson_unique_id           
+id
+date_completion
+certificate__link
+completed__lessons
+Class {
+  start_date
+  end_date
+  id 
+  class_name 
+  unique_id
+  show_modules_drop_fed 
+}
+}
+course_name
+course_access_type
+Modules (
+		limit: 1000 
+    orderBy: [{ path: ["order"], type: asc }]
+  ){
+id
+unique_id
+order
+module_name
+description
+week_open_from_start_date
+don_t_track_progress
+zoom_session
+module_default_is_open
+module_length_in_hour
+module_length_in_minute
+number_of_lessons_in_module
+lesson__count__visible
+lesson__count__progress
+don_t_track_progress
+ClassCustomisations(
+ query: [{ where: {class_to_modify_id: ${classID}} }]
+  
+  orderBy: [{ path: ["created_at"], type: desc }]
+) {
+  id
+  created_at
+  days_to_offset
+  specific_date
+}
+Lessons(
+  	limit: 1000 
+    orderBy: [{ path: ["order_in_module"], type: asc }]
+  ) {
+  id
+  unique_id
+  order_in_module
+  order_in_course
+  type
+  lesson_name
+  lesson_introduction_text
+  lesson_learning_outcome
+  time_to_complete
+  lesson_length_in_hour
+  lesson_length_in_minute
+  awc_lesson_content_page_url
+  custom__button__text
+  lesson__progress__not__tracked
+  Assessments {
+    name
+  }
+  due_days_after_module_open_date 
+  assessment__due__date
+  Lesson_Enrolment_in_Progresses(
+    query: [{ where: {id: ${studentseid}} }]
+  ) {
+    id
+  Lesson_In_Progresses{
+      id
+    }
+  }
+  Enrolment_Lesson_Completions(
+    query: [{ where: {id: ${studentseid}} }]
+  ) {
+    id
+          Lesson_Completions{
+      id
+    }
+  }
+  ClassCustomisations(
+    query: [
+        { where: { class_to_modify_id: ${classID} } }
+      ]
+   
+    orderBy: [{ path: ["created_at"], type: desc }]
+  ) {
+    id
+    created_at
+    days_to_offset
+    specific_date
+  }
+}
+}
+}
+}
+  `;
 
     // Fetch and map the unified data from the new query
     async function fetchLmsUnifiedData() {
         try {
-            const classID = await fetchClassIdFromUrl();
-            if (!classID) return null;
-
-            const lmsQuery = generateLmsQuery(classID, studentseid, COURSE_ID);
             const response = await fetchGraphQL(lmsQuery);
+
             if (!response || !response.LMSQuery || !response.LMSQuery.length) {
                 return null;
             }
-
+	    
             const course = response.LMSQuery[0];
-            const classInfo = course.Enrolments_As_Course?.[0]?.Class || {};
-            globalClassId = classInfo.id ?? null;
-            showDripFed = classInfo.show_modules_drop_fed ?? false;
+            const classId = course.Enrolments_As_Course?.[0]?.Class?.id ?? null;
+	    let classUidForStudent = course.Enrolments_As_Course?.[0]?.Class?.unique_id ?? null;
+	    let classNameForStudent = course.Enrolments_As_Course?.[0]?.Class?.class_name ?? null;
+            globalClassId = classId;
+
+            const dripFad =
+                course.Enrolments_As_Course?.[0]?.Class?.show_modules_drop_fed ?? null;
+            showDripFed = dripFad;
             const mappedData = {
                 courseName: course.course_name,
                 courseAccessType: course.course_access_type,
                 classId,
-                classUidForStudent,
-                classNameForStudent,
+		classUidForStudent,
+		    classNameForStudent,
                 dripFad,
                 enrolments: (course.Enrolments_As_Course ?? []).map((enr) => ({
                     id: enr.id,
@@ -494,8 +462,8 @@
                 modules: (course.Modules ?? []).map((mod) => ({
                     id: mod.id,
                     classId,
-                    classUidForStudent,
-                    classNameForStudent,
+		    classUidForStudent,
+			classNameForStudent,
                     dripFad,
                     uniqueId: mod.unique_id,
                     order: mod.order,
@@ -546,7 +514,7 @@
         if (!data) return null;
 
         //const { classId, dripFad } = data;
-        const { classId, dripFad, classNameForStudent, classUidForStudent } = data;
+	    const { classId, dripFad, classNameForStudent, classUidForStudent } = data; 
 
         const enrolments = (data.enrolments || []).map((enr) => ({
             id: enr.id,
@@ -597,7 +565,7 @@
                             ...lesson,
                             status,
                             classId,
-                            classUidForStudent, classNameForStudent,
+			    classUidForStudent,classNameForStudent,
                             dripFad,
                             eid: data.enrolments?.[0]?.id || null,
                             dueDateUnix: dueDateInfo.dueDateUnix,
@@ -625,7 +593,7 @@
                 return {
                     ...module,
                     classId,
-                    classUidForStudent, classNameForStudent,
+		    classUidForStudent,classNameForStudent,
                     dripFad,
                     lessons,
                     lessonID: module.lessons.map((lesson) => lesson.id),
@@ -647,7 +615,7 @@
             dateCompletion: data.enrolments?.[0]?.dateCompletion || null,
             eid: data.enrolments?.[0]?.id || null,
             classId,
-            classUidForStudent, classNameForStudent,
+	    classUidForStudent,classNameForStudent,
             dripFad,
             modules,
             enrolments,
