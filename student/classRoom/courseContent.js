@@ -10,6 +10,44 @@
     let nextLesson = "";
     let unifiedNewModules = [];
 
+    async function fetchClassIdFromUrl() {
+        const regex = /[?&]eid=([^&#]*)/;
+        const match = window.location.href.match(regex);
+        if (!match || !match[1]) return null;
+
+        const eidforEnroll = match[1];
+        const query = {
+            query: `
+        query calcEnrolments {
+          calcEnrolments(
+            query: [
+              { where: { id: "${eidforEnroll}" } }
+              { andWhere: { course_id: "${COURSE_ID}" } }
+            ]
+          ) {
+            Class_ID: field(arg: ["class_id"])
+          }
+        }
+      `
+        };
+
+        const response = await fetch("https://awc.vitalstats.app/api/v1/graphql", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Api-Key": "mMzQezxyIwbtSc85rFPs3"
+            },
+            body: JSON.stringify(query)
+        });
+        const data = await response.json();
+        const enrolments = data?.data?.calcEnrolments;
+
+        if (Array.isArray(enrolments) && enrolments.length > 0) {
+            return enrolments[0].Class_ID;
+        }
+        return null;
+    }
+
     function getSydneyUnixFromLocalNow() {
         const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         if (userTimeZone === "Australia/Sydney") {
@@ -77,9 +115,6 @@
 
         return formatted;
     }
-
-
-
 
     function defineQuery() {
         getEnrollmentFormat = `
@@ -211,27 +246,27 @@
         }
     }
 
-function formatDate(unixTimestamp) {
-  if (!unixTimestamp) return "Invalid Date";
-  const date = new Date(unixTimestamp * 1000);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
+    function formatDate(unixTimestamp) {
+        if (!unixTimestamp) return "Invalid Date";
+        const date = new Date(unixTimestamp * 1000);
+        return date.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        });
+    }
 
     // Format a unix timestamp to a human-readable date
-function formatDateNew(unixTimestamp) {
-    if (!unixTimestamp) return "Invalid Date";
-    const date = new Date(unixTimestamp); // Treat it as milliseconds
-    return date.toLocaleDateString("en-US", {
-        timeZone: "Australia/Sydney",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-    });
-}
+    function formatDateNew(unixTimestamp) {
+        if (!unixTimestamp) return "Invalid Date";
+        const date = new Date(unixTimestamp); // Treat it as milliseconds
+        return date.toLocaleDateString("en-US", {
+            timeZone: "Australia/Sydney",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        });
+    }
 
 
     function determineAvailability(startDateUnix, weekOpen, customisations = []) {
@@ -257,16 +292,16 @@ function formatDateNew(unixTimestamp) {
             openDateUnix =
                 latestWithDate.specific_date > 9999999999
                     ? latestWithDate.specific_date
-            	    : latestWithDate.specific_date * 1000; 
+                    : latestWithDate.specific_date * 1000;
         } else if (weekOpen === 0) {
             return { isAvailable: true, openDateText: "Available anytime" };
         } else {
             openDateUnix = (startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000;
             if (latestWithOffset) {
                 openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
-		const openDateMidnight = new Date(openDateUnix);
-		openDateMidnight.setUTCHours(0, 0, 0, 0);
-		openDateUnix = openDateMidnight.getTime();
+                const openDateMidnight = new Date(openDateUnix);
+                openDateMidnight.setUTCHours(0, 0, 0, 0);
+                openDateUnix = openDateMidnight.getTime();
             }
         }
 
@@ -276,46 +311,46 @@ function formatDateNew(unixTimestamp) {
     }
 
     function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisations = []) {
-    const dueWeek = lesson.assessmentDueEndOfWeek;
-    let dueDateUnix = null, dueDateText = null;
+        const dueWeek = lesson.assessmentDueEndOfWeek;
+        let dueDateUnix = null, dueDateText = null;
 
-    if (dueWeek === 0 || dueWeek === null) {
-        return { dueDateUnix: null, dueDateText: null };
-    }
+        if (dueWeek === 0 || dueWeek === null) {
+            return { dueDateUnix: null, dueDateText: null };
+        }
 
-    const baseDate = new Date(moduleStartDateUnix);
-    baseDate.setUTCHours(0, 0, 0, 0);
-    const normalizedStartUnix = baseDate.getTime();
+        const baseDate = new Date(moduleStartDateUnix);
+        baseDate.setUTCHours(0, 0, 0, 0);
+        const normalizedStartUnix = baseDate.getTime();
 
-    const sorted = [...customisations].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    const latestWithDate = sorted.find(c => c.specific_date);
-    const latestWithOffset = sorted.find(c => c.days_to_offset !== null && c.days_to_offset !== undefined);
+        const sorted = [...customisations].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        const latestWithDate = sorted.find(c => c.specific_date);
+        const latestWithOffset = sorted.find(c => c.days_to_offset !== null && c.days_to_offset !== undefined);
 
-    if (latestWithDate) {
-        dueDateUnix = latestWithDate.specific_date > 9999999999
-            ? latestWithDate.specific_date
-            : latestWithDate.specific_date * 1000;
+        if (latestWithDate) {
+            dueDateUnix = latestWithDate.specific_date > 9999999999
+                ? latestWithDate.specific_date
+                : latestWithDate.specific_date * 1000;
+            dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
+            return { dueDateUnix, dueDateText };
+        }
+
+        if (latestWithOffset) {
+            dueDateUnix = normalizedStartUnix + latestWithOffset.days_to_offset * 86400 * 1000;
+            dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
+            return { dueDateUnix, dueDateText };
+        }
+
+        const msInADay = 86400 * 1000;
+        const endOfDayOffsetMs = (23 * 3600 + 59 * 60) * 1000;
+
+        dueDateUnix = normalizedStartUnix + (dueWeek - 1) * msInADay + endOfDayOffsetMs;
         dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
+
         return { dueDateUnix, dueDateText };
     }
 
-    if (latestWithOffset) {
-        dueDateUnix = normalizedStartUnix + latestWithOffset.days_to_offset * 86400 * 1000;
-        dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
-        return { dueDateUnix, dueDateText };
-    }
-
-    const msInADay = 86400 * 1000;
-    const endOfDayOffsetMs = (23 * 3600 + 59 * 60) * 1000;
-
-    dueDateUnix = normalizedStartUnix + (dueWeek - 1) * msInADay + endOfDayOffsetMs;
-    dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
-    
-    return { dueDateUnix, dueDateText };
-}
-
-
-    const lmsQuery = `
+    function generateLmsQuery(classID, studentseid, courseID) {
+        return `
     query LMSQuery {
 LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
 Enrolments_As_Course(query: [{ where: {id: ${studentseid}} }]) { 
@@ -419,21 +454,26 @@ Lessons(
 }
 }
 }
-  `;
+  `
+    };
+
 
     // Fetch and map the unified data from the new query
     async function fetchLmsUnifiedData() {
         try {
-            const response = await fetchGraphQL(lmsQuery);
+            const classID = await fetchClassIdFromUrl();
+            if (!classID) return null;
 
+            const lmsQuery = generateLmsQuery(classID, studentseid, COURSE_ID);
+            const response = await fetchGraphQL(lmsQuery);
             if (!response || !response.LMSQuery || !response.LMSQuery.length) {
                 return null;
             }
-	    
+
             const course = response.LMSQuery[0];
             const classId = course.Enrolments_As_Course?.[0]?.Class?.id ?? null;
-	    let classUidForStudent = course.Enrolments_As_Course?.[0]?.Class?.unique_id ?? null;
-	    let classNameForStudent = course.Enrolments_As_Course?.[0]?.Class?.class_name ?? null;
+            let classUidForStudent = course.Enrolments_As_Course?.[0]?.Class?.unique_id ?? null;
+            let classNameForStudent = course.Enrolments_As_Course?.[0]?.Class?.class_name ?? null;
             globalClassId = classId;
 
             const dripFad =
@@ -443,8 +483,8 @@ Lessons(
                 courseName: course.course_name,
                 courseAccessType: course.course_access_type,
                 classId,
-		classUidForStudent,
-		    classNameForStudent,
+                classUidForStudent,
+                classNameForStudent,
                 dripFad,
                 enrolments: (course.Enrolments_As_Course ?? []).map((enr) => ({
                     id: enr.id,
@@ -462,8 +502,8 @@ Lessons(
                 modules: (course.Modules ?? []).map((mod) => ({
                     id: mod.id,
                     classId,
-		    classUidForStudent,
-			classNameForStudent,
+                    classUidForStudent,
+                    classNameForStudent,
                     dripFad,
                     uniqueId: mod.unique_id,
                     order: mod.order,
@@ -514,7 +554,7 @@ Lessons(
         if (!data) return null;
 
         //const { classId, dripFad } = data;
-	    const { classId, dripFad, classNameForStudent, classUidForStudent } = data; 
+        const { classId, dripFad, classNameForStudent, classUidForStudent } = data;
 
         const enrolments = (data.enrolments || []).map((enr) => ({
             id: enr.id,
@@ -565,7 +605,7 @@ Lessons(
                             ...lesson,
                             status,
                             classId,
-			    classUidForStudent,classNameForStudent,
+                            classUidForStudent, classNameForStudent,
                             dripFad,
                             eid: data.enrolments?.[0]?.id || null,
                             dueDateUnix: dueDateInfo.dueDateUnix,
@@ -593,7 +633,7 @@ Lessons(
                 return {
                     ...module,
                     classId,
-		    classUidForStudent,classNameForStudent,
+                    classUidForStudent, classNameForStudent,
                     dripFad,
                     lessons,
                     lessonID: module.lessons.map((lesson) => lesson.id),
@@ -615,7 +655,7 @@ Lessons(
             dateCompletion: data.enrolments?.[0]?.dateCompletion || null,
             eid: data.enrolments?.[0]?.id || null,
             classId,
-	    classUidForStudent,classNameForStudent,
+            classUidForStudent, classNameForStudent,
             dripFad,
             modules,
             enrolments,
