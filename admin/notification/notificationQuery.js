@@ -157,6 +157,7 @@ function getSubscriptionQueryForAllClasses() {
         Type: type
         Unique_ID: unique_id
         Class {
+        id 
         unique_id 
           class_name
           Enrolments { id }
