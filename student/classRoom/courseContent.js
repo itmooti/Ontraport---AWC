@@ -22,7 +22,6 @@
           calcEnrolments(
             query: [
               { where: { id: "${eidforEnroll}" } }
-              { andWhere: { course_id: "[Page//ID]" } }
             ]
           ) {
             Class_ID: field(arg: ["class_id"])
