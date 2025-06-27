@@ -400,13 +400,15 @@ let lowerContent = '';
 
     const courseUid = notification.Class?.Active_Course?.unique_id || notification.Class?.Course?.unique_id;
       const classIDForADmin=  notification?.Class?.unique_id;
+      const classIdUrl = notification?.Class?.id;
+        const classNameUrl =   notification?.Class?.class_name;
     const activeOrInactive = notification.Class?.Active_Course?.unique_id ? "Active_Course" : "Course";
  const commentIdForNoti = notification.Comment?.id;
     if ((type === "Posts" || type === "Post Comments") && notification.Post_ID) {
       window.location.href = `https://courses.writerscentre.com.au/teacher/class/${classIDForADmin}?selectedTab=chats?current-post-id=${notification.Notification_Type === 'Posts' ? notification.Post_ID : commentIdForNoti}`;
     } else if ((type === "Submissions" || type === "Submission Comments") && notification.Submissions?.Assessment?.Lesson?.unique_id) {
       const lessonUid = notification.Submissions.Assessment.Lesson.unique_id;
-          window.location.href = `https://courses.writerscentre.com.au/course-details/content/${lessonUid}?submissionPostIs=${notification.Notification_Type === 'Submissions' ? notification.Submissions_ID : commentIdForNoti}${assessmentType === "File Submission" ? `&subUID=${subUID}&commentScrollId=${commentScrollID}` : ""}`
+          window.location.href = `https://courses.writerscentre.com.au/course-details/content/${lessonUid}?submissionPostIs=${notification.Notification_Type === 'Submissions' ? notification.Submissions_ID : commentIdForNoti}&classIdFromUrl=${classIdUrl}&className=${classNameUrl}&classUid=${classIDForADmin}&currentClassID=${classIdUrl}&currentClassName=${classNameUrl}&currentClassUniqueID=${classIDForADmin}${assessmentType === "File Submission" ? `&subUID=${subUID}&commentScrollId=${commentScrollID}` : ""}`
     } else {
       window.location.href = `https://courses.writerscentre.com.au/teacher/class/${classIDForADmin}?selectedTab=announcements?data-announcement-template-id=${notification.Notification_Type === 'Announcements' ? anouncementScrollId : commentIdForNoti}`;
     }
