@@ -158,6 +158,7 @@ function getSubscriptionQueryForAllClasses() {
         Unique_ID: unique_id
         Class {
         unique_id 
+        id 
           class_name
           Enrolments { id }
           Active_Course {
