@@ -1,4 +1,3 @@
-
     let FetchLessonQuery = `
         query calcLessons($orderBy: [QueryOrderByInput!]) {
         calcLessons(
@@ -63,7 +62,7 @@
                 lesson_to_modify_id: $lesson_to_modify_id
                 }
             }
-            { andWhere: { class_to_modify_id: ${currentPageClassIDForAssessments} } }
+            { andWhere: { class_to_modify_id: ${currentPageClassID} } }
             ]
         ) {
             ID: field(arg: ["id"])
@@ -153,10 +152,10 @@
     async function loadAssignments() {
         const container = document.getElementById("assignmentsContainer");
         container.innerHTML = `
-  <div role="status" class="flex h-[100px] w-full animate-pulse items-center justify-center rounded-lg bg-gray-300"></div>
-  <div role="status" class="flex h-[100px] w-full animate-pulse items-center justify-center rounded-lg bg-gray-300"></div>
-  <div role="status" class="flex h-[100px] w-full animate-pulse items-center justify-center rounded-lg bg-gray-300"></div>
-   <div role="status" class="flex h-[100px] w-full animate-pulse items-center justify-center rounded-lg bg-gray-300"></div>
+            <div role="status" class="flex h-[100px] w-full animate-pulse items-center justify-center rounded-lg bg-gray-300"></div>
+            <div role="status" class="flex h-[100px] w-full animate-pulse items-center justify-center rounded-lg bg-gray-300"></div>
+            <div role="status" class="flex h-[100px] w-full animate-pulse items-center justify-center rounded-lg bg-gray-300"></div>
+            <div role="status" class="flex h-[100px] w-full animate-pulse items-center justify-center rounded-lg bg-gray-300"></div>
 `;
 
 
@@ -206,8 +205,8 @@
                     const latestCustomization = customizations[0];
                     if (latestCustomization.Specific_Date !== null && latestCustomization.Specific_Date !== undefined) {
                         dueDate = new Date(latestCustomization.Specific_Date * 1000);
-                        dueDate.setHours(23, 59, 0, 0);
-                    } else if (latestCustomization.Days_to_Offset !== null && latestCustomization.Days_to_Offset !== undefined) {
+                    }
+                    else if (latestCustomization.Days_to_Offset !== null && latestCustomization.Days_to_Offset !== undefined) {
                         dueDate = computeDueDateFromCustomization(startDate, latestCustomization.Days_to_Offset);
                     }
                 } else {
