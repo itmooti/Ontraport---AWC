@@ -62,7 +62,7 @@
                 lesson_to_modify_id: $lesson_to_modify_id
                 }
             }
-            { andWhere: { class_to_modify_id: ${currentPageClassID} } }
+            { andWhere: { class_to_modify_id: ${currentPageClassIDForAssessments} } }
             ]
         ) {
             ID: field(arg: ["id"])
