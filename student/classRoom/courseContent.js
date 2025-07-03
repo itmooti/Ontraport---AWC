@@ -23,33 +23,27 @@ console.log("Initial state:", {
 });
 
 function getSydneyMidnightTimestamp(msTime) {
-  // 1. Build a Date from your msTime
+  console.log("getSydneyMidnightTimestamp called with:", msTime);
   const d = new Date(msTime);
-
-  // 2. Extract "YYYY-MM-DD" in Sydney
-  const dateStr = d.toLocaleDateString("en-CA", {
+  console.log("  Date object:", d);
+  const ymd = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Australia/Sydney",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }); // e.g. "2025-07-04"
-  const [year, month, day] = dateStr.split("-").map(Number);
-
-  // 3. Find Sydney's UTC-offset at that moment (in minutes)
+  }).format(d);
+  console.log("  Formatted Y-M-D (Sydney):", ymd);
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "Australia/Sydney",
     timeZoneName: "shortOffset",
   }).formatToParts(d);
+  console.log("  formatToParts output:", parts);
   const offsetPart =
-    parts.find((p) => p.type === "timeZoneName")?.value || "+10:00";
-  // offsetPart is like "+10:00" or "+11:00"
-  const [, sign, hh, mm] = offsetPart.match(/([+-])(\d{2}):(\d{2})/);
-  const offsetMinutes = parseInt(hh, 10) * 60 + parseInt(mm, 10);
-  const totalOffset = sign === "+" ? offsetMinutes : -offsetMinutes;
-
-  // 4. Compute the UTC-ms that corresponds to Sydney local midnight:
-  //    midnight UTC minus Sydney offset
-  return Date.UTC(year, month - 1, day, 0, 0, 0) - totalOffset * 60 * 1000;
+    parts.find((p) => p.type === "timeZoneName")?.value || "+11:00";
+  console.log("  Timezone offset part:", offsetPart);
+  const ts = Date.parse(`${ymd}T00:00:00${offsetPart}`);
+  console.log("getSydneyMidnightTimestamp returning:", ts);
+  return ts;
 }
 
 async function fetchClassIdFromUrl() {
@@ -371,55 +365,62 @@ function formatDateNew(unixTimestamp) {
 }
 
 function determineAvailability(startDateUnix, weekOpen, customisations = []) {
-  // 1) normalize startDate (seconds → ms)
-  let startMs = startDateUnix;
-  if (startMs && startMs < 1e10) startMs *= 1000;
-
-  // 2) figure out the raw open-ms (no snapping to midnight)
-  const SECONDS_IN_DAY = 86400 * 1000;
-  const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
-
-  // sort newest first
-  const sorted = [...customisations].sort(
-    (a, b) => new Date(b.created_at) - new Date(a.created_at)
-  );
-
-  let openMs;
-  const spec = sorted.find((c) => c.specific_date != null);
-  if (spec) {
-    openMs =
-      spec.specific_date < 1e10
-        ? spec.specific_date * 1000
-        : spec.specific_date;
-  } else if (sorted.find((c) => c.days_to_offset != null)) {
-    const offs = sorted.find((c) => c.days_to_offset != null);
-    openMs = startMs + offs.days_to_offset * SECONDS_IN_DAY;
-  } else if (weekOpen === 0) {
-    // always open
-    return { isAvailable: true, openDateText: "Available anytime" };
-  } else {
-    openMs = startMs + (weekOpen - 1) * SECONDS_IN_WEEK;
+  console.log("determineAvailability called with:", {
+    startDateUnix,
+    weekOpen,
+    customisations,
+  });
+  const todayUnix = getSydneyUnixFromLocalNow();
+  console.log("  todayUnix:", todayUnix);
+  if (!startDateUnix) {
+    console.log("  No startDateUnix, returning unavailable");
+    return { isAvailable: false, openDateText: "No Start Date" };
   }
 
-  // 3) compare Y-M-D strings in Sydney to ignore time-of-day
-  const todayYmd = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Australia/Sydney",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
+  const SECONDS_IN_DAY = 86400;
+  const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
+  let openDateUnix;
 
-  const openYmd = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Australia/Sydney",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date(openMs));
+  const sortedCustomisations = [...customisations].sort(
+    (a, b) => new Date(b.created_at) - new Date(a.created_at)
+  );
+  console.log("  sortedCustomisations:", sortedCustomisations);
 
-  const isAvailable = todayYmd >= openYmd;
-  const openDateText = `Unlocks on ${formatDateNew(openMs)}`;
+  const latestWithDate = sortedCustomisations.find((c) => c.specific_date);
+  console.log("  latestWithDate:", latestWithDate);
+  const latestWithOffset = sortedCustomisations.find(
+    (c) => c.days_to_offset !== null && c.days_to_offset !== undefined
+  );
+  console.log("  latestWithOffset:", latestWithOffset);
 
-  return { isAvailable, openDateText, openDateUnix: openMs };
+  if (latestWithDate) {
+    openDateUnix =
+      latestWithDate.specific_date > 9999999999
+        ? latestWithDate.specific_date
+        : latestWithDate.specific_date * 1000;
+    console.log("  Using specific_date, openDateUnix:", openDateUnix);
+  } else if (weekOpen === 0) {
+    console.log("  weekOpen=0, available anytime");
+    return { isAvailable: true, openDateText: "Available anytime" };
+  } else {
+    openDateUnix = (startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000;
+    console.log("  After weekOpen, raw openDateUnix:", openDateUnix);
+    if (latestWithOffset) {
+      openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
+      console.log("  After offset, raw openDateUnix:", openDateUnix);
+      openDateUnix = getSydneyMidnightTimestamp(openDateUnix);
+      console.log("  Snapped to Sydney midnight, openDateUnix:", openDateUnix);
+    }
+  }
+
+  const isAvailable = todayUnix <= openDateUnix;
+  const openDateText = `Unlocks on ${formatDateNew(openDateUnix)}`;
+  console.log("  determineAvailability returning:", {
+    isAvailable,
+    openDateText,
+    openDateUnix,
+  });
+  return { isAvailable, openDateText, openDateUnix };
 }
 
 function determineAssessmentDueDateUnified(
