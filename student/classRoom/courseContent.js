@@ -410,6 +410,7 @@ function determineAvailability(startDateUnix, weekOpen, customisations = []) {
     return { isAvailable: true, openDateText: "Available anytime" };
   } else {
     openDateUnix = (startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000;
+    openDateUnix = getSydneyMidnightTimestamp(openDateUnix);
     console.log("  After weekOpen, raw openDateUnix:", openDateUnix);
     if (latestWithOffset) {
       openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
