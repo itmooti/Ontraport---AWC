@@ -409,7 +409,7 @@ function determineAvailability(startDateUnix, weekOpen, customisations = []) {
     console.log("  weekOpen=0, available anytime");
     return { isAvailable: true, openDateText: "Available anytime" };
   } else {
-    openDateUnix = ((startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000) - 43200;
+    openDateUnix = (startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000;
     console.log("  After weekOpen, raw openDateUnix:", openDateUnix);
     if (latestWithOffset) {
       openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
