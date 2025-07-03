@@ -23,27 +23,33 @@ console.log("Initial state:", {
 });
 
 function getSydneyMidnightTimestamp(msTime) {
-  console.log("getSydneyMidnightTimestamp called with:", msTime);
+  // 1. Build a Date from your msTime
   const d = new Date(msTime);
-  console.log("  Date object:", d);
-  const ymd = new Intl.DateTimeFormat("en-CA", {
+
+  // 2. Extract "YYYY-MM-DD" in Sydney
+  const dateStr = d.toLocaleDateString("en-CA", {
     timeZone: "Australia/Sydney",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).format(d);
-  console.log("  Formatted Y-M-D (Sydney):", ymd);
+  }); // e.g. "2025-07-04"
+  const [year, month, day] = dateStr.split("-").map(Number);
+
+  // 3. Find Sydney's UTC-offset at that moment (in minutes)
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "Australia/Sydney",
     timeZoneName: "shortOffset",
   }).formatToParts(d);
-  console.log("  formatToParts output:", parts);
   const offsetPart =
-    parts.find((p) => p.type === "timeZoneName")?.value || "+11:00";
-  console.log("  Timezone offset part:", offsetPart);
-  const ts = Date.parse(`${ymd}T00:00:00${offsetPart}`);
-  console.log("getSydneyMidnightTimestamp returning:", ts);
-  return ts;
+    parts.find((p) => p.type === "timeZoneName")?.value || "+10:00";
+  // offsetPart is like "+10:00" or "+11:00"
+  const [, sign, hh, mm] = offsetPart.match(/([+-])(\d{2}):(\d{2})/);
+  const offsetMinutes = parseInt(hh, 10) * 60 + parseInt(mm, 10);
+  const totalOffset = sign === "+" ? offsetMinutes : -offsetMinutes;
+
+  // 4. Compute the UTC-ms that corresponds to Sydney local midnight:
+  //    midnight UTC minus Sydney offset
+  return Date.UTC(year, month - 1, day, 0, 0, 0) - totalOffset * 60 * 1000;
 }
 
 async function fetchClassIdFromUrl() {
