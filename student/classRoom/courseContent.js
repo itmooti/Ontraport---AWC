@@ -10,21 +10,21 @@
     let nextLesson = "";
     let unifiedNewModules = [];
 
-// function getSydneyMidnightTimestamp(msTime) {
-//   const d = new Date(msTime);
-//   const ymd = new Intl.DateTimeFormat("en-CA", {
-//     timeZone: "Australia/Sydney",
-//     year: "numeric",
-//     month: "2-digit",
-//     day: "2-digit",
-//   }).format(d); 
-//   const parts = new Intl.DateTimeFormat("en-US", {
-//     timeZone: "Australia/Sydney",
-//     timeZoneName: "shortOffset"
-//   }).formatToParts(d);
-//   const offsetPart = parts.find(p => p.type === "timeZoneName")?.value || "+11:00";
-//   return Date.parse(`${ymd}T00:00:00${offsetPart}`);
-// }
+function getSydneyMidnightTimestamp(msTime) {
+  const d = new Date(msTime);
+  const ymd = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Australia/Sydney",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d); 
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Australia/Sydney",
+    timeZoneName: "shortOffset"
+  }).formatToParts(d);
+  const offsetPart = parts.find(p => p.type === "timeZoneName")?.value || "+11:00";
+  return Date.parse(`${ymd}T00:00:00${offsetPart}`);
+}
 
     async function fetchClassIdFromUrl() {
         const regex = /[?&]eid=([^&#]*)/;
@@ -351,30 +351,6 @@ function getSydneyUnixFromLocalNow() {
   //       const openDateText = `Unlocks on ${formatDateNew(openDateUnix)}`;
   //       return { isAvailable, openDateText, openDateUnix };
   //   }
-
-function getSydneyUnixFromLocalNow() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Australia/Sydney",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-    timeZoneName: "shortOffset",
-  }).formatToParts(new Date());
-
-  const year   = parts.find(p => p.type === "year").value;
-  const month  = parts.find(p => p.type === "month").value;
-  const day    = parts.find(p => p.type === "day").value;
-  const hour   = parts.find(p => p.type === "hour").value;
-  const minute = parts.find(p => p.type === "minute").value;
-  const second = parts.find(p => p.type === "second").value;
-  const offset = parts.find(p => p.type === "timeZoneName").value;
-
-  return Date.parse(`${year}-${month}-${day}T${hour}:${minute}:${second}${offset}`);
-}
 
 function determineAvailability(startDateUnix, weekOpen, customisations = []) {
   const todayUnix = getSydneyUnixFromLocalNow();
