@@ -10,18 +10,25 @@
     let nextLesson = "";
     let unifiedNewModules = [];
 
-    function getSydneyMidnightTimestamp(msTime) {
-	    const date = new Date(msTime);
-	    const sydneyDateStr = date.toLocaleDateString("en-AU", {
-	        timeZone: "Australia/Sydney",
-	        year: "numeric",
-	        month: "2-digit",
-	        day: "2-digit"
-	    });
-	
-	    const midnightInSydney = new Date(`${sydneyDateStr}T00:00:00`);
-	    return midnightInSydney.getTime();
-    }
+function getSydneyMidnightTimestamp(msTime) {
+    const date = new Date(msTime);
+    const midnightSydneyStr = date.toLocaleString("en-AU", {
+	timeZone: "Australia/Sydney",
+	year: "numeric",
+	month: "2-digit",
+	day: "2-digit",
+	hour: "2-digit",
+	minute: "2-digit",
+	second: "2-digit",
+	hour12: false,
+    });
+
+    const [datePart, timePart] = midnightSydneyStr.split(', ');
+    const sydneyMidnight = new Date(`${datePart}T00:00:00`);
+    const timestamp = sydneyMidnight.getTime();
+
+    return timestamp;
+}
 
 
     async function fetchClassIdFromUrl() {
