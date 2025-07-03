@@ -286,105 +286,48 @@ function getSydneyMidnightTimestamp(msTime) {
     }
 
 
-  //   function determineAvailability(startDateUnix, weekOpen, customisations = []) {
-  //       const todayUnix = getSydneyUnixFromLocalNow();
-  //       if (!startDateUnix) {
-  //           return { isAvailable: false, openDateText: "No Start Date" };
-  //       }
+    function determineAvailability(startDateUnix, weekOpen, customisations = []) {
+        const todayUnix = getSydneyUnixFromLocalNow();
+        if (!startDateUnix) {
+            return { isAvailable: false, openDateText: "No Start Date" };
+        }
 
-  //       const SECONDS_IN_DAY = 86400;
-  //       const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
+        const SECONDS_IN_DAY = 86400;
+        const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
 
-  //       let openDateUnix;
+        let openDateUnix;
 
-  //       const sortedCustomisations = [...customisations].sort(
-  //           (a, b) => new Date(b.created_at) - new Date(a.created_at)
-  //       );
+        const sortedCustomisations = [...customisations].sort(
+            (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        );
 
-  //       const latestWithDate = sortedCustomisations.find((c) => c.specific_date);
-  //       const latestWithOffset = sortedCustomisations.find(
-  //           (c) => c.days_to_offset !== null && c.days_to_offset !== undefined
-  //       );
-  //       if (latestWithDate) {
-  //           openDateUnix =
-  //               latestWithDate.specific_date > 9999999999
-  //                   ? latestWithDate.specific_date
-  //                   : latestWithDate.specific_date * 1000;
-  //       } else if (weekOpen === 0) {
-  //           return { isAvailable: true, openDateText: "Available anytime" };
-  //       } else {
-  //           openDateUnix = (startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000;
-  //           if (latestWithOffset) {
-  //               //openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
-  //               //const openDateMidnight = new Date(openDateUnix);
-  //               //openDateMidnight.setUTCHours(0, 0, 0, 0);
-  //               //openDateUnix = openDateMidnight.getTime();
-		// openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
-  //               openDateUnix = getSydneyMidnightTimestamp(openDateUnix);
-  //           }
-  //       }
+        const latestWithDate = sortedCustomisations.find((c) => c.specific_date);
+        const latestWithOffset = sortedCustomisations.find(
+            (c) => c.days_to_offset !== null && c.days_to_offset !== undefined
+        );
+        if (latestWithDate) {
+            openDateUnix =
+                latestWithDate.specific_date > 9999999999
+                    ? latestWithDate.specific_date
+                    : latestWithDate.specific_date * 1000;
+        } else if (weekOpen === 0) {
+            return { isAvailable: true, openDateText: "Available anytime" };
+        } else {
+            openDateUnix = (startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000;
+            if (latestWithOffset) {
+                //openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
+                //const openDateMidnight = new Date(openDateUnix);
+                //openDateMidnight.setUTCHours(0, 0, 0, 0);
+                //openDateUnix = openDateMidnight.getTime();
+		openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
+                openDateUnix = getSydneyMidnightTimestamp(openDateUnix);
+            }
+        }
 
-  //       const isAvailable = todayUnix <= openDateUnix;
-  //       const openDateText = `Unlocks on ${formatDateNew(openDateUnix)}`;
-  //       return { isAvailable, openDateText, openDateUnix };
-  //   }
-
-function determineAvailability(startDateUnix, weekOpen, customisations = []) {
-    // ── normalize input (seconds → ms) ──
-    let startMs = startDateUnix;
-    if (startMs < 1e10) {
-      startMs = startMs * 1000;
+        const isAvailable = todayUnix <= openDateUnix;
+        const openDateText = `Unlocks on ${formatDateNew(openDateUnix)}`;
+        return { isAvailable, openDateText, openDateUnix };
     }
-
-    const todayUnix = getSydneyUnixFromLocalNow();
-    const SECONDS_IN_DAY = 86400;
-    const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
-
-    // sort customisations newest first
-    const sorted = [...customisations].sort(
-      (a, b) => new Date(b.created_at) - new Date(a.created_at)
-    );
-
-    // 1) specific_date override
-    const spec = sorted.find(c => c.specific_date != null);
-    if (spec) {
-      let dateMs = spec.specific_date;
-      if (dateMs < 1e10) dateMs *= 1000;            // also normalize
-      const openMidnight = getSydneyMidnightTimestamp(dateMs);
-      return {
-        isAvailable: todayUnix >= openMidnight,
-        openDateText: `Unlocks on ${formatDateNew(openMidnight)}`,
-        openDateUnix: openMidnight
-      };
-    }
-
-    // 2) days_to_offset override
-    const offs = sorted.find(c => c.days_to_offset != null);
-    if (offs) {
-      const rawMs = startMs + offs.days_to_offset * SECONDS_IN_DAY * 1000;
-      const openMidnight = getSydneyMidnightTimestamp(rawMs);
-      return {
-        isAvailable: todayUnix >= openMidnight,
-        openDateText: `Unlocks on ${formatDateNew(openMidnight)}`,
-        openDateUnix: openMidnight
-      };
-    }
-
-    // 3) week-open logic
-    if (weekOpen === 0) {
-      return { isAvailable: true, openDateText: "Available anytime" };
-    }
-    const rawMs = startMs + (weekOpen - 1) * SECONDS_IN_WEEK * 1000;
-    const openMidnight = getSydneyMidnightTimestamp(rawMs);
-    return {
-      isAvailable: todayUnix >= openMidnight,
-      openDateText: `Unlocks on ${formatDateNew(openMidnight)}`,
-      openDateUnix: openMidnight
-    };
-}
-
-
-
 
     function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisations = []) {
         const dueWeek = lesson.assessmentDueEndOfWeek;
