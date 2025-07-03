@@ -330,6 +330,10 @@ function getSydneyMidnightTimestamp(msTime) {
   //   }
 
 function determineAvailability(startDateUnixMs, weekOpen, customisations = []) {
+	let startMs = startDateUnix;
+    if (startMs < 1e10) {
+      startMs = startMs * 1000;
+    }
     const todayUnix = getSydneyUnixFromLocalNow();
     const SECONDS_IN_DAY = 86400;
     const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
