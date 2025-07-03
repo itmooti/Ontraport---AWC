@@ -11,32 +11,20 @@
     let unifiedNewModules = [];
 
 function getSydneyMidnightTimestamp(msTime) {
-    const inputDate = new Date(msTime);
-
-    const sydneyMidnightStr = inputDate.toLocaleString("en-AU", {
-        timeZone: "Australia/Sydney",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
-    });
-
-    const [datePart] = sydneyMidnightStr.split(','); // e.g., "04/07/2025"
-    const [day, month, year] = datePart.trim().split('/');
-
-    const isoSydneyMidnight = `${year}-${month}-${day}T00:00:00`;
-
-    const sydneyMidnight = new Date(isoSydneyMidnight);
-
-    // Adjust this Date to Sydney time
-    const utcDate = new Date(sydneyMidnight.toLocaleString("en-US", { timeZone: "Australia/Sydney" }));
-    return utcDate.getTime();
+  const d = new Date(msTime);
+  const ymd = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Australia/Sydney",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d); 
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Australia/Sydney",
+    timeZoneName: "shortOffset"
+  }).formatToParts(d);
+  const offsetPart = parts.find(p => p.type === "timeZoneName")?.value || "+11:00";
+  return Date.parse(`${ymd}T00:00:00${offsetPart}`);
 }
-
-
 
     async function fetchClassIdFromUrl() {
         const regex = /[?&]eid=([^&#]*)/;
