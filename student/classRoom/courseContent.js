@@ -329,7 +329,7 @@ function getSydneyMidnightTimestamp(msTime) {
   //       return { isAvailable, openDateText, openDateUnix };
   //   }
 
-function determineAvailability(startDateUnixMs, weekOpen, customisations = []) {
+function determineAvailability(startDateUnix, weekOpen, customisations = []) {
 	let startMs = startDateUnix;
     if (startMs < 1e10) {
       startMs = startMs * 1000;
