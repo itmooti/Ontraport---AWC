@@ -330,55 +330,56 @@ function getSydneyMidnightTimestamp(msTime) {
   //   }
 
 function determineAvailability(startDateUnix, weekOpen, customisations = []) {
-	let startMs = startDateUnix;
+    // ── normalize input (seconds → ms) ──
+    let startMs = startDateUnix;
     if (startMs < 1e10) {
       startMs = startMs * 1000;
     }
+
     const todayUnix = getSydneyUnixFromLocalNow();
     const SECONDS_IN_DAY = 86400;
     const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
 
     // sort customisations newest first
     const sorted = [...customisations].sort(
-        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      (a, b) => new Date(b.created_at) - new Date(a.created_at)
     );
 
     // 1) specific_date override
     const spec = sorted.find(c => c.specific_date != null);
     if (spec) {
-        let dateMs = spec.specific_date;
-        if (dateMs < 1e10) dateMs *= 1000;
-        const openMidnight = getSydneyMidnightTimestamp(dateMs);
-        return {
-            isAvailable: todayUnix >= openMidnight,
-            openDateText: `Unlocks on ${formatDateNew(openMidnight)}`,
-            openDateUnix: openMidnight
-        };
+      let dateMs = spec.specific_date;
+      if (dateMs < 1e10) dateMs *= 1000;            // also normalize
+      const openMidnight = getSydneyMidnightTimestamp(dateMs);
+      return {
+        isAvailable: todayUnix >= openMidnight,
+        openDateText: `Unlocks on ${formatDateNew(openMidnight)}`,
+        openDateUnix: openMidnight
+      };
     }
 
     // 2) days_to_offset override
     const offs = sorted.find(c => c.days_to_offset != null);
     if (offs) {
-        const rawMs = startDateUnixMs + offs.days_to_offset * SECONDS_IN_DAY * 1000;
-        const openMidnight = getSydneyMidnightTimestamp(rawMs);
-        return {
-            isAvailable: todayUnix >= openMidnight,
-            openDateText: `Unlocks on ${formatDateNew(openMidnight)}`,
-            openDateUnix: openMidnight
-        };
-    }
-
-    // 3) weekOpen logic
-    if (weekOpen === 0) {
-        return { isAvailable: true, openDateText: "Available anytime" };
-    }
-    // week 1 → startDate; week 2 → startDate + 1 week; etc.
-    const rawMs = startDateUnixMs + (weekOpen - 1) * SECONDS_IN_WEEK * 1000;
-    const openMidnight = getSydneyMidnightTimestamp(rawMs);
-    return {
+      const rawMs = startMs + offs.days_to_offset * SECONDS_IN_DAY * 1000;
+      const openMidnight = getSydneyMidnightTimestamp(rawMs);
+      return {
         isAvailable: todayUnix >= openMidnight,
         openDateText: `Unlocks on ${formatDateNew(openMidnight)}`,
         openDateUnix: openMidnight
+      };
+    }
+
+    // 3) week-open logic
+    if (weekOpen === 0) {
+      return { isAvailable: true, openDateText: "Available anytime" };
+    }
+    const rawMs = startMs + (weekOpen - 1) * SECONDS_IN_WEEK * 1000;
+    const openMidnight = getSydneyMidnightTimestamp(rawMs);
+    return {
+      isAvailable: todayUnix >= openMidnight,
+      openDateText: `Unlocks on ${formatDateNew(openMidnight)}`,
+      openDateUnix: openMidnight
     };
 }
 
