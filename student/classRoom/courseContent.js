@@ -370,64 +370,117 @@ function formatDateNew(unixTimestamp) {
   return formatted;
 }
 
-function determineAvailability(startDateUnix, weekOpen, customisations = []) {
-  console.log("determineAvailability called with:", {
-    startDateUnix,
-    weekOpen,
-    customisations,
-  });
-  const todayUnix = getSydneyUnixFromLocalNow();
-  console.log("  todayUnix:", todayUnix);
-  if (!startDateUnix) {
-    console.log("  No startDateUnix, returning unavailable");
-    return { isAvailable: false, openDateText: "No Start Date" };
-  }
+// function determineAvailability(startDateUnix, weekOpen, customisations = []) {
+//   console.log("determineAvailability called with:", {
+//     startDateUnix,
+//     weekOpen,
+//     customisations,
+//   });
+//   const todayUnix = getSydneyUnixFromLocalNow();
+//   console.log("  todayUnix:", todayUnix);
+//   if (!startDateUnix) {
+//     console.log("  No startDateUnix, returning unavailable");
+//     return { isAvailable: false, openDateText: "No Start Date" };
+//   }
 
+//   const SECONDS_IN_DAY = 86400;
+//   const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
+//   let openDateUnix;
+
+//   const sortedCustomisations = [...customisations].sort(
+//     (a, b) => new Date(b.created_at) - new Date(a.created_at)
+//   );
+//   console.log("  sortedCustomisations:", sortedCustomisations);
+
+//   const latestWithDate = sortedCustomisations.find((c) => c.specific_date);
+//   console.log("  latestWithDate:", latestWithDate);
+//   const latestWithOffset = sortedCustomisations.find(
+//     (c) => c.days_to_offset !== null && c.days_to_offset !== undefined
+//   );
+//   console.log("  latestWithOffset:", latestWithOffset);
+
+//   if (latestWithDate) {
+//     openDateUnix =
+//       latestWithDate.specific_date > 9999999999
+//         ? latestWithDate.specific_date
+//         : latestWithDate.specific_date * 1000;
+//     console.log("  Using specific_date, openDateUnix:", openDateUnix);
+//   } else if (weekOpen === 0) {
+//     console.log("  weekOpen=0, available anytime");
+//     return { isAvailable: true, openDateText: "Available anytime" };
+//   } else {
+//     openDateUnix = (startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000;
+//     console.log("  After weekOpen, raw openDateUnix:", openDateUnix);
+//     if (latestWithOffset) {
+//       openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
+//       console.log("  After offset, raw openDateUnix:", openDateUnix);
+//       openDateUnix = getSydneyMidnightTimestamp(openDateUnix);
+//       console.log("  Snapped to Sydney midnight, openDateUnix:", openDateUnix);
+//     }
+//   }
+
+//   const isAvailable = todayUnix <= openDateUnix;
+//   const openDateText = `Unlocks on ${formatDateNew(openDateUnix)}`;
+//   console.log("  determineAvailability returning:", {
+//     isAvailable,
+//     openDateText,
+//     openDateUnix,
+//   });
+//   return { isAvailable, openDateText, openDateUnix };
+// }
+
+function determineAvailability(startDateUnix, weekOpen, customisations = []) {
   const SECONDS_IN_DAY = 86400;
   const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
-  let openDateUnix;
 
-  const sortedCustomisations = [...customisations].sort(
+  // sort so the most recent customisation is first
+  const sorted = [...customisations].sort(
     (a, b) => new Date(b.created_at) - new Date(a.created_at)
   );
-  console.log("  sortedCustomisations:", sortedCustomisations);
-
-  const latestWithDate = sortedCustomisations.find((c) => c.specific_date);
-  console.log("  latestWithDate:", latestWithDate);
-  const latestWithOffset = sortedCustomisations.find(
+  const latestWithDate = sorted.find((c) => c.specific_date);
+  const latestWithOffset = sorted.find(
     (c) => c.days_to_offset !== null && c.days_to_offset !== undefined
   );
-  console.log("  latestWithOffset:", latestWithOffset);
+
+  let rawMs;
 
   if (latestWithDate) {
-    openDateUnix =
+    // 1️⃣ coerce to ms
+    rawMs =
       latestWithDate.specific_date > 9999999999
         ? latestWithDate.specific_date
         : latestWithDate.specific_date * 1000;
-    console.log("  Using specific_date, openDateUnix:", openDateUnix);
   } else if (weekOpen === 0) {
-    console.log("  weekOpen=0, available anytime");
     return { isAvailable: true, openDateText: "Available anytime" };
   } else {
-    openDateUnix = (startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000;
-    console.log("  After weekOpen, raw openDateUnix:", openDateUnix);
+    // 2️⃣ normalize startDateUnix (sec ↔ ms) once
+    const startMs =
+      startDateUnix > 9999999999 ? startDateUnix : startDateUnix * 1000;
+
+    // 3️⃣ apply week offset and optional day offset
+    rawMs = startMs + (weekOpen - 1) * SECONDS_IN_WEEK * 1000;
     if (latestWithOffset) {
-      openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
-      console.log("  After offset, raw openDateUnix:", openDateUnix);
-      openDateUnix = getSydneyMidnightTimestamp(openDateUnix);
-      console.log("  Snapped to Sydney midnight, openDateUnix:", openDateUnix);
+      rawMs += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
     }
   }
 
-  const isAvailable = todayUnix <= openDateUnix;
+  // 4️⃣ snap *all* branches to Sydney midnight
+  const openDateUnix = getSydneyMidnightTimestamp(rawMs);
+
+  // roll up availability
+  const todayUnix = getSydneyUnixFromLocalNow();
+  const isAvailable = todayUnix >= openDateUnix;
   const openDateText = `Unlocks on ${formatDateNew(openDateUnix)}`;
-  console.log("  determineAvailability returning:", {
-    isAvailable,
-    openDateText,
-    openDateUnix,
-  });
+
   return { isAvailable, openDateText, openDateUnix };
 }
+
+/*
+  1- We only multiply by 1000 once, right when we read a “seconds” timestamp.
+  2- We build a single rawMs for either the specific_date or the week+day offsets.
+  3- No matter which branch, we then call getSydneyMidnightTimestamp(rawMs) to force 00:00 Australia/Sydney.
+  4- Finally we compare to “now” and format the date.
+  */
 
 function determineAssessmentDueDateUnified(
   lesson,
