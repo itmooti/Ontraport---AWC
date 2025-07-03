@@ -10,20 +10,38 @@
     let nextLesson = "";
     let unifiedNewModules = [];
 
+// function getSydneyMidnightTimestamp(msTime) {
+//   const d = new Date(msTime);
+//   const ymd = new Intl.DateTimeFormat("en-CA", {
+//     timeZone: "Australia/Sydney",
+//     year: "numeric",
+//     month: "2-digit",
+//     day: "2-digit",
+//   }).format(d); 
+//   const parts = new Intl.DateTimeFormat("en-US", {
+//     timeZone: "Australia/Sydney",
+//     timeZoneName: "shortOffset"
+//   }).formatToParts(d);
+//   const offsetPart = parts.find(p => p.type === "timeZoneName")?.value || "+11:00";
+//   return Date.parse(`${ymd}T00:00:00${offsetPart}`);
+// }
+
 function getSydneyMidnightTimestamp(msTime) {
-  const d = new Date(msTime);
-  const ymd = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Australia/Sydney",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(d); 
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Australia/Sydney",
-    timeZoneName: "shortOffset"
-  }).formatToParts(d);
-  const offsetPart = parts.find(p => p.type === "timeZoneName")?.value || "+11:00";
-  return Date.parse(`${ymd}T00:00:00${offsetPart}`);
+  const date = new Date(msTime);
+  const [year, month, day] = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Australia/Sydney',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(date).split('-').map(Number);
+  const tzPart = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Australia/Sydney',
+    timeZoneName: 'shortOffset'
+  }).formatToParts(date).find(p => p.type === 'timeZoneName').value.replace('GMT', '');
+  const offset = tzPart.includes(':') ? tzPart : tzPart + ':00';
+  const [h, m] = offset.split(':').map(Number);
+  const offsetMs = (h * 60 + (h < 0 ? -m : m)) * 60000;
+  return Date.UTC(year, month - 1, day) - offsetMs;
 }
 
     async function fetchClassIdFromUrl() {
@@ -286,50 +304,84 @@ function getSydneyMidnightTimestamp(msTime) {
     }
 
 
-    function determineAvailability(startDateUnix, weekOpen, customisations = []) {
-        const todayUnix = getSydneyUnixFromLocalNow();
-        if (!startDateUnix) {
-            return { isAvailable: false, openDateText: "No Start Date" };
-        }
+  //   function determineAvailability(startDateUnix, weekOpen, customisations = []) {
+  //       const todayUnix = getSydneyUnixFromLocalNow();
+  //       if (!startDateUnix) {
+  //           return { isAvailable: false, openDateText: "No Start Date" };
+  //       }
 
-        const SECONDS_IN_DAY = 86400;
-        const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
+  //       const SECONDS_IN_DAY = 86400;
+  //       const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
 
-        let openDateUnix;
+  //       let openDateUnix;
 
-        const sortedCustomisations = [...customisations].sort(
-            (a, b) => new Date(b.created_at) - new Date(a.created_at)
-        );
+  //       const sortedCustomisations = [...customisations].sort(
+  //           (a, b) => new Date(b.created_at) - new Date(a.created_at)
+  //       );
 
-        const latestWithDate = sortedCustomisations.find((c) => c.specific_date);
-        const latestWithOffset = sortedCustomisations.find(
-            (c) => c.days_to_offset !== null && c.days_to_offset !== undefined
-        );
-        if (latestWithDate) {
-            openDateUnix =
-                latestWithDate.specific_date > 9999999999
-                    ? latestWithDate.specific_date
-                    : latestWithDate.specific_date * 1000;
-        } else if (weekOpen === 0) {
-            return { isAvailable: true, openDateText: "Available anytime" };
-        } else {
-            openDateUnix = (startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000;
-            if (latestWithOffset) {
-                //openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
-                //const openDateMidnight = new Date(openDateUnix);
-                //openDateMidnight.setUTCHours(0, 0, 0, 0);
-                //openDateUnix = openDateMidnight.getTime();
-		openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
-                openDateUnix = getSydneyMidnightTimestamp(openDateUnix);
-            }
-        }
+  //       const latestWithDate = sortedCustomisations.find((c) => c.specific_date);
+  //       const latestWithOffset = sortedCustomisations.find(
+  //           (c) => c.days_to_offset !== null && c.days_to_offset !== undefined
+  //       );
+  //       if (latestWithDate) {
+  //           openDateUnix =
+  //               latestWithDate.specific_date > 9999999999
+  //                   ? latestWithDate.specific_date
+  //                   : latestWithDate.specific_date * 1000;
+  //       } else if (weekOpen === 0) {
+  //           return { isAvailable: true, openDateText: "Available anytime" };
+  //       } else {
+  //           openDateUnix = (startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000;
+  //           if (latestWithOffset) {
+  //               //openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
+  //               //const openDateMidnight = new Date(openDateUnix);
+  //               //openDateMidnight.setUTCHours(0, 0, 0, 0);
+  //               //openDateUnix = openDateMidnight.getTime();
+		// openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
+  //               openDateUnix = getSydneyMidnightTimestamp(openDateUnix);
+  //           }
+  //       }
 
-        const isAvailable = todayUnix <= openDateUnix;
-        const openDateText = `Unlocks on ${formatDateNew(openDateUnix)}`;
-        return { isAvailable, openDateText, openDateUnix };
-    }
+  //       const isAvailable = todayUnix <= openDateUnix;
+  //       const openDateText = `Unlocks on ${formatDateNew(openDateUnix)}`;
+  //       return { isAvailable, openDateText, openDateUnix };
+  //   }
 
 
+function determineAvailability(startDateUnix, weekOpen, customisations = []) {
+  const todayUnix = Date.now();
+  if (!startDateUnix) {
+    return { isAvailable: false, openDateText: 'No Start Date' };
+  }
+  if (weekOpen === 0) {
+    return { isAvailable: true, openDateText: 'Available anytime' };
+  }
+
+  const SECONDS_IN_DAY = 86400;
+  const SECONDS_IN_WEEK = SECONDS_IN_DAY * 7;
+  let openDateUtc = (startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000;
+
+  const sorted = [...customisations].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const latestDate = sorted.find(c => c.specific_date);
+  const latestOffset = sorted.find(c => c.days_to_offset != null);
+
+  if (latestDate) {
+    openDateUtc = latestDate.specific_date > 1e10
+      ? latestDate.specific_date
+      : latestDate.specific_date * 1000;
+  } else if (latestOffset) {
+    openDateUtc += latestOffset.days_to_offset * SECONDS_IN_DAY * 1000;
+    openDateUtc = getSydneyMidnightTimestamp(openDateUtc);
+  } else {
+    openDateUtc = getSydneyMidnightTimestamp(openDateUtc);
+  }
+
+  const isAvailable = todayUnix >= openDateUtc;
+  const openDateText = `Unlocks on ${new Date(openDateUtc).toLocaleDateString('en-US', {
+    timeZone: 'Australia/Sydney', year: 'numeric', month: 'long', day: 'numeric'
+  })}`;
+  return { isAvailable, openDateText, openDateUnix: openDateUtc };
+}
     function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisations = []) {
         const dueWeek = lesson.assessmentDueEndOfWeek;
         let dueDateUnix = null, dueDateText = null;
