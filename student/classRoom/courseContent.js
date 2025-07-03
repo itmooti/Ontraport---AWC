@@ -64,78 +64,55 @@ function getSydneyMidnightTimestamp(msTime) {
         return null;
     }
 
-    // function getSydneyUnixFromLocalNow() {
-    //     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    //     if (userTimeZone === "Australia/Sydney") {
-    //         const sydneyNow = Date.now(); // Already Sydney time
-    //         console.log("User is already in Sydney timezone.");
-    //         console.log("Sydney Unix Timestamp (ms):", sydneyNow);
-    //         return sydneyNow;
-    //     }
-    //     const now = new Date();
-    //     const options = {
-    //         timeZone: "Australia/Sydney",
-    //         year: "numeric",
-    //         month: "2-digit",
-    //         day: "2-digit",
-    //         hour: "2-digit",
-    //         minute: "2-digit",
-    //         second: "2-digit",
-    //         hour12: false
-    //     };
-    //     const parts = new Intl.DateTimeFormat("en-CA", options).formatToParts(now);
+    function getSydneyUnixFromLocalNow() {
+        const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (userTimeZone === "Australia/Sydney") {
+            const sydneyNow = Date.now(); // Already Sydney time
+            console.log("User is already in Sydney timezone.");
+            console.log("Sydney Unix Timestamp (ms):", sydneyNow);
+            return sydneyNow;
+        }
+        const now = new Date();
+        const options = {
+            timeZone: "Australia/Sydney",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false
+        };
+        const parts = new Intl.DateTimeFormat("en-CA", options).formatToParts(now);
 
-    //     const sydney = {
-    //         year: parts.find(p => p.type === "year").value,
-    //         month: parts.find(p => p.type === "month").value,
-    //         day: parts.find(p => p.type === "day").value,
-    //         hour: parts.find(p => p.type === "hour").value,
-    //         minute: parts.find(p => p.type === "minute").value,
-    //         second: parts.find(p => p.type === "second").value
-    //     };
+        const sydney = {
+            year: parts.find(p => p.type === "year").value,
+            month: parts.find(p => p.type === "month").value,
+            day: parts.find(p => p.type === "day").value,
+            hour: parts.find(p => p.type === "hour").value,
+            minute: parts.find(p => p.type === "minute").value,
+            second: parts.find(p => p.type === "second").value
+        };
 
-    //     // Format to ISO-style string
-    //     const sydneyDateStr = `${sydney.year}-${sydney.month}-${sydney.day}T${sydney.hour}:${sydney.minute}:${sydney.second}`;
+        // Format to ISO-style string
+        const sydneyDateStr = `${sydney.year}-${sydney.month}-${sydney.day}T${sydney.hour}:${sydney.minute}:${sydney.second}`;
 
-    //     // Create date using correct timezone offset (Sydney)
-    //     // Use UTC base and manually apply timezone offset (ugly workaround, but native JS lacks tz awareness)
-    //     const utcDate = new Date(now.toISOString()); // use current UTC time
-    //     const offsetMinutes = -utcDate.getTimezoneOffset(); // current local offset in minutes
+        // Create date using correct timezone offset (Sydney)
+        // Use UTC base and manually apply timezone offset (ugly workaround, but native JS lacks tz awareness)
+        const utcDate = new Date(now.toISOString()); // use current UTC time
+        const offsetMinutes = -utcDate.getTimezoneOffset(); // current local offset in minutes
 
-    //     // Offset in Sydney (hardcoded for now, better with Intl if needed dynamically)
-    //     const sydneyOffsetMinutes = new Date().toLocaleTimeString('en-US', { timeZone: 'Australia/Sydney', timeZoneName: 'short' }).includes('AEDT') ? 660 : 600;
-    //     const timezoneOffset = sydneyOffsetMinutes - offsetMinutes;
+        // Offset in Sydney (hardcoded for now, better with Intl if needed dynamically)
+        const sydneyOffsetMinutes = new Date().toLocaleTimeString('en-US', { timeZone: 'Australia/Sydney', timeZoneName: 'short' }).includes('AEDT') ? 660 : 600;
+        const timezoneOffset = sydneyOffsetMinutes - offsetMinutes;
 
-    //     const adjustedDate = new Date(new Date().getTime() + timezoneOffset * 60000);
+        const adjustedDate = new Date(new Date().getTime() + timezoneOffset * 60000);
 
-    //     const sydneyUnixMs = adjustedDate.getTime();
-    //     console.log("Sydney Unix Timestamp (ms):", sydneyUnixMs);
-    //     return sydneyUnixMs;
-    // }
+        const sydneyUnixMs = adjustedDate.getTime();
+        console.log("Sydney Unix Timestamp (ms):", sydneyUnixMs);
+        return sydneyUnixMs;
+    }
 
-function getSydneyUnixFromLocalNow() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Australia/Sydney",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-    timeZoneName: "shortOffset",
-  }).formatToParts(new Date());
-
-  const year   = parts.find(p => p.type === "year").value;
-  const month  = parts.find(p => p.type === "month").value;
-  const day    = parts.find(p => p.type === "day").value;
-  const hour   = parts.find(p => p.type === "hour").value;
-  const minute = parts.find(p => p.type === "minute").value;
-  const second = parts.find(p => p.type === "second").value;
-  const offset = parts.find(p => p.type === "timeZoneName").value;
-
-  return Date.parse(`${year}-${month}-${day}T${hour}:${minute}:${second}${offset}`);
-}
 
     function getRemainingTime(openDateUnixMs, todayUnixMs) {
         if (todayUnixMs > openDateUnixMs) {
@@ -309,89 +286,48 @@ function getSydneyUnixFromLocalNow() {
     }
 
 
-  //   function determineAvailability(startDateUnix, weekOpen, customisations = []) {
-  //       const todayUnix = getSydneyUnixFromLocalNow();
-  //       if (!startDateUnix) {
-  //           return { isAvailable: false, openDateText: "No Start Date" };
-  //       }
+    function determineAvailability(startDateUnix, weekOpen, customisations = []) {
+        const todayUnix = getSydneyUnixFromLocalNow();
+        if (!startDateUnix) {
+            return { isAvailable: false, openDateText: "No Start Date" };
+        }
 
-  //       const SECONDS_IN_DAY = 86400;
-  //       const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
+        const SECONDS_IN_DAY = 86400;
+        const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
 
-  //       let openDateUnix;
+        let openDateUnix;
 
-  //       const sortedCustomisations = [...customisations].sort(
-  //           (a, b) => new Date(b.created_at) - new Date(a.created_at)
-  //       );
+        const sortedCustomisations = [...customisations].sort(
+            (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        );
 
-  //       const latestWithDate = sortedCustomisations.find((c) => c.specific_date);
-  //       const latestWithOffset = sortedCustomisations.find(
-  //           (c) => c.days_to_offset !== null && c.days_to_offset !== undefined
-  //       );
-  //       if (latestWithDate) {
-  //           openDateUnix =
-  //               latestWithDate.specific_date > 9999999999
-  //                   ? latestWithDate.specific_date
-  //                   : latestWithDate.specific_date * 1000;
-  //       } else if (weekOpen === 0) {
-  //           return { isAvailable: true, openDateText: "Available anytime" };
-  //       } else {
-  //           openDateUnix = (startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000;
-  //           if (latestWithOffset) {
-  //               //openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
-  //               //const openDateMidnight = new Date(openDateUnix);
-  //               //openDateMidnight.setUTCHours(0, 0, 0, 0);
-  //               //openDateUnix = openDateMidnight.getTime();
-		// openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
-  //               openDateUnix = getSydneyMidnightTimestamp(openDateUnix);
-  //           }
-  //       }
+        const latestWithDate = sortedCustomisations.find((c) => c.specific_date);
+        const latestWithOffset = sortedCustomisations.find(
+            (c) => c.days_to_offset !== null && c.days_to_offset !== undefined
+        );
+        if (latestWithDate) {
+            openDateUnix =
+                latestWithDate.specific_date > 9999999999
+                    ? latestWithDate.specific_date
+                    : latestWithDate.specific_date * 1000;
+        } else if (weekOpen === 0) {
+            return { isAvailable: true, openDateText: "Available anytime" };
+        } else {
+            openDateUnix = (startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000;
+            if (latestWithOffset) {
+                //openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
+                //const openDateMidnight = new Date(openDateUnix);
+                //openDateMidnight.setUTCHours(0, 0, 0, 0);
+                //openDateUnix = openDateMidnight.getTime();
+		openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
+                openDateUnix = getSydneyMidnightTimestamp(openDateUnix);
+            }
+        }
 
-  //       const isAvailable = todayUnix <= openDateUnix;
-  //       const openDateText = `Unlocks on ${formatDateNew(openDateUnix)}`;
-  //       return { isAvailable, openDateText, openDateUnix };
-  //   }
-
-function determineAvailability(startDateUnix, weekOpen, customisations = []) {
-  const todayUnix = getSydneyUnixFromLocalNow();
-  if (!startDateUnix) {
-    return { isAvailable: false, openDateText: "No Start Date" };
-  }
-
-  const SECONDS_IN_DAY = 86400;
-  const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
-
-  const sorted = [...customisations].sort(
-    (a, b) => new Date(b.created_at) - new Date(a.created_at)
-  );
-  const byDate   = sorted.find(c => c.specific_date  != null);
-  const byOffset = sorted.find(c => c.days_to_offset != null);
-
-  let openDateUnix;
-  if (byDate) {
-    const dateMs = byDate.specific_date > 9999999999
-      ? byDate.specific_date
-      : byDate.specific_date * 1000;
-    openDateUnix = getSydneyMidnightTimestamp(dateMs);
-  }
-  else if (weekOpen === 0) {
-    return { isAvailable: true, openDateText: "Available anytime" };
-  }
-  else {
-    const baseMs = startDateUnix > 9999999999
-      ? startDateUnix
-      : startDateUnix * 1000;
-    openDateUnix = baseMs + (weekOpen - 1) * SECONDS_IN_WEEK * 1000;
-    if (byOffset) {
-      openDateUnix += byOffset.days_to_offset * SECONDS_IN_DAY * 1000;
+        const isAvailable = todayUnix <= openDateUnix;
+        const openDateText = `Unlocks on ${formatDateNew(openDateUnix)}`;
+        return { isAvailable, openDateText, openDateUnix };
     }
-    openDateUnix = getSydneyMidnightTimestamp(openDateUnix);
-  }
-
-  const isAvailable   = todayUnix >= openDateUnix;
-  const openDateText  = `Unlocks on ${formatDateNew(openDateUnix)}`;
-  return { isAvailable, openDateText, openDateUnix };
-}
 
 
     function determineAssessmentDueDateUnified(lesson, moduleStartDateUnix, customisations = []) {
