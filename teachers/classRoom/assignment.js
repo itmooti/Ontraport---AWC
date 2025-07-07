@@ -112,15 +112,6 @@ async function fetchGraphQL(query, variables) {
 
 // Helper: Format a Date object as "Due By Sunday 23:59 Feb 9"
 function formatDueString(date) {
-  const days = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
   const months = [
     "Jan",
     "Feb",
@@ -135,7 +126,7 @@ function formatDueString(date) {
     "Nov",
     "Dec",
   ];
-  const dayName = days[date.getDay()];
+
   const hours = date.getHours().toString().padStart(2, "0");
   const minutes = date.getMinutes().toString().padStart(2, "0");
   const monthAbbr = months[date.getMonth()];
@@ -183,16 +174,6 @@ function debounce(func, delay) {
     clearTimeout(timeout);
     timeout = setTimeout(() => func.apply(this, args), delay);
   };
-}
-
-// Helper to adjust a date to the next Sunday at 23:59
-function adjustToNextSunday(date) {
-  let d = new Date(date);
-  let dayOfWeek = d.getDay();
-  let daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
-  d.setDate(d.getDate() + daysUntilSunday);
-  d.setHours(23, 59, 0, 0);
-  return d;
 }
 
 // New function for due date calculation based on customization fields
@@ -311,7 +292,10 @@ async function loadAssignments() {
           startDate
         );
       } else {
-        dueDate = adjustToNextSunday(new Date(startDate));
+        // NEW:
+        let fallback = new Date(startDate);
+        fallback.setHours(23, 59, 0, 0);
+        dueDate = fallback;
       }
       dueDates.push({
         lessonID: lesson.ID,
