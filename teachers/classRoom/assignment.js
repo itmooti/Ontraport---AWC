@@ -141,17 +141,17 @@ function computeDueDateFromAssessment(startDate, dueEndOfWeekValue) {
   const totalDays = (dueEndOfWeekValue - 1) * 7;
   const dueDate = new Date(startDate);
   dueDate.setDate(startDate.getDate() + totalDays);
-  dueDate.setHours(23, 59, 0, 0);
+  dueDate.setHours(0, 0, 0, 0);
   return dueDate;
 }
 
 function computeDueDateFromCustomization(startDate, daysOffset) {
   let dueDate = new Date(startDate);
   dueDate.setDate(startDate.getDate() + parseInt(daysOffset, 10));
-  dueDate.setHours(23, 59, 0, 0);
+  dueDate.setHours(0, 0, 0, 0);
   if (dueDate < startDate) {
     let adjusted = new Date(startDate);
-    adjusted.setHours(23, 59, 0, 0);
+    adjusted.setHours(0, 0, 0, 0);
     return adjusted;
   }
   return dueDate;
@@ -202,7 +202,7 @@ function computeAssessmentDueDateFromCustomization(
     dueDate.setDate(
       dueDate.getDate() + parseInt(customization.Days_to_Offset, 10)
     );
-    dueDate.setHours(23, 59, 0, 0);
+    dueDate.setHours(0, 0, 0, 0);
     return dueDate;
   }
 
@@ -218,12 +218,12 @@ function computeAssessmentDueDateFromCustomization(
           10
         )
     );
-    dueDate.setHours(23, 59, 0, 0);
+    dueDate.setHours(0, 0, 0, 0);
     return dueDate;
   }
 
   let fallback = new Date(classStartDate);
-  fallback.setHours(23, 59, 0, 0);
+  fallback.setHours(0, 0, 0, 0);
   return fallback;
 }
 
@@ -294,7 +294,7 @@ async function loadAssignments() {
       } else {
         // NEW:
         let fallback = new Date(startDate);
-        fallback.setHours(23, 59, 0, 0);
+        fallback.setHours(0, 0, 0, 0);
         dueDate = fallback;
       }
       dueDates.push({
