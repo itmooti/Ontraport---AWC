@@ -140,7 +140,7 @@ function formatDueString(date) {
   const minutes = date.getMinutes().toString().padStart(2, "0");
   const monthAbbr = months[date.getMonth()];
   const dayOfMonth = date.getDate();
-  return `Due By ${dayName} ${hours}:${minutes} ${dayOfMonth} ${monthAbbr}`;
+  return `Due By ${hours}:${minutes} ${dayOfMonth} ${monthAbbr}`;
 }
 
 // Due date calculations (unchanged)
