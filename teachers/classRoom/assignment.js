@@ -1,97 +1,100 @@
 // Updated GraphQL query (search parameter removed)
 let FetchLessonQuery = `
-        query calcLessons($orderBy: [QueryOrderByInput!]) {
-        calcLessons(
-            query: [
-            { where: { type: "Assessment" } }
-            {
-                andWhere: {
-                Course: [
-                    {
-                    where: {
-                        unique_id: "${CourseUniqueIDForTeacher}"
-                    }
-                    }
-                ]
-                }
-            }
-            ]
-            orderBy: $orderBy
-        ) {
-            ID: field(arg: ["id"])
-            submissionTotalCount: countDistinct(
-            args: [
-                { field: ["Assessments", "Submissions", "id"] }
-            ]
-            )
-            AssessmentsType: field(arg: ["Assessments", "type"])
-            AssessmentsName: field(arg: ["Assessments", "name"])
-            Module_Module_Name: field(
-            arg: ["Module", "module_name"]
-            )
-            Lesson_Name: field(arg: ["lesson_name"])
-            Assessments_AWC_Teacher_s_Portal_Class_Assignment_Details_Page_URL: field(
-            arg: [
-                "Assessments"
-                "awc_teacher_s_portal_class_assignment_details_page_url"
-            ]
-            )
-            Assessments_Total_Primary_Submissions: field(
-            arg: ["Assessments", "total_primary_submissions"]
-            )
-            Class_Student_Enrolements: field(
-            arg: [
-                "Course"
-                "Classes_As_Active_Course"
-                "student_enrolements"
-            ]
-            )
-            created_at: field(arg: ["created_at"])
-        }
-        }
-`;
-
-let FetchLessonCustomizationQuery = `
-query calcClassCustomisations(
-  $lesson_to_modify_id: AwcLessonID
-) {
-  calcClassCustomisations(
+        query calcLessons($limit: IntScalar, $offset: IntScalar) {
+  calcLessons(
     query: [
-      { where: { type: "Assessment Due Date" } }
+      { where: { type: "Assessment" } }
       {
         andWhere: {
-          lesson_to_modify_id: $lesson_to_modify_id
-        }
-      }
-      {
-        andWhere: {
-          class_to_modify_id: "${currentPageClassIDForAssessments}"
+          Course: [
+            { where: { unique_id: "${CourseUniqueIDForTeacher}" } }
+            {
+              andWhere: {
+                Classes_As_Course: [{ where: { id: "${classUniqueID}" } }]
+              }
+            }
+          ]
         }
       }
     ]
+    limit: $limit
+    offset: $offset
+    orderBy: [{ path: [], type: asc }]
   ) {
     ID: field(arg: ["id"])
-    Date_Added: field(arg: ["created_at"])
-    Days_to_Offset: field(arg: ["days_to_offset"])
-    Specific_Date: field(arg: ["specific_date"])
-    Module_Week_Open_from_Start_Date: field(
-      arg: [
-        "Lesson_to_Modify"
-        "Module"
-        "week_open_from_start_date"
+    submissionTotalCount: countDistinct(
+      args: [
+        { field: ["Assessments", "Submissions", "id"] }
       ]
     )
-    Class_To_Modify_Start_Date: field(
-      arg: ["Class_to_Modify", "start_date"]
+    AssessmentsType: field(arg: ["Assessments", "type"])
+    AssessmentsName: field(arg: ["Assessments", "name"])
+    Module_Module_Name: field(
+      arg: ["Module", "module_name"]
     )
-    Lesson_To_Modify_Due_days_after_module_open_date: field(
+    Lesson_Name: field(arg: ["lesson_name"])
+    Assessments_AWC_Teacher_s_Portal_Class_Assignment_Details_Page_URL: field(
       arg: [
-        "Lesson_to_Modify"
-        "due_days_after_module_open_date"
+        "Assessments"
+        "awc_teacher_s_portal_class_assignment_details_page_url"
       ]
     )
+    Assessments_Total_Primary_Submissions: field(
+      arg: ["Assessments", "total_primary_submissions"]
+    )
+    Class_Student_Enrolements: field(
+      arg: [
+        "Course"
+        "Classes_As_Active_Course"
+        "student_enrolements"
+      ]
+    )
+    created_at: field(arg: ["created_at"])
   }
 }
+`;
+
+let FetchLessonCustomizationQuery = `
+    query calcClassCustomisations(
+    $lesson_to_modify_id: AwcLessonID
+    ) {
+    calcClassCustomisations(
+        query: [
+        { where: { type: "Assessment Due Date" } }
+        {
+            andWhere: {
+            lesson_to_modify_id: $lesson_to_modify_id
+            }
+        }
+        {
+            andWhere: {
+            class_to_modify_id: "${currentPageClassIDForAssessments}"
+            }
+        }
+        ]
+    ) {
+        ID: field(arg: ["id"])
+        Date_Added: field(arg: ["created_at"])
+        Days_to_Offset: field(arg: ["days_to_offset"])
+        Specific_Date: field(arg: ["specific_date"])
+        Module_Week_Open_from_Start_Date: field(
+        arg: [
+            "Lesson_to_Modify"
+            "Module"
+            "week_open_from_start_date"
+        ]
+        )
+        Class_To_Modify_Start_Date: field(
+        arg: ["Class_to_Modify", "start_date"]
+        )
+        Lesson_To_Modify_Due_days_after_module_open_date: field(
+        arg: [
+            "Lesson_to_Modify"
+            "due_days_after_module_open_date"
+        ]
+        )
+    }
+    }
 `;
 
 // Helper: GraphQL fetch function.
