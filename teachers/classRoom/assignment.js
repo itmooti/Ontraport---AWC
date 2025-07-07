@@ -10,7 +10,7 @@ let FetchLessonQuery = `
             { where: { unique_id: "${CourseUniqueIDForTeacher}" } }
             {
               andWhere: {
-                Classes_As_Course: [{ where: { id: "${classUniqueID}" } }]
+                Classes_As_Course: [{ where: { unique_id: "${classUniqueID}" } }]
               }
             }
           ]
