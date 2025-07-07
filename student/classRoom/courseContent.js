@@ -486,7 +486,7 @@ function determineAssessmentDueDateUnified(
 
   const endOfDayOffsetMs = (23 * 3600 + 59 * 60) * 1000;
   dueDateUnix =
-    normalizedStartUnix + (dueWeek - 1) * 86400 * 1000 + endOfDayOffsetMs;
+    normalizedStartUnix + (dueWeek) * 86400 * 1000 + endOfDayOffsetMs;
   dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
   console.log("  Default end-of-week due date:", { dueDateUnix, dueDateText });
   return { dueDateUnix, dueDateText };
