@@ -181,11 +181,10 @@ function computeAssessmentDueDateFromCustomization(
   customization,
   classStartDate
 ) {
-  if (
-    customization.Specific_Date !== null &&
-    customization.Specific_Date !== undefined
-  ) {
-    return new Date(customization.Specific_Date * 1000);
+  if (customization.Specific_Date && !isNaN(customization.Specific_Date)) {
+    const date = new Date(customization.Specific_Date * 1000);
+    date.setHours(0, 0, 0, 0);
+    return date;
   }
 
   let weekOpen = parseInt(customization.Module_Week_Open_from_Start_Date, 10);
@@ -196,9 +195,10 @@ function computeAssessmentDueDateFromCustomization(
 
   if (
     customization.Days_to_Offset !== null &&
-    customization.Days_to_Offset !== undefined
+    customization.Days_to_Offset !== undefined &&
+    customization.Days_to_Offset !== ""
   ) {
-    let dueDate = new Date(moduleOpenDate);
+    const dueDate = new Date(moduleOpenDate);
     dueDate.setDate(
       dueDate.getDate() + parseInt(customization.Days_to_Offset, 10)
     );
@@ -208,9 +208,11 @@ function computeAssessmentDueDateFromCustomization(
 
   if (
     customization.Lesson_To_Modify_Due_days_after_module_open_date !== null &&
-    customization.Lesson_To_Modify_Due_days_after_module_open_date !== undefined
+    customization.Lesson_To_Modify_Due_days_after_module_open_date !==
+      undefined &&
+    customization.Lesson_To_Modify_Due_days_after_module_open_date !== ""
   ) {
-    let dueDate = new Date(moduleOpenDate);
+    const dueDate = new Date(moduleOpenDate);
     dueDate.setDate(
       dueDate.getDate() +
         parseInt(
@@ -222,7 +224,7 @@ function computeAssessmentDueDateFromCustomization(
     return dueDate;
   }
 
-  let fallback = new Date(classStartDate);
+  const fallback = new Date(classStartDate);
   fallback.setHours(0, 0, 0, 0);
   return fallback;
 }
