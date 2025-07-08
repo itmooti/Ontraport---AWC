@@ -387,27 +387,58 @@ var myHelpers = {
   return false;
 },
 
+  // getUserVoteId: function (votes, recordId) {
+  //   var currentUserId = visitorContactID;
+  //   if (!Array.isArray(votes) || votes.length === 0) return "";
+  //   if (votes[0].hasOwnProperty("post_upvote_id")) {
+  //     var vote = votes.find(
+  //       (vote) =>
+  //         Number(vote.member_post_upvote_id) === currentUserId &&
+  //         Number(vote.post_upvote_id) === Number(recordId)
+  //     );
+  //     return vote ? vote.id : "";
+  //   }
+  //   if (votes[0].hasOwnProperty("forum_comment_upvote_id")) {
+  //     var vote = votes.find(
+  //       (vote) =>
+  //         Number(vote.member_comment_upvote_id) === currentUserId &&
+  //         Number(vote.forum_comment_upvote_id) === Number(recordId)
+  //     );
+  //     return vote ? vote.id : "";
+  //   }
+  //   return "";
+  // },
   getUserVoteId: function (votes, recordId) {
-    var currentUserId = visitorContactID;
-    if (!Array.isArray(votes) || votes.length === 0) return "";
-    if (votes[0].hasOwnProperty("post_upvote_id")) {
-      var vote = votes.find(
-        (vote) =>
-          Number(vote.member_post_upvote_id) === currentUserId &&
-          Number(vote.post_upvote_id) === Number(recordId)
-      );
-      return vote ? vote.id : "";
-    }
-    if (votes[0].hasOwnProperty("forum_comment_upvote_id")) {
-      var vote = votes.find(
-        (vote) =>
-          Number(vote.member_comment_upvote_id) === currentUserId &&
-          Number(vote.forum_comment_upvote_id) === Number(recordId)
-      );
-      return vote ? vote.id : "";
-    }
-    return "";
-  },
+  var currentUserId = visitorContactID;
+  var forTeacherStudentId = forTeacherStudentIdOP;
+
+  if (!Array.isArray(votes) || votes.length === 0) return "";
+
+  const matchMemberId = (memberId) =>
+    Number(memberId) === Number(currentUserId) ||
+    (forTeacherStudentId && Number(memberId) === Number(forTeacherStudentId));
+
+  if (votes[0].hasOwnProperty("post_upvote_id")) {
+    var vote = votes.find(
+      (vote) =>
+        matchMemberId(vote.member_post_upvote_id) &&
+        Number(vote.post_upvote_id) === Number(recordId)
+    );
+    return vote ? vote.id : "";
+  }
+
+  if (votes[0].hasOwnProperty("forum_comment_upvote_id")) {
+    var vote = votes.find(
+      (vote) =>
+        matchMemberId(vote.member_comment_upvote_id) &&
+        Number(vote.forum_comment_upvote_id) === Number(recordId)
+    );
+    return vote ? vote.id : "";
+  }
+
+  return "";
+},
+
   commentCount: function (comments) {
     return Array.isArray(comments) ? comments.length : 0;
   },
