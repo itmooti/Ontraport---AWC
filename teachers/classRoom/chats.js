@@ -360,33 +360,7 @@ var myHelpers = {
   //     );
   //   return false;
   // },
-  hasUserVoted: function (votes, recordId) {
-  var currentUserId = visitorContactID;
-  var forTeacherStudentId = forTeacherStudentIdOP;
-
-  if (!Array.isArray(votes) || votes.length === 0) return false;
-
-  const matchMemberId = (memberId) =>
-    Number(memberId) === Number(currentUserId) ||
-    (forTeacherStudentId && Number(memberId) === Number(forTeacherStudentId));
-
-  if (votes[0].hasOwnProperty("post_upvote_id"))
-    return votes.some(
-      (vote) =>
-        matchMemberId(vote.member_post_upvote_id) &&
-        Number(vote.post_upvote_id) === Number(recordId)
-    );
-
-  if (votes[0].hasOwnProperty("forum_comment_upvote_id"))
-    return votes.some(
-      (vote) =>
-        matchMemberId(vote.member_comment_upvote_id) &&
-        Number(vote.forum_comment_upvote_id) === Number(recordId)
-    );
-
-  return false;
-},
-
+ 
   // getUserVoteId: function (votes, recordId) {
   //   var currentUserId = visitorContactID;
   //   if (!Array.isArray(votes) || votes.length === 0) return "";
@@ -408,15 +382,46 @@ var myHelpers = {
   //   }
   //   return "";
   // },
-  getUserVoteId: function (votes, recordId) {
-  var currentUserId = visitorContactID;
-  var forTeacherStudentId = forTeacherStudentIdOP;
+hasUserVoted: function (votes, recordId) {
+  var currentUserId     = Number(visitorContactID);
+  var teacherStudentId  = typeof forTeacherStudentIdOP !== "undefined"
+                          ? Number(forTeacherStudentIdOP)
+                          : null;
+
+  if (!Array.isArray(votes) || votes.length === 0) return false;
+
+  const matchMemberId = (memberId) =>
+    Number(memberId) === currentUserId ||
+    (teacherStudentId !== null && Number(memberId) === teacherStudentId);
+
+  if (votes[0].hasOwnProperty("post_upvote_id"))
+    return votes.some(
+      (vote) =>
+        matchMemberId(vote.member_post_upvote_id) &&
+        Number(vote.post_upvote_id) === Number(recordId)
+    );
+
+  if (votes[0].hasOwnProperty("forum_comment_upvote_id"))
+    return votes.some(
+      (vote) =>
+        matchMemberId(vote.member_comment_upvote_id) &&
+        Number(vote.forum_comment_upvote_id) === Number(recordId)
+    );
+
+  return false;
+},
+
+getUserVoteId: function (votes, recordId) {
+  var currentUserId     = Number(visitorContactID);
+  var teacherStudentId  = typeof forTeacherStudentIdOP !== "undefined"
+                          ? Number(forTeacherStudentIdOP)
+                          : null;
 
   if (!Array.isArray(votes) || votes.length === 0) return "";
 
   const matchMemberId = (memberId) =>
-    Number(memberId) === Number(currentUserId) ||
-    (forTeacherStudentId && Number(memberId) === Number(forTeacherStudentId));
+    Number(memberId) === currentUserId ||
+    (teacherStudentId !== null && Number(memberId) === teacherStudentId);
 
   if (votes[0].hasOwnProperty("post_upvote_id")) {
     var vote = votes.find(
@@ -438,6 +443,7 @@ var myHelpers = {
 
   return "";
 },
+
 
   commentCount: function (comments) {
     return Array.isArray(comments) ? comments.length : 0;
