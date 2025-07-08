@@ -342,23 +342,51 @@ var myHelpers = {
   voteCount: function (votes) {
     return Array.isArray(votes) ? votes.length : 0;
   },
+  // hasUserVoted: function (votes, recordId) {
+  //   var currentUserId = visitorContactID;
+  //   var forTeacherStudentId=forTeacherStudentIdOP; 
+  //   if (!Array.isArray(votes) || votes.length === 0) return false;
+  //   if (votes[0].hasOwnProperty("post_upvote_id"))
+  //     return votes.some(
+  //       (vote) =>
+  //         Number(vote.member_post_upvote_id) === currentUserId &&
+  //         Number(vote.post_upvote_id) === Number(recordId)
+  //     );
+  //   if (votes[0].hasOwnProperty("forum_comment_upvote_id"))
+  //     return votes.some(
+  //       (vote) =>
+  //         Number(vote.member_comment_upvote_id) === currentUserId &&
+  //         Number(vote.forum_comment_upvote_id) === Number(recordId)
+  //     );
+  //   return false;
+  // },
   hasUserVoted: function (votes, recordId) {
-    var currentUserId = visitorContactID;
-    if (!Array.isArray(votes) || votes.length === 0) return false;
-    if (votes[0].hasOwnProperty("post_upvote_id"))
-      return votes.some(
-        (vote) =>
-          Number(vote.member_post_upvote_id) === currentUserId &&
-          Number(vote.post_upvote_id) === Number(recordId)
-      );
-    if (votes[0].hasOwnProperty("forum_comment_upvote_id"))
-      return votes.some(
-        (vote) =>
-          Number(vote.member_comment_upvote_id) === currentUserId &&
-          Number(vote.forum_comment_upvote_id) === Number(recordId)
-      );
-    return false;
-  },
+  var currentUserId = visitorContactID;
+  var forTeacherStudentId = forTeacherStudentIdOP;
+
+  if (!Array.isArray(votes) || votes.length === 0) return false;
+
+  const matchMemberId = (memberId) =>
+    Number(memberId) === Number(currentUserId) ||
+    (forTeacherStudentId && Number(memberId) === Number(forTeacherStudentId));
+
+  if (votes[0].hasOwnProperty("post_upvote_id"))
+    return votes.some(
+      (vote) =>
+        matchMemberId(vote.member_post_upvote_id) &&
+        Number(vote.post_upvote_id) === Number(recordId)
+    );
+
+  if (votes[0].hasOwnProperty("forum_comment_upvote_id"))
+    return votes.some(
+      (vote) =>
+        matchMemberId(vote.member_comment_upvote_id) &&
+        Number(vote.forum_comment_upvote_id) === Number(recordId)
+    );
+
+  return false;
+},
+
   getUserVoteId: function (votes, recordId) {
     var currentUserId = visitorContactID;
     if (!Array.isArray(votes) || votes.length === 0) return "";
