@@ -32,6 +32,7 @@ class NewMentionManager {
                 getContact(query: [{ where: { email: "courses@writerscentre.com.au" } }]) {
                     Display_Name: display_name
                     Contact_ID: id
+                    Unique_ID: unique_id 
                     Profile_Image: profile_image
                     Is_Instructor: is_instructor
                     Is_Admin: is_admin
@@ -73,6 +74,7 @@ class NewMentionManager {
             value: result.Teacher.display_name,
             name: result.Teacher.display_name,
             id: result.Teacher.id,
+            uniqueId:result.Teacher.Unique_ID,
             profileImage: result.Teacher.profile_image,
             isAdmin: false,
             isInstructor: true,
@@ -86,6 +88,7 @@ class NewMentionManager {
               value: Student.display_name,
               name: Student.display_name,
               id: Student.id,
+              uniqueId:Student.Unique_ID,
               profileImage: Student.profile_image,
               isAdmin: false,
               isInstructor: false,
@@ -100,6 +103,7 @@ class NewMentionManager {
             value: admin.Display_Name,
             name: admin.Display_Name,
             id: admin.Contact_ID,
+            uniqueId:admin.Unique_ID,
             profileImage: admin.Profile_Image,
             isAdmin: true,
             isInstructor: admin.Is_Instructor,
@@ -156,7 +160,7 @@ class NewMentionManager {
   }
 
   static selectTemplate(item) {
-    return `<span class="mention" data-mention-id="${item.original.id}" data-contact-id="${item.original.id}">@${item.original.value}</span>`;
+    return `<span class="mention" data-mention-id="${item.original.uniqueId}" data-contact-id="${item.original.id}">@${item.original.value}</span>`;
   }
 }
 
