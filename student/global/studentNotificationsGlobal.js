@@ -63,11 +63,11 @@
               Class: [
                 {
                   where: {
-                     ${activeOrInactive}: [
+                     Course: [
                       {
                         where: {
                           Lessons: [
-                            { where: { unique_id: "${lessonUid}" } }
+                            { where: { unique_id: "${activeOrInactive}" } }
                           ]
                         }
                       }
@@ -780,7 +780,7 @@ Read_Contact_ID: read_contact_id
                 window.location.href = `https://courses.writerscentre.com.au/students/course-details/${courseUid}?eid=${myEidFromCourse}&selectedTab=courseChat&current-post-id=${notification.Notification_Type === 'Posts' ? notification.Post_ID : commentIdForNoti}&classIdFromUrl=${classIdUrl}&className=${classNameUrl}&classUid=${classUniqueId}&currentClassID=${classIdUrl}&currentClassName=${classNameUrl}&currentClassUniqueID=${classUniqueId}`;
             } else if ((type === "Submissions" || type === "Submission Comments") && notification.Submissions?.Assessment?.Lesson?.unique_id) {
                 const lessonUid = notification.Submissions.Assessment.Lesson.unique_id;
-                const myEidFromLesson = await getEnrolmentIdsByLessonUid(classIdUrl);
+                const myEidFromLesson = await getEnrolmentIdsByCourseUid(classIdUrl);
                 window.location.href = `https://courses.writerscentre.com.au/course-details/content/${lessonUid}?eid=${myEidFromLesson}&classIdFromUrl=${classIdUrl}&className=${classNameUrl}&classUid=${classUniqueId}&currentClassID=${classIdUrl}&currentClassName=${classNameUrl}&currentClassUniqueID=${classUniqueId}&submissionPostIs=${notification.Notification_Type === 'Submissions' ? notification.Submissions_ID : commentIdForNoti}${assessmentType === "File Submission" ? `&subUID=${subUID}&commentScrollId=${commentScrollID}` : ""}`;
             } else {
                 const myEidFromCourse = await getEnrolmentIdsByCourseUid(classIdUrl);
