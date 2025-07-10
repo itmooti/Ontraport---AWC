@@ -52,18 +52,72 @@ function getSydneyMidnightTimestamp(msTime) {
   return Date.UTC(year, month - 1, day, 0, 0, 0) - offsetMinutes * 60 * 1000;
 }
 
+// async function fetchClassIdFromUrl() {
+//   console.log("fetchClassIdFromUrl start, URL:", window.location.href);
+//   const regex = /[?&]eid=([^&#]*)/;
+//   const match = window.location.href.match(regex);
+//   console.log("  Regex match result:", match);
+//   if (!match || !match[1]) {
+//     console.log("  No eid found in URL, returning null");
+//     return null;
+//   }
+
+//   const eidforEnroll = match[1];
+//   console.log("  Extracted eidforEnroll:", eidforEnroll);
+//   const query = {
+//     query: `
+//       query calcEnrolments {
+//         calcEnrolments(
+//           query: [
+//             { where: { id: "${eidforEnroll}" } }
+//             { andWhere: { course_id: "${COURSE_ID}" } }
+//           ]
+//         ) {
+//           Class_ID: field(arg: ["class_id"])
+//         }
+//       }
+//     `,
+//   };
+//   console.log("  GraphQL query:", query.query.trim());
+
+//   try {
+//     const response = await fetch("https://awc.vitalstats.app/api/v1/graphql", {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//         "Api-Key": "mMzQezxyIwbtSc85rFPs3",
+//       },
+//       body: JSON.stringify(query),
+//     });
+//     console.log("  fetch response:", response);
+//     const data = await response.json();
+//     console.log("  Parsed JSON data:", data);
+//     const enrolments = data?.data?.calcEnrolments;
+//     console.log("  enrolments array:", enrolments);
+
+//     if (Array.isArray(enrolments) && enrolments.length > 0) {
+//       console.log("  Returning Class_ID:", enrolments[0].Class_ID);
+//       return enrolments[0].Class_ID;
+//     }
+//   } catch (err) {
+//     console.error("  fetchClassIdFromUrl error:", err);
+//   }
+
+//   console.log("  No class ID found, returning null");
+//   return null;
+// }
 async function fetchClassIdFromUrl() {
   console.log("fetchClassIdFromUrl start, URL:", window.location.href);
-  const regex = /[?&]eid=([^&#]*)/;
-  const match = window.location.href.match(regex);
-  console.log("  Regex match result:", match);
-  if (!match || !match[1]) {
-    console.log("  No eid found in URL, returning null");
-    return null;
+
+  const url               = new URL(window.location.href);
+  const eidforEnroll      = url.searchParams.get("eid");
+  const fallbackClassId   = url.searchParams.get("currentClassID") || url.searchParams.get("classIdFromUrl");
+
+  if (!eidforEnroll) {
+    console.log("  No eid found; using fallback class ID:", fallbackClassId);
+    return fallbackClassId || null;
   }
 
-  const eidforEnroll = match[1];
-  console.log("  Extracted eidforEnroll:", eidforEnroll);
   const query = {
     query: `
       query calcEnrolments {
@@ -81,18 +135,18 @@ async function fetchClassIdFromUrl() {
   console.log("  GraphQL query:", query.query.trim());
 
   try {
-    const response = await fetch("https://awc.vitalstats.app/api/v1/graphql", {
-      method: "POST",
+    const response   = await fetch("https://awc.vitalstats.app/api/v1/graphql", {
+      method:  "POST",
       headers: {
         "Content-Type": "application/json",
-        "Api-Key": "mMzQezxyIwbtSc85rFPs3",
+        "Api-Key":      "mMzQezxyIwbtSc85rFPs3",
       },
       body: JSON.stringify(query),
     });
     console.log("  fetch response:", response);
-    const data = await response.json();
-    console.log("  Parsed JSON data:", data);
-    const enrolments = data?.data?.calcEnrolments;
+
+    const data        = await response.json();
+    const enrolments  = data?.data?.calcEnrolments;
     console.log("  enrolments array:", enrolments);
 
     if (Array.isArray(enrolments) && enrolments.length > 0) {
@@ -103,9 +157,10 @@ async function fetchClassIdFromUrl() {
     console.error("  fetchClassIdFromUrl error:", err);
   }
 
-  console.log("  No class ID found, returning null");
-  return null;
+  console.log("  GraphQL returned no result; using fallback class ID:", fallbackClassId);
+  return fallbackClassId || null;
 }
+
 
 function getSydneyUnixFromLocalNow() {
   console.log("getSydneyUnixFromLocalNow called");
