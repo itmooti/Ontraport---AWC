@@ -95,7 +95,10 @@ document.addEventListener("submit", async function (e) {
 
     const form = e.target;
     const mentionableDiv = form.querySelector(".mentionable");
-    const mentionIds = mentionableDiv?._mentionIds || [];
+    // const mentionIds = mentionableDiv?._mentionIds || [];
+    const mentionSpans = mentionableDiv?.querySelectorAll("span.mention") || [];
+    const mentionIds = Array.from(mentionSpans).map(span => span.getAttribute("data-mention-id"));
+
     const mentionablePlaceholder = form.querySelector(".mention-placeholder");
     if (mentionablePlaceholder) {
       mentionablePlaceholder.remove();
