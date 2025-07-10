@@ -156,7 +156,7 @@ class NewMentionManager {
   }
 
   static selectTemplate(item) {
-    return `<span class="mention" data-contact-id="${item.original.id}">@${item.original.value}</span>`;
+    return `<span class="mention" data-mention-id="${item.original.id}" data-contact-id="${item.original.id}">@${item.original.value}</span>`;
   }
 }
 
