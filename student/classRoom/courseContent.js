@@ -937,22 +937,17 @@ async function renderUnifiedModules() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("DOMContentLoaded #2: attaching click handler for nextLessonUrl");
   document.body.addEventListener("click", function (event) {
-    console.log("Body click event:", event);
     var anchor = event.target.closest("a.nextLessonUrl");
     if (!anchor) {
-      console.log("  Click not on .nextLessonUrl, ignoring");
       return;
     }
     console.log("  .nextLessonUrl clicked, href:", anchor.getAttribute("href"));
     event.preventDefault();
     var href = anchor.getAttribute("href");
     var match = href.match(/content\/([^?\/]+)/);
-    console.log("  Extracted lessonUid match:", match);
     if (!match) return;
     var lessonUid = match[1];
-    console.log("  lessonUid:", lessonUid);
     var module = unifiedNewModules.find(function (mod) {
       return (
         Array.isArray(mod.lessons) &&
@@ -969,9 +964,7 @@ document.addEventListener("DOMContentLoaded", function () {
       console.log("  Module locked, navigating to href");
       window.location.href = href;
     } else {
-      console.log(
-        "  Module unlocked or not found, showing unavailableLessonModal"
-      );
+      
       document
         .querySelector(".unavailableLessonModal")
         .classList.remove("hidden");
