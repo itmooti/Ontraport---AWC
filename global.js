@@ -3,7 +3,7 @@ window.addEventListener("load", function () {
   const loader = document.getElementById("loader");
   setTimeout(() => {
     loader.classList.add("fade-out");
-  }, 500);
+  }, 1000);
 });
 tailwind.config = {
   theme: {
