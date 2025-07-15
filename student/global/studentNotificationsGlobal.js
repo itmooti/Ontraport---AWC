@@ -1172,7 +1172,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 5000);
 });
 
-const GET_NOTIFICATIONS_QUERY = `
+const GET_ANNOUNCEMENTS_QUERY = `
    query getAnnouncements(
     $class_id: [AwcClassID]
     $limit: IntScalar
