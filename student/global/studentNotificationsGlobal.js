@@ -1385,23 +1385,25 @@ const GET_ANNOUNCEMENTS_QUERY = `
     }
 `;
 
-const containerMain = document.getElementById("parentNotificationTemplatesInBody");
-const containerNav = document.getElementById("secondaryNotificationContainer");
+document.addEventListener("DOMContentLoaded", function () {
+    const containerMain = document.getElementById("parentNotificationTemplatesInBody");
+    const containerNav = document.getElementById("secondaryNotificationContainer");
 
-// create a sentinel element
-function makeSentinel(id) {
-    const s = document.createElement("div");
-    s.id = id;
-    s.style.height = "1px";
-    return s;
-}
+    // create a sentinel element
+    function makeSentinel(id) {
+        const s = document.createElement("div");
+        s.id = id;
+        s.style.height = "1px";
+        return s;
+    }
 
-// append one sentinel to each (if they exist)
-const sentinelMain = makeSentinel("loadMoreSentinelMain");
-if (containerMain) containerMain.appendChild(sentinelMain);
+    // append one sentinel to each (if they exist)
+    const sentinelMain = makeSentinel("loadMoreSentinelMain");
+    if (containerMain) containerMain.appendChild(sentinelMain);
 
-const sentinelNav = makeSentinel("loadMoreSentinelNav");
-if (containerNav) containerNav.appendChild(sentinelNav);
+    const sentinelNav = makeSentinel("loadMoreSentinelNav");
+    if (containerNav) containerNav.appendChild(sentinelNav);
+});
 
 
 // 3) fetch a single page of notifications
@@ -1449,7 +1451,7 @@ function onIntersection(entries) {
 
 // observe the “main” list
 const observerMain = new IntersectionObserver(onIntersection, {
-    root: containerMain,      // ← bind to the main container
+    root: containerMain,
     rootMargin: "0px",
     threshold: 1.0
 });
