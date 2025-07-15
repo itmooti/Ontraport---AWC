@@ -558,7 +558,6 @@ async function initializeSocketGeneric(containerType, limit = 50) {
             }
         });
 
-        document.getElementById("socketLoader")?.classList.add("hidden");
         if (notificationData.length === 0) {
             document.getElementById("noAllMessage")?.classList.remove("hidden");
             document.getElementById("noAnnouncementsMessage")?.classList.remove("hidden");
@@ -567,6 +566,7 @@ async function initializeSocketGeneric(containerType, limit = 50) {
             document.getElementById("noAnnouncementsMessage")?.classList.add("hidden");
             document.getElementById("parentNotificationTemplatesInBody")?.classList.remove("hidden");
         }
+
         loader?.classList.add("hidden");
         updateMarkAllReadVisibility();
     };
@@ -580,8 +580,19 @@ async function initializeSocketGeneric(containerType, limit = 50) {
     };
 }
 
-initializeSocketGeneric("body", 50000);  // Body - more detailed view
-initializeSocketGeneric("nav", 10);     // Nav - concise view
+document.addEventListener("DOMContentLoaded", () => {
+    const bodyContainerExists = document.getElementById("parentNotificationTemplatesInBody");
+    const navContainerExists = document.getElementById("secondaryNotificationContainer");
+
+    if (bodyContainerExists) {
+        initializeSocketGeneric("body", 5000);
+    }
+
+    if (navContainerExists) {
+        initializeSocketGeneric("nav", 50);
+    }
+});
+
 
 
 function createNotificationCard(notification, isRead) {
