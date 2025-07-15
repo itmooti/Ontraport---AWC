@@ -3,69 +3,6 @@ const pageSize = 20;
 let loadingPage = false;
 let noMoreNotifications = false;
 
-const GET_NOTIFICATIONS_QUERY = getSubscriptionQueryForAllClasses()
-    .replace(
-        /^subscription\s+subscribeToAnnouncements/,
-        "query getAnnouncements"
-    );
-
-// 3) fetch a single page of notifications
-async function fetchNotifications(page) {
-    const offset = page * pageSize;
-    const classIds = await fetchClassIds();
-    const res = await fetch(graphQlApiEndpointUrlAwc, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Api-Key": graphQlApiKeyAwc
-        },
-        body: JSON.stringify({
-            query: GET_NOTIFICATIONS_QUERY,
-            variables: { class_id: classIds, limit: pageSize, offset }
-        })
-    });
-    const json = await res.json();
-    const list = json?.data?.fetchNotifications || [];
-    if (list.length === 0) {
-        noMoreNotifications = true;
-        return;
-    }
-    // prepend older pages below current ones
-    list.reverse().forEach(notification => {
-        if (!notificationIDs.has(notification.ID)) {
-            notificationData.unshift(notification);
-            notificationIDs.add(notification.ID);
-            processNotification(notification);
-        }
-    });
-}
-
-// 4) bootstrap page 0 and wire up infinite‐scroll
-document.addEventListener("DOMContentLoaded", () => {
-    // initial load
-    loadingPage = true;
-    fetchNotifications(0).then(() => {
-        loadingPage = false;
-    });
-
-    // attach to both your body + nav-bar containers
-    [container, document.getElementById("secondaryNotificationContainer")]
-        .filter(el => el)
-        .forEach(el => {
-            el.addEventListener("scroll", () => {
-                if (loadingPage || noMoreNotifications) return;
-                const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 50;
-                if (nearBottom) {
-                    loadingPage = true;
-                    currentPageForNotifications++;
-                    fetchNotifications(currentPageForNotifications).then(() => {
-                        loadingPage = false;
-                    });
-                }
-            });
-        });
-});
-
 // get created at date to  get notifications only after user has enrolled
 let createdAt;
 var dateElements = document.querySelectorAll("[data-date-enrolled]");
@@ -1231,4 +1168,68 @@ document.addEventListener("DOMContentLoaded", function () {
             updateNoNotificationMessagesSec();
         }
     }, 5000);
+});
+
+
+const GET_NOTIFICATIONS_QUERY = getSubscriptionQueryForAllClasses()
+    .replace(
+        /^subscription\s+subscribeToAnnouncements/,
+        "query getAnnouncements"
+    );
+
+// 3) fetch a single page of notifications
+async function fetchNotifications(page) {
+    const offset = page * pageSize;
+    const classIds = await fetchClassIds();
+    const res = await fetch(graphQlApiEndpointUrlAwc, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Api-Key": graphQlApiKeyAwc
+        },
+        body: JSON.stringify({
+            query: GET_NOTIFICATIONS_QUERY,
+            variables: { class_id: classIds, limit: pageSize, offset }
+        })
+    });
+    const json = await res.json();
+    const list = json?.data?.fetchNotifications || [];
+    if (list.length === 0) {
+        noMoreNotifications = true;
+        return;
+    }
+    // prepend older pages below current ones
+    list.reverse().forEach(notification => {
+        if (!notificationIDs.has(notification.ID)) {
+            notificationData.unshift(notification);
+            notificationIDs.add(notification.ID);
+            processNotification(notification);
+        }
+    });
+}
+
+// 4) bootstrap page 0 and wire up infinite‐scroll
+document.addEventListener("DOMContentLoaded", () => {
+    // initial load
+    loadingPage = true;
+    fetchNotifications(0).then(() => {
+        loadingPage = false;
+    });
+
+    // attach to both your body + nav-bar containers
+    [container, document.getElementById("secondaryNotificationContainer")]
+        .filter(el => el)
+        .forEach(el => {
+            el.addEventListener("scroll", () => {
+                if (loadingPage || noMoreNotifications) return;
+                const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 50;
+                if (nearBottom) {
+                    loadingPage = true;
+                    currentPageForNotifications++;
+                    fetchNotifications(currentPageForNotifications).then(() => {
+                        loadingPage = false;
+                    });
+                }
+            });
+        });
 });
