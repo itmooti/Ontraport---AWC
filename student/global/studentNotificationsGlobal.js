@@ -1385,13 +1385,32 @@ const GET_ANNOUNCEMENTS_QUERY = `
     }
 `;
 
+const containerMain = document.getElementById("parentNotificationTemplatesInBody");
+const containerNav = document.getElementById("secondaryNotificationContainer");
+
+// create a sentinel element
+function makeSentinel(id) {
+    const s = document.createElement("div");
+    s.id = id;
+    s.style.height = "1px";
+    return s;
+}
+
+// append one sentinel to each (if they exist)
+const sentinelMain = makeSentinel("loadMoreSentinelMain");
+if (containerMain) containerMain.appendChild(sentinelMain);
+
+const sentinelNav = makeSentinel("loadMoreSentinelNav");
+if (containerNav) containerNav.appendChild(sentinelNav);
+
+
 // 3) fetch a single page of notifications
 async function fetchAnnouncementsPage(page) {
+    if (noMoreAnnouncements) return;
+    loadingPage = true;
     const classIds = await fetchClassIds();
     const offset = page * pageSize;
-    loadingPage = true;
-
-    const response = await fetch(graphQlApiEndpointUrlAwc, {
+    const res = await fetch(graphQlApiEndpointUrlAwc, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -1402,13 +1421,43 @@ async function fetchAnnouncementsPage(page) {
             variables: { class_id: classIds, limit: pageSize, offset }
         })
     });
-    const result = await response.json();
-    const list = result?.data?.getAnnouncements || [];
+    const json = await res.json();
+    const list = json?.data?.getAnnouncements || [];
 
-    if (list.length < pageSize) {
-        noMoreAnnouncements = true;
-    }
+    if (list.length < pageSize) noMoreAnnouncements = true;
 
+    // reverse so older come below newer
+    list.reverse().forEach(notification => {
+        if (!notificationIDs.has(notification.ID)) {
+            notificationData.unshift(notification);
+            notificationIDs.add(notification.ID);
+            processNotification(notification);
+        }
+    });
+
+    loadingPage = false;
+} async function fetchAnnouncementsPage(page) {
+    if (noMoreAnnouncements) return;
+    loadingPage = true;
+    const classIds = await fetchClassIds();
+    const offset = page * pageSize;
+    const res = await fetch(graphQlApiEndpointUrlAwc, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Api-Key": graphQlApiKeyAwc
+        },
+        body: JSON.stringify({
+            query: GET_ANNOUNCEMENTS_QUERY,
+            variables: { class_id: classIds, limit: pageSize, offset }
+        })
+    });
+    const json = await res.json();
+    const list = json?.data?.getAnnouncements || [];
+
+    if (list.length < pageSize) noMoreAnnouncements = true;
+
+    // reverse so older come below newer
     list.reverse().forEach(notification => {
         if (!notificationIDs.has(notification.ID)) {
             notificationData.unshift(notification);
@@ -1419,6 +1468,26 @@ async function fetchAnnouncementsPage(page) {
 
     loadingPage = false;
 }
+
+// Create one observer, but let it watch multiple sentinels
+const observer = new IntersectionObserver(entries => {
+    for (let entry of entries) {
+        if (entry.isIntersecting && !loadingPage && !noMoreAnnouncements) {
+            currentPage++;
+            fetchAnnouncementsPage(currentPage);
+        }
+    }
+}, {
+    root: null,            // use viewport if you want page-level scroll
+    // root: containerMain, // or use container for inner scroll
+    rootMargin: "0px",
+    threshold: 1.0
+});
+
+// start observing
+observer.observe(sentinelMain);
+observer.observe(sentinelNav);
+
 
 // on load, pull page 0 and wire up scroll on both containers
 document.addEventListener("DOMContentLoaded", function () {
