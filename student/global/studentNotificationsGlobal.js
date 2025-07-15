@@ -1,7 +1,7 @@
 let currentPageForNotifications = 0;
-const pageSize = 20;
+const pageSize = 50;
 let loadingPage = false;
-let noMoreNotifications = false;
+let noMoreAnnouncements = false;
 
 
 
