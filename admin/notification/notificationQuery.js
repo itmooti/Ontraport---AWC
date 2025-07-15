@@ -11,7 +11,12 @@ const fetchUserDate = user_Preference_Turn_Off_All_Notifications === 'Yes' ? `
 
 function getSubscriptionQueryForAllClasses() {
   return `
-    subscription subscribeToAnnouncements($class_id: [AwcClassID]) {
+    subscription subscribeToAnnouncements(
+      $class_id: [AwcClassID]
+      $limit: IntScalar
+      $offset: IntScalar
+      ) {
+      
       subscribeToAnnouncements(
         query: [{ whereIn: { class_id: $class_id } }
           {
@@ -138,9 +143,9 @@ function getSubscriptionQueryForAllClasses() {
             ]
           }
         ]
-        limit: 50000
-        offset: 0
-        orderBy: [{ path: ["created_at"], type: asc }]
+        limit: $limit
+        offset: $offset
+        orderBy: [{ path: ["created_at"], type: desc }]
       ) {
          ID: id
         Class_ID: class_id
