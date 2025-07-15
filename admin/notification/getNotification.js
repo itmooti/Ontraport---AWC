@@ -5,8 +5,6 @@ const pendingAnnouncements = new Set();
 const cardMap = new Map();
 const notificationIDs = new Set();
 const notificationData = [];
-const graphQlApiKeyAwc = "mMzQezxyIwbtSc85rFPs3"; 
-const graphQlWsEndpointUrlAwc = `wss://awc.vitalstats.app/api/v1/graphql?apiKey=${graphQlApiKeyAwc}`;
 
 
 function timeAgo(unixTimestamp) {
@@ -61,72 +59,65 @@ query calcClasses {
 }
 
 
-async function initializeSocketGeneric(containerType, limit = 50) {
-   const containerElement = containerType === "body"
-        ? document.getElementById("parentNotificationTemplatesInBody")
-        : document.getElementById("secondaryNotificationContainer");
+async function initializeSocket() {
+      document.getElementById("socketLoader")?.classList.remove("hidden");
+    document.getElementById("parentNotificationTemplatesInBody")?.classList.add("hidden");
+    document.getElementById("noAllMessage")?.classList.add("hidden");
+    document.getElementById("noAnnouncementsMessage")?.classList.add("hidden");
 
-    const loaderId = containerType === "body" ? "socketLoader" : "socketLoadersec";
-    const loader = document.getElementById(loaderId);
-    loader?.classList.remove("hidden");
+  if (document.hidden) return;
 
-    const classIds = await fetchClassIds();
-    if (!classIds || classIds.length === 0) return;
+  const classIds = await fetchClassIds(); // fetches all student’s class IDs
+  if (!classIds || classIds.length === 0) return;
 
-    const socket = new WebSocket("wss://awc.vitalstats.app/api/v1/graphql", "vitalstats");
+  const socket = new WebSocket(WS_ENDPOINT, "vitalstats");
+  let keepAliveInterval;
 
-    socket.onopen = () => {
-        socket.send(JSON.stringify({ type: "connection_init" }));
-        socket.send(
-            JSON.stringify({
-                id: `subscription_${containerType}`,
-                type: "GQL_START",
-                payload: {
-                    query: getSubscriptionQueryForAllClasses(),
-                    variables: { class_id: classIds, offset: 0, limit }
-                }
-            })
-        );
-    };
+  socket.onopen = () => {
+    keepAliveInterval = setInterval(() => {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "KEEP_ALIVE" }));
+      }
+    }, 28000);
 
-  //   socket.send(JSON.stringify({ type: "connection_init" }));
+    socket.send(JSON.stringify({ type: "connection_init" }));
 
-  //   socket.send(
-  //     JSON.stringify({
-  //       id: "subscription_all_classes",
-  //       type: "GQL_START",
-  //       payload: {
-  //         query: getSubscriptionQueryForAllClasses(), // this function should return your new query
-  //         variables: { 
-  //             class_id: classIds,
-  //             offset: 0,
-  //             limit: 50
-  //         }
-  //       }
-  //     })
-  //   );
-  // };
+    socket.send(
+      JSON.stringify({
+        id: "subscription_all_classes",
+        type: "GQL_START",
+        payload: {
+          query: getSubscriptionQueryForAllClasses(), // this function should return your new query
+          variables: { class_id: classIds }
+        }
+      })
+    );
+  };
 
-   socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type !== "GQL_DATA") return;
-        if (!data.payload || !data.payload.data) return;
-        const result = data.payload?.data?.subscribeToAnnouncements;
-        if (!result) return;
+  socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type !== "GQL_DATA") return;
+    if (!data.payload || !data.payload.data) return;
 
-        const notifications = Array.isArray(result) ? result : [result];
-        const userId = Number(loggedInContactIdIntAwc);
+    const result = data.payload.data.subscribeToAnnouncements;
+    if (!result) return;
 
-        notifications.forEach((notification) => {
-            if (
-                notification.Read_Contacts_Data?.some(
-                    (read) => Number(read.read_contact_id) === Number(LOGGED_IN_CONTACT_ID)
-                )
-            ) readAnnouncements.add(Number(notification.ID));
-        });
+    const notifications = Array.isArray(result) ? result : [result];
+
+    // Existing logic for read status
+    notifications.forEach((notification) => {
+      if (
+        notification.Read_Contacts_Data &&
+        notification.Read_Contacts_Data.some(
+          (read) => Number(read.read_contact_id) === Number(LOGGED_IN_CONTACT_ID)
+        )
+      ) {
+        readAnnouncements.add(Number(notification.ID));
+      }
+    });
 
     // Filter notifications based on type and user preferences
-    const filtered = notifications.filter((notification) => {
+    const filteredNotifications = notifications.filter((notification) => {
       const userId = Number(LOGGED_IN_CONTACT_ID);
       switch (notification.Notification_Type) {
         case "Posts": {
@@ -188,33 +179,34 @@ async function initializeSocketGeneric(containerType, limit = 50) {
       }
     });
 
-    if (filtered.length === 0) return;
+    if (filteredNotifications.length === 0) return;
 
-    filtered.forEach((notification) => {
+    filteredNotifications.forEach((notification) => {
       notificationIDs.add(Number(notification.ID));
       notificationData.push(notification);
     });
 
-    otificationData.sort((a, b) => a.Date_Added - b.Date_Added);
-        displayedNotifications.clear();
-        containerElement.innerHTML = "";
+    notificationData.sort((a, b) => a.Date_Added - b.Date_Added);
+    displayedNotifications.clear();
+    const container = document.getElementById("parentNotificationTemplatesInBody");
+    container.innerHTML = "";
 
     notificationData.forEach((notification) => {
-            if (!displayedNotifications.has(Number(notification.ID))) {
-                processNotification(notification);
-            }
-        });
+      if (!displayedNotifications.has(Number(notification.ID))) {
+        processNotification(notification);
+      }
+    });
 
        document.getElementById("socketLoader")?.classList.add("hidden");
        document.getElementById("socketLoadersec")?.classList.add("hidden");
-        if (notificationData.length === 0) {
-            document.getElementById("noAllMessage")?.classList.remove("hidden");
-            document.getElementById("noAnnouncementsMessage")?.classList.remove("hidden");
-        } else {
-          document.getElementById("noAllMessage")?.classList.add("hidden");
-          document.getElementById("noAnnouncementsMessage")?.classList.add("hidden");
-          document.getElementById("parentNotificationTemplatesInBody")?.classList.remove("hidden");
-        }
+if (notificationData.length === 0) {
+    document.getElementById("noAllMessage")?.classList.remove("hidden");
+    document.getElementById("noAnnouncementsMessage")?.classList.remove("hidden");
+} else {
+  document.getElementById("noAllMessage")?.classList.add("hidden");
+  document.getElementById("noAnnouncementsMessage")?.classList.add("hidden");
+  document.getElementById("parentNotificationTemplatesInBody")?.classList.remove("hidden");
+}
 
     updateMarkAllReadVisibility();
   };
@@ -224,23 +216,14 @@ async function initializeSocketGeneric(containerType, limit = 50) {
   };
 
   socket.onclose = () => {
-        setTimeout(() => initializeSocketGeneric(containerType, limit), 28000);
-    };
+    clearInterval(keepAliveInterval);
+    setTimeout(() => {
+      if (!document.hidden) initializeSocket(); // retry on disconnect
+    }, 28000);
+  };
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    const bodyContainerExists = document.getElementById("parentNotificationTemplatesInBody");
-    const navContainerExists = document.getElementById("secondaryNotificationContainer");
-
-    if (bodyContainerExists) {
-        initializeSocketGeneric("body", 10);
-    }
-
-    if (navContainerExists) {
-        initializeSocketGeneric("nav", 50000);
-    }
-});
-
+initializeSocket();
 
 function createNotificationCard(notification, isRead) {
     const assessmentType = notification.Submissions?.Assessment?.type;
