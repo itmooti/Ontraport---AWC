@@ -10,6 +10,8 @@ function getClassUid() {
 
 const classUid = getClassUid();
 
+console.log("Class uid is ", classUid);
+
     let completedQueryForTeacher;
     let inProgressQueryForTeacher;
     let enrollmentCourseProgressQueryForTeacher;
