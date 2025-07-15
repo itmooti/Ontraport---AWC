@@ -258,8 +258,8 @@
             ]
           }
         ]
-        limit: 5000000
-        offset: 0
+        limit: $limit
+        offset: $offset
         orderBy: [{ path: ["created_at"], type: asc }]
       ) {
         ID: id
