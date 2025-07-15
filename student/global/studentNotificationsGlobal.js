@@ -581,7 +581,7 @@ async function initializeSocketGeneric(containerType, limit = 50) {
 }
 
 initializeSocketGeneric("body", 50000);  // Body - more detailed view
-initializeSocketGeneric("nav", 50);     // Nav - concise view
+initializeSocketGeneric("nav", 10);     // Nav - concise view
 
 
 function createNotificationCard(notification, isRead) {
