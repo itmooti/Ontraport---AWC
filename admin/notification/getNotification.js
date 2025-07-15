@@ -5,6 +5,8 @@ const pendingAnnouncements = new Set();
 const cardMap = new Map();
 const notificationIDs = new Set();
 const notificationData = [];
+const graphQlApiKeyAwc = "mMzQezxyIwbtSc85rFPs3"; 
+const graphQlWsEndpointUrlAwc = `wss://awc.vitalstats.app/api/v1/graphql?apiKey=${graphQlApiKeyAwc}`;
 
 
 function timeAgo(unixTimestamp) {
@@ -71,7 +73,7 @@ async function initializeSocketGeneric(containerType, limit = 50) {
     const classIds = await fetchClassIds();
     if (!classIds || classIds.length === 0) return;
 
-    const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
+    const socket = new WebSocket("wss://awc.vitalstats.app/api/v1/graphql", "vitalstats");
 
     socket.onopen = () => {
         socket.send(JSON.stringify({ type: "connection_init" }));
