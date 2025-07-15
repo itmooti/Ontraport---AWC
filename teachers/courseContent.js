@@ -3,12 +3,12 @@ async function getClassId() {
     return params.get("classId")?.replace(/'/g, "") || null;
 }
 
-async function getClassUid() {
-    const params = new URL(window.location.href).searchParams;
-    return params.get("classUID")?.replace(/'/g, "") || null;
+function getClassUid() {
+  const params = new URL(window.location.href).searchParams;
+  return params.get('classUID')?.replace(/'/g, '') ?? null;
 }
 
-let classUid = getClassUid();
+const classUid = getClassUid();
 
     let completedQueryForTeacher;
     let inProgressQueryForTeacher;
