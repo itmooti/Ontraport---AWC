@@ -580,7 +580,7 @@ async function initializeSocketGeneric(containerType, limit = 50) {
     };
 }
 
-initializeSocketGeneric("body", 5000);  // Body - more detailed view
+initializeSocketGeneric("body", 50000);  // Body - more detailed view
 initializeSocketGeneric("nav", 50);     // Nav - concise view
 
 
