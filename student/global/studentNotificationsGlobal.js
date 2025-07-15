@@ -3,6 +3,8 @@ const pageSize = 20;
 let loadingPage = false;
 let noMoreNotifications = false;
 
+
+
 // get created at date to  get notifications only after user has enrolled
 let createdAt;
 var dateElements = document.querySelectorAll("[data-date-enrolled]");
@@ -1170,35 +1172,243 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 5000);
 });
 
-
-const GET_NOTIFICATIONS_QUERY = getSubscriptionQueryForAllClasses()
-    .replace(
-        /^subscription\s+subscribeToAnnouncements/,
-        "query getAnnouncements"
-    );
+const GET_NOTIFICATIONS_QUERY = `
+   query getAnnouncements(
+    $class_id: [AwcClassID]
+    $limit: IntScalar
+    $offset: IntScalar
+    ) {
+      getAnnouncements(
+        query: [{ whereIn: { class_id: $class_id } }
+          {
+            andWhereGroup: [
+              {
+                whereGroup: [
+                  {
+                    where: { notification__type: "${POSTS_TYPE}" }
+                  }
+                  {
+                    andWhere: {
+                      Post: [
+                        {
+                          where: {
+                            author_id: ${CONTACTss_ID}
+                            _OPERATOR_: neq
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                orWhereGroup: [
+                  {
+                    where: { notification__type: "${POST_COMMENTS_TYPE}" }
+                  },
+                  {
+                    andWhere: {
+                      Comment: [
+                        {
+                          where: {
+                            author_id: ${CONTACTss_ID}
+                            _OPERATOR_: neq
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                orWhereGroup: [
+                  { where: { notification__type: "${ANNOUNCEMENTS_TYPE}" } }
+                ]
+              },
+              {
+                orWhereGroup: [
+                  { where: { notification__type: "${ANNOUNCEMENT_COMMENTS_TYPE}" } },
+                  {
+                    andWhere: {
+                      Comment: [
+                        {
+                          where: {
+                            author_id: ${CONTACTss_ID}
+                            _OPERATOR_: neq
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                orWhereGroup: [
+                  { where: { notification__type: "${SUBMISSIONS_TYPE}" } },
+                  {
+                    andWhere: {
+                      Submissions: [
+                        {
+                          where: {
+                            Student: [
+                              {
+                                where: {
+                                  Student: [
+                                    {
+                                      where: {
+                                        id: ${CONTACTss_ID}
+                                        _OPERATOR_: neq
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          andWhere: {
+                            Assessment: [
+                              { where: { private_submission: false } }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                orWhereGroup: [
+                  { where: { notification__type: "${SUBMISSION_COMMENTS_TYPE}" } },
+                  {
+                    andWhere: {
+                      Submissions: [
+                        {
+                          where: {
+                            ForumComments: [
+                              {
+                                where: {
+                                  author_id: ${CONTACTss_ID}
+                                  _OPERATOR_: neq
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+        limit: $limit
+        offset: $offset
+        orderBy: [{ path: ["created_at"], type: desc }]
+      ) {
+        ID: id
+        Class_ID: class_id
+        Comment_ID: comment_id
+        Content: content
+        Course_ID: course_id
+        Notification_Type: notification__type
+        Date_Added: created_at
+        Instructor_ID: instructor_id
+        Post_ID: post_id
+        Status: status
+        Submissions_ID: submissions_id
+        Title: title
+        Type: type
+        Unique_ID: unique_id
+        Class {
+                id 
+                unique_id
+                class_name
+                Enrolments { id }
+                Active_Course {
+                unique_id
+                course_name
+                Lessons { unique_id }
+        }
+         Course {
+            unique_id
+            course_name
+        }
+        }
+        Post {
+         post_copy
+          author_id
+          Author { display_name first_name last_name }
+          Mentions { display_name first_name last_name id }
+        }
+        Mentions { id }
+        Submissions {
+        submission_note
+        unique_id 
+          Student {
+            student_id
+            Student { display_name first_name last_name }
+          }
+          Announcements { Course { Lessons { unique_id } } }
+          Assessment {type  Lesson { unique_id } }
+          Submission_Mentions { id }
+          ForumComments { Author { display_name first_name last_name } }
+        }
+        Comment { 
+        comment 
+          id  
+          author_id 
+          reply_to_comment_id 
+          Reply_to_Comment{
+            author_id
+          } 
+          parent_announcement_id
+          Mentions { id }
+          Forum_Post {
+            author_id
+            Author { first_name last_name }
+          }
+          Author { display_name first_name last_name }
+        }
+        Instructor { display_name first_name last_name }
+        ForumComments {
+          Author { display_name first_name last_name }
+          Parent_Announcement { instructor_id }
+        }
+        Read_Contacts_Data {
+          read_announcement_id
+          read_contact_id
+        }
+      }
+    }
+`;
 
 // 3) fetch a single page of notifications
-async function fetchNotifications(page) {
-    const offset = page * pageSize;
+async function fetchAnnouncementsPage(page) {
     const classIds = await fetchClassIds();
-    const res = await fetch(graphQlApiEndpointUrlAwc, {
+    const offset = page * pageSize;
+    loadingPage = true;
+
+    const response = await fetch(graphQlApiEndpointUrlAwc, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             "Api-Key": graphQlApiKeyAwc
         },
         body: JSON.stringify({
-            query: GET_NOTIFICATIONS_QUERY,
+            query: GET_ANNOUNCEMENTS_QUERY,
             variables: { class_id: classIds, limit: pageSize, offset }
         })
     });
-    const json = await res.json();
-    const list = json?.data?.fetchNotifications || [];
-    if (list.length === 0) {
-        noMoreNotifications = true;
-        return;
+    const result = await response.json();
+    const list = result?.data?.getAnnouncements || [];
+
+    if (list.length < pageSize) {
+        noMoreAnnouncements = true;
     }
-    // prepend older pages below current ones
+
     list.reverse().forEach(notification => {
         if (!notificationIDs.has(notification.ID)) {
             notificationData.unshift(notification);
@@ -1206,29 +1416,22 @@ async function fetchNotifications(page) {
             processNotification(notification);
         }
     });
+
+    loadingPage = false;
 }
 
-// 4) bootstrap page 0 and wire up infinite‐scroll
-document.addEventListener("DOMContentLoaded", () => {
-    // initial load
-    loadingPage = true;
-    fetchNotifications(0).then(() => {
-        loadingPage = false;
-    });
+// on load, pull page 0 and wire up scroll on both containers
+document.addEventListener("DOMContentLoaded", function () {
+    fetchAnnouncementsPage(0);
 
-    // attach to both your body + nav-bar containers
     [container, document.getElementById("secondaryNotificationContainer")]
         .filter(el => el)
         .forEach(el => {
-            el.addEventListener("scroll", () => {
-                if (loadingPage || noMoreNotifications) return;
-                const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 50;
-                if (nearBottom) {
-                    loadingPage = true;
-                    currentPageForNotifications++;
-                    fetchNotifications(currentPageForNotifications).then(() => {
-                        loadingPage = false;
-                    });
+            el.addEventListener("scroll", function () {
+                if (loadingPage || noMoreAnnouncements) return;
+                if (el.scrollTop + el.clientHeight >= el.scrollHeight - 50) {
+                    currentPage++;
+                    fetchAnnouncementsPage(currentPage);
                 }
             });
         });
