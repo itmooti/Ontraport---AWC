@@ -432,29 +432,40 @@ const startTime = Date.now();
 let spinnerRemoved = false;
 
 
-async function initializeSocketGeneric(containerType, limit = 50) {
-    const containerElement = containerType === "body"
-        ? document.getElementById("parentNotificationTemplatesInBody")
-        : document.getElementById("secondaryNotificationContainer");
+async function initializeSocket() {
+    document.getElementById("socketLoader")?.classList.remove("hidden");
+    document.getElementById("parentNotificationTemplatesInBody")?.classList.add("hidden");
+    document.getElementById("noAllMessage")?.classList.add("hidden");
+    document.getElementById("noAnnouncementsMessage")?.classList.add("hidden");
 
-    const loaderId = containerType === "body" ? "socketLoader" : "socketLoadersec";
-    const loader = document.getElementById(loaderId);
-    loader?.classList.remove("hidden");
+    if (document.hidden) return;
 
     const classIds = await fetchClassIds();
     if (!classIds || classIds.length === 0) return;
 
     const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
+    let keepAliveInterval;
 
     socket.onopen = () => {
+        keepAliveInterval = setInterval(() => {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: "KEEP_ALIVE" }));
+            }
+        }, 28000);
+
         socket.send(JSON.stringify({ type: "connection_init" }));
+
         socket.send(
             JSON.stringify({
-                id: `subscription_${containerType}`,
+                id: "subscription_all_classes",
                 type: "GQL_START",
                 payload: {
                     query: getSubscriptionQueryForAllClasses(),
-                    variables: { class_id: classIds, offset: 0, limit }
+                    variables: {
+                        class_id: classIds,
+                        offset: 0,
+                        limit: 50000
+                    }
                 }
             })
         );
@@ -463,22 +474,26 @@ async function initializeSocketGeneric(containerType, limit = 50) {
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         if (data.type !== "GQL_DATA") return;
-        const result = data.payload?.data?.subscribeToAnnouncements;
+        if (!data.payload || !data.payload.data) return;
+
+        const result = data.payload.data.subscribeToAnnouncements;
         if (!result) return;
-
         const notifications = Array.isArray(result) ? result : [result];
-        const userId = Number(loggedInContactIdIntAwc);
 
+        // Existing logic for read status
         notifications.forEach((notification) => {
             if (
-                notification.Read_Contacts_Data?.some(
-                    (read) => Number(read.read_contact_id) === userId
+                notification.Read_Contacts_Data &&
+                notification.Read_Contacts_Data.some(
+                    (read) => Number(read.read_contact_id) === Number(loggedInContactIdIntAwc)
                 )
-            ) readAnnouncements.add(Number(notification.ID));
+            ) {
+                readAnnouncements.add(Number(notification.ID));
+            }
         });
 
         // Filter notifications based on type and user preferences
-        const filtered = notifications.filter((notification) => {
+        const filteredNotifications = notifications.filter((notification) => {
             const userId = Number(loggedInContactIdIntAwc);
             switch (notification.Notification_Type) {
                 case "Posts": {
@@ -541,16 +556,16 @@ async function initializeSocketGeneric(containerType, limit = 50) {
         });
 
 
-        if (filtered.length === 0) return;
+        if (filteredNotifications.length === 0) return;
 
-        filtered.forEach((notification) => {
+        filteredNotifications.forEach((notification) => {
             notificationIDs.add(Number(notification.ID));
             notificationData.push(notification);
         });
 
         notificationData.sort((a, b) => a.Date_Added - b.Date_Added);
         displayedNotifications.clear();
-        containerElement.innerHTML = "";
+        container.innerHTML = "";
 
         notificationData.forEach((notification) => {
             if (!displayedNotifications.has(Number(notification.ID))) {
@@ -558,6 +573,7 @@ async function initializeSocketGeneric(containerType, limit = 50) {
             }
         });
 
+        document.getElementById("socketLoader")?.classList.add("hidden");
         if (notificationData.length === 0) {
             document.getElementById("noAllMessage")?.classList.remove("hidden");
             document.getElementById("noAnnouncementsMessage")?.classList.remove("hidden");
@@ -567,7 +583,6 @@ async function initializeSocketGeneric(containerType, limit = 50) {
             document.getElementById("parentNotificationTemplatesInBody")?.classList.remove("hidden");
         }
 
-        loader?.classList.add("hidden");
         updateMarkAllReadVisibility();
     };
 
@@ -576,24 +591,14 @@ async function initializeSocketGeneric(containerType, limit = 50) {
     };
 
     socket.onclose = () => {
-        setTimeout(() => initializeSocketGeneric(containerType, limit), 28000);
+        clearInterval(keepAliveInterval);
+        setTimeout(() => {
+            if (!document.hidden) initializeSocket(); // retry on disconnect
+        }, 28000);
     };
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    const bodyContainerExists = document.getElementById("parentNotificationTemplatesInBody");
-    const navContainerExists = document.getElementById("secondaryNotificationContainer");
-
-    if (bodyContainerExists) {
-        initializeSocketGeneric("body", 5000);
-    }
-
-    if (navContainerExists) {
-        initializeSocketGeneric("nav", 50);
-    }
-});
-
-
+initializeSocket();
 
 function createNotificationCard(notification, isRead) {
     const assessmentType = notification.Submissions?.Assessment?.type;
