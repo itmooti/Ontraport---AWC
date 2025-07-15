@@ -260,7 +260,7 @@
         ]
         limit: $limit
         offset: $offset
-        orderBy: [{ path: ["created_at"], type: asc }]
+        orderBy: [{ path: ["created_at"], type: desc }]
       ) {
         ID: id
         Class_ID: class_id
@@ -462,7 +462,7 @@ Read_Contact_ID: read_contact_id
                         variables: { 
                             class_id: classIds,
                             offset: 0,
-                            limit: 30
+                            limit: 50
                         }
                     }
                 })
