@@ -129,8 +129,8 @@
         return `
     subscription subscribeToAnnouncements(
     $class_id: [AwcClassID]
-    $limit: 30
-    $offset: 0
+    $limit: IntScalar
+    $offset: IntScalar
     ) {
       subscribeToAnnouncements(
         query: [{ whereIn: { class_id: $class_id } }
@@ -459,7 +459,11 @@ Read_Contact_ID: read_contact_id
                     type: "GQL_START",
                     payload: {
                         query: getSubscriptionQueryForAllClasses(),
-                        variables: { class_id: classIds }
+                        variables: { 
+                            class_id: classIds,
+                            offset: 0,
+                            limit: 30
+                        }
                     }
                 })
             );
