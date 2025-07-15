@@ -1436,72 +1436,35 @@ async function fetchAnnouncementsPage(page) {
     });
 
     loadingPage = false;
-} async function fetchAnnouncementsPage(page) {
-    if (noMoreAnnouncements) return;
-    loadingPage = true;
-    const classIds = await fetchClassIds();
-    const offset = page * pageSize;
-    const res = await fetch(graphQlApiEndpointUrlAwc, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Api-Key": graphQlApiKeyAwc
-        },
-        body: JSON.stringify({
-            query: GET_ANNOUNCEMENTS_QUERY,
-            variables: { class_id: classIds, limit: pageSize, offset }
-        })
-    });
-    const json = await res.json();
-    const list = json?.data?.getAnnouncements || [];
-
-    if (list.length < pageSize) noMoreAnnouncements = true;
-
-    // reverse so older come below newer
-    list.reverse().forEach(notification => {
-        if (!notificationIDs.has(notification.ID)) {
-            notificationData.unshift(notification);
-            notificationIDs.add(notification.ID);
-            processNotification(notification);
-        }
-    });
-
-    loadingPage = false;
 }
 
-// Create one observer, but let it watch multiple sentinels
-const observer = new IntersectionObserver(entries => {
+function onIntersection(entries) {
     for (let entry of entries) {
         if (entry.isIntersecting && !loadingPage && !noMoreAnnouncements) {
             currentPageForNotifications++;
             fetchAnnouncementsPage(currentPageForNotifications);
         }
     }
-}, {
-    root: null,            // use viewport if you want page-level scroll
-    // root: containerMain, // or use container for inner scroll
+}
+
+// observe the “main” list
+const observerMain = new IntersectionObserver(onIntersection, {
+    root: containerMain,      // ← bind to the main container
     rootMargin: "0px",
     threshold: 1.0
 });
+observerMain.observe(sentinelMain);
 
-// start observing
-observer.observe(sentinelMain);
-observer.observe(sentinelNav);
+// observe the “nav” list
+const observerNav = new IntersectionObserver(onIntersection, {
+    root: containerNav,       // ← bind to the nav container
+    rootMargin: "0px",
+    threshold: 1.0
+});
+observerNav.observe(sentinelNav);
 
 
 // on load, pull page 0 and wire up scroll on both containers
 document.addEventListener("DOMContentLoaded", function () {
     fetchAnnouncementsPage(0);
-
-    [container, document.getElementById("secondaryNotificationContainer")]
-        .filter(el => el)
-        .forEach(el => {
-            el.addEventListener("scroll", function () {
-                if (loadingPage || noMoreAnnouncements) return;
-                if (el.scrollTop + el.clientHeight >= el.scrollHeight - 50) {
-                    currentPageForNotifications++;
-                    fetchAnnouncementsPage(currentPageForNotifications);
-                }
-            });
-        });
 });
