@@ -1440,6 +1440,7 @@ async function fetchAnnouncementsPage(page) {
 
 function onIntersection(entries) {
     for (let entry of entries) {
+        console.log("sentinel intersecting?", entry.isIntersecting);
         if (entry.isIntersecting && !loadingPage && !noMoreAnnouncements) {
             currentPageForNotifications++;
             fetchAnnouncementsPage(currentPageForNotifications);
@@ -1450,10 +1451,15 @@ function onIntersection(entries) {
 // observe the “main” list
 const observerMain = new IntersectionObserver(onIntersection, {
     root: containerMain,
-    rootMargin: "0px",
-    threshold: 1.0
+    rootMargin: "0px 0px 200px 0px",  // 200px “pre-load” before you actually hit the bottom
+    threshold: 0                       // fire as soon as any part of sentinel is visible
 });
-observerMain.observe(sentinelMain);
+
+if (sentinelMain) {
+    observerMain.observe(sentinelMain);
+} else {
+    console.error("⚠️ loadMoreSentinelMain not found in DOM");
+}
 
 // observe the “nav” list
 const observerNav = new IntersectionObserver(onIntersection, {
