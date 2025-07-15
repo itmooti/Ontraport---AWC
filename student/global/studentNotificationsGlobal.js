@@ -1,4 +1,4 @@
-let currentPage = 0;
+let currentPageForNotifications = 0;
 const pageSize = 20;
 let loadingPage = false;
 let noMoreNotifications = false;
@@ -57,8 +57,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 50;
                 if (nearBottom) {
                     loadingPage = true;
-                    currentPage++;
-                    fetchNotifications(currentPage).then(() => {
+                    currentPageForNotifications++;
+                    fetchNotifications(currentPageForNotifications).then(() => {
                         loadingPage = false;
                     });
                 }
