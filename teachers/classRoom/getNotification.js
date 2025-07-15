@@ -87,7 +87,11 @@ async function initializeSocket() {
         type: "GQL_START",
         payload: {
           query: getSubscriptionQueryForAllClasses(), // this function should return your new query
-          variables: { class_id: classIds }
+          variables: { 
+              class_id: classIds,
+              limit: 50,
+              offset: 0
+          }
         }
       })
     );
