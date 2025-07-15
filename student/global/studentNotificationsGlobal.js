@@ -432,7 +432,7 @@ const startTime = Date.now();
 let spinnerRemoved = false;
 
 
-async function initializeSocket() {
+async function initializeSocket(limit) {
     document.getElementById("socketLoader")?.classList.remove("hidden");
     document.getElementById("parentNotificationTemplatesInBody")?.classList.add("hidden");
     document.getElementById("noAllMessage")?.classList.add("hidden");
@@ -464,7 +464,7 @@ async function initializeSocket() {
                     variables: {
                         class_id: classIds,
                         offset: 0,
-                        limit: 50000
+                        limit: limit
                     }
                 }
             })
@@ -598,7 +598,18 @@ async function initializeSocket() {
     };
 }
 
-initializeSocket();
+document.addEventListener("DOMContentLoaded", () => {
+    const navContainerExists = document.getElementById("parentNotificationTemplatesInBody");
+    const bodyContainerExists = document.getElementById("secondaryNotificationContainer");
+
+    if (bodyContainerExists) {
+        initializeSocket(50000);
+    }
+
+    if (navContainerExists) {
+        initializeSocket(10);
+    }
+});
 
 function createNotificationCard(notification, isRead) {
     const assessmentType = notification.Submissions?.Assessment?.type;
