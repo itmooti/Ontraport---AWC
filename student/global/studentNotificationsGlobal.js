@@ -1473,8 +1473,8 @@ async function fetchAnnouncementsPage(page) {
 const observer = new IntersectionObserver(entries => {
     for (let entry of entries) {
         if (entry.isIntersecting && !loadingPage && !noMoreAnnouncements) {
-            currentPage++;
-            fetchAnnouncementsPage(currentPage);
+            currentPageForNotifications++;
+            fetchAnnouncementsPage(currentPageForNotifications);
         }
     }
 }, {
@@ -1499,8 +1499,8 @@ document.addEventListener("DOMContentLoaded", function () {
             el.addEventListener("scroll", function () {
                 if (loadingPage || noMoreAnnouncements) return;
                 if (el.scrollTop + el.clientHeight >= el.scrollHeight - 50) {
-                    currentPage++;
-                    fetchAnnouncementsPage(currentPage);
+                    currentPageForNotifications++;
+                    fetchAnnouncementsPage(currentPageForNotifications);
                 }
             });
         });
