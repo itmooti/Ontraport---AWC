@@ -127,7 +127,11 @@
 
     function getSubscriptionQueryForAllClasses() {
         return `
-    subscription subscribeToAnnouncements($class_id: [AwcClassID]) {
+    subscription subscribeToAnnouncements(
+    $class_id: [AwcClassID]
+    $limit: 30
+    $offset: 0
+    ) {
       subscribeToAnnouncements(
         query: [{ whereIn: { class_id: $class_id } }
           {
