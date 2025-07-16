@@ -309,7 +309,7 @@ async function waitForDueDates() {
         const fileData = extractFileData(sub.File_Upload);
         const dueDateUnix = getDueDateUnix(sub.Assessment_Lesson_ID);
         const submissionDateUnix = sub.Submission_Date_Time;
-      const formattedDueDate = dueDateUnix ? formatTime(dueDateUnix) : "No Due Date";
+      const formattedDueDate = dueDateUnix ? dueDateUnix : "No Due Date";
 
         return {
             ...sub,
