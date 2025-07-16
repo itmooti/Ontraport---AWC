@@ -151,14 +151,14 @@ function computeDueDateFromAssessment(startDate, dueEndOfWeekValue) {
   const totalDays = (dueEndOfWeekValue - 1) * 7;
   const dueDate = new Date(startDate);
   dueDate.setDate(startDate.getDate() + totalDays);
-  date = setSydneyTime(date, 23, 59);  // Or 00:00 if needed
-  return dueDate;
+  const adjusted = setSydneyTime(dueDate, 23, 59);
+  return adjusted;
 }
 
 function computeDueDateFromCustomization(startDate, daysOffset) {
   let dueDate = new Date(startDate);
   dueDate.setDate(startDate.getDate() + parseInt(daysOffset, 10));
-  date = setSydneyTime(date, 23, 59);  // Or 00:00 if needed
+  dueDate = setSydneyTime(date, 23, 59);
   if (dueDate < startDate) {
     let adjusted = new Date(startDate);
     adjusted = setSydneyTime(adjusted, 23, 59);
@@ -193,7 +193,7 @@ function computeAssessmentDueDateFromCustomization(
 ) {
   if (customization.Specific_Date && !isNaN(customization.Specific_Date)) {
     const date = new Date(customization.Specific_Date * 1000);
-    date = setSydneyTime(date, 23, 59);  // Or 00:00 if needed
+    date = setSydneyTime(date, 23, 59); 
     return date;
   }
 
@@ -212,8 +212,7 @@ function computeAssessmentDueDateFromCustomization(
     dueDate.setDate(
       dueDate.getDate() + parseInt(customization.Days_to_Offset, 10)
     );
-    date = setSydneyTime(date, 23, 59);  // Or 00:00 if needed
-    return dueDate;
+    return setSydneyTime(dueDate, 23, 59);
   }
 
   if (
