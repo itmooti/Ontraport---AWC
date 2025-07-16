@@ -1,7 +1,7 @@
-function setSydneyTime(date, hours, minutes) {
-  const sydneyDate = new Date(date.toLocaleString('en-US', { timeZone: 'Australia/Sydney' }));
-  sydneyDate.setHours(hours, minutes, 0, 0);
-  return new Date(sydneyDate.toLocaleString('en-US', { timeZone: 'UTC' }));
+function setSydneyTime(date, hours = 0, minutes = 0) {
+  const sydneyTime = new Date(date.toLocaleString('en-US', { timeZone: 'Australia/Sydney' }));
+  sydneyTime.setHours(hours, minutes, 0, 0);
+  return new Date(sydneyTime.toLocaleString('en-US', { timeZone: 'UTC' }));
 }
 
 
@@ -235,7 +235,7 @@ function computeAssessmentDueDateFromCustomization(
   }
 
   const fallback = new Date(classStartDate);
-  fallback.setHours(0, 0, 0, 0);
+  fallback = setSydneyTime(fallback, 23, 59);
   return fallback;
 }
 
@@ -306,7 +306,7 @@ async function loadAssignments() {
       } else {
         // NEW:
         let fallback = new Date(startDate);
-        fallback.setHours(0, 0, 0, 0);
+        fallback = setSydneyTime(fallback, 23, 59);
         dueDate = fallback;
       }
       dueDates.push({
