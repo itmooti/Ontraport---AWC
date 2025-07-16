@@ -1,3 +1,10 @@
+function setSydneyTime(date, hours, minutes) {
+  const sydneyDate = new Date(date.toLocaleString('en-US', { timeZone: 'Australia/Sydney' }));
+  sydneyDate.setHours(hours, minutes, 0, 0);
+  return new Date(sydneyDate.toLocaleString('en-US', { timeZone: 'UTC' }));
+}
+
+
 // Updated GraphQL query (search parameter removed)
 let FetchLessonQuery = `
         query calcLessons($limit: IntScalar, $offset: IntScalar) {
@@ -144,14 +151,14 @@ function computeDueDateFromAssessment(startDate, dueEndOfWeekValue) {
   const totalDays = (dueEndOfWeekValue - 1) * 7;
   const dueDate = new Date(startDate);
   dueDate.setDate(startDate.getDate() + totalDays);
-  dueDate.setHours(0, 0, 0, 0);
+  date = setSydneyTime(date, 23, 59);  // Or 00:00 if needed
   return dueDate;
 }
 
 function computeDueDateFromCustomization(startDate, daysOffset) {
   let dueDate = new Date(startDate);
   dueDate.setDate(startDate.getDate() + parseInt(daysOffset, 10));
-  dueDate.setHours(0, 0, 0, 0);
+  date = setSydneyTime(date, 23, 59);  // Or 00:00 if needed
   if (dueDate < startDate) {
     let adjusted = new Date(startDate);
     adjusted.setHours(0, 0, 0, 0);
@@ -186,7 +193,7 @@ function computeAssessmentDueDateFromCustomization(
 ) {
   if (customization.Specific_Date && !isNaN(customization.Specific_Date)) {
     const date = new Date(customization.Specific_Date * 1000);
-    date.setHours(0, 0, 0, 0);
+    date = setSydneyTime(date, 23, 59);  // Or 00:00 if needed
     return date;
   }
 
@@ -205,7 +212,7 @@ function computeAssessmentDueDateFromCustomization(
     dueDate.setDate(
       dueDate.getDate() + parseInt(customization.Days_to_Offset, 10)
     );
-    dueDate.setHours(0, 0, 0, 0);
+    date = setSydneyTime(date, 23, 59);  // Or 00:00 if needed
     return dueDate;
   }
 
@@ -223,7 +230,7 @@ function computeAssessmentDueDateFromCustomization(
           10
         )
     );
-    dueDate.setHours(0, 0, 0, 0);
+    date = setSydneyTime(date, 23, 59);  // Or 00:00 if needed
     return dueDate;
   }
 
