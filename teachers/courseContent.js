@@ -8,9 +8,10 @@ function getClassUid() {
   return params.get('classUID')?.replace(/'/g, '') ?? null;
 }
 
-const classUid = getClassUid();
-
-console.log("Class uid is ", classUid);
+document.addEventListener("DOMContentLoaded", function(){
+	const classUid = getClassUid();
+	console.log("Class uid is ", classUid);	
+});
 
     let completedQueryForTeacher;
     let inProgressQueryForTeacher;
