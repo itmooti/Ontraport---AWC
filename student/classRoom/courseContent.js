@@ -52,60 +52,7 @@ function getSydneyMidnightTimestamp(msTime) {
   return Date.UTC(year, month - 1, day, 0, 0, 0) - offsetMinutes * 60 * 1000;
 }
 
-// async function fetchClassIdFromUrl() {
-//   console.log("fetchClassIdFromUrl start, URL:", window.location.href);
-//   const regex = /[?&]eid=([^&#]*)/;
-//   const match = window.location.href.match(regex);
-//   console.log("  Regex match result:", match);
-//   if (!match || !match[1]) {
-//     console.log("  No eid found in URL, returning null");
-//     return null;
-//   }
 
-//   const eidforEnroll = match[1];
-//   console.log("  Extracted eidforEnroll:", eidforEnroll);
-//   const query = {
-//     query: `
-//       query calcEnrolments {
-//         calcEnrolments(
-//           query: [
-//             { where: { id: "${eidforEnroll}" } }
-//             { andWhere: { course_id: "${COURSE_ID}" } }
-//           ]
-//         ) {
-//           Class_ID: field(arg: ["class_id"])
-//         }
-//       }
-//     `,
-//   };
-//   console.log("  GraphQL query:", query.query.trim());
-
-//   try {
-//     const response = await fetch("https://awc.vitalstats.app/api/v1/graphql", {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//         "Api-Key": "mMzQezxyIwbtSc85rFPs3",
-//       },
-//       body: JSON.stringify(query),
-//     });
-//     console.log("  fetch response:", response);
-//     const data = await response.json();
-//     console.log("  Parsed JSON data:", data);
-//     const enrolments = data?.data?.calcEnrolments;
-//     console.log("  enrolments array:", enrolments);
-
-//     if (Array.isArray(enrolments) && enrolments.length > 0) {
-//       console.log("  Returning Class_ID:", enrolments[0].Class_ID);
-//       return enrolments[0].Class_ID;
-//     }
-//   } catch (err) {
-//     console.error("  fetchClassIdFromUrl error:", err);
-//   }
-
-//   console.log("  No class ID found, returning null");
-//   return null;
-// }
 async function fetchClassIdFromUrl() {
   console.log("fetchClassIdFromUrl start, URL:", window.location.href);
 
@@ -425,85 +372,17 @@ function formatDateNew(unixTimestamp) {
   return formatted;
 }
 
-// function determineAvailability(startDateUnix, weekOpen, customisations = []) {
-//   console.log("determineAvailability called with:", {
-//     startDateUnix,
-//     weekOpen,
-//     customisations,
-//   });
-//   const todayUnix = getSydneyUnixFromLocalNow();
-//   console.log("  todayUnix:", todayUnix);
-//   if (!startDateUnix) {
-//     console.log("  No startDateUnix, returning unavailable");
-//     return { isAvailable: false, openDateText: "No Start Date" };
-//   }
-
-//   const SECONDS_IN_DAY = 86400;
-//   const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
-//   let openDateUnix;
-
-//   const sortedCustomisations = [...customisations].sort(
-//     (a, b) => new Date(b.created_at) - new Date(a.created_at)
-//   );
-//   console.log("  sortedCustomisations:", sortedCustomisations);
-
-//   const latestWithDate = sortedCustomisations.find((c) => c.specific_date);
-//   console.log("  latestWithDate:", latestWithDate);
-//   const latestWithOffset = sortedCustomisations.find(
-//     (c) => c.days_to_offset !== null && c.days_to_offset !== undefined
-//   );
-//   console.log("  latestWithOffset:", latestWithOffset);
-
-//   if (latestWithDate) {
-//     openDateUnix =
-//       latestWithDate.specific_date > 9999999999
-//         ? latestWithDate.specific_date
-//         : latestWithDate.specific_date * 1000;
-//     console.log("  Using specific_date, openDateUnix:", openDateUnix);
-//   } else if (weekOpen === 0) {
-//     console.log("  weekOpen=0, available anytime");
-//     return { isAvailable: true, openDateText: "Available anytime" };
-//   } else {
-//     openDateUnix = (startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000;
-//     openDateUnix = getSydneyMidnightTimestamp(openDateUnix);
-//     console.log("  After weekOpen, raw openDateUnix:", openDateUnix);
-//     if (latestWithOffset) {
-//       openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
-//       console.log("  After offset, raw openDateUnix:", openDateUnix);
-//       openDateUnix = getSydneyMidnightTimestamp(openDateUnix);
-//       console.log("  Snapped to Sydney midnight, openDateUnix:", openDateUnix);
-//     }
-//   }
-
-//   const isAvailable = todayUnix <= openDateUnix;
-//   const openDateText = `Unlocks on ${formatDateNew(openDateUnix)}`;
-//   console.log("  determineAvailability returning:", {
-//     isAvailable,
-//     openDateText,
-//     openDateUnix,
-//   });
-//   return { isAvailable, openDateText, openDateUnix };
-// }
-
 function determineAvailability(startDateUnix, weekOpen, customisations = []) {
   console.log("determineAvailability called with:", {
     startDateUnix,
     weekOpen,
     customisations,
   });
-
   const todayUnix = getSydneyUnixFromLocalNow();
   console.log("  todayUnix:", todayUnix);
-
   if (!startDateUnix) {
     console.log("  No startDateUnix, returning unavailable");
     return { isAvailable: false, openDateText: "No Start Date" };
-  }
-
-  // 🔴 New logic: if weekOpen is null or 0, it's unavailable no matter what
-  if (weekOpen === null || weekOpen === 0) {
-    console.log("  weekOpen is null or 0, returning unavailable");
-    return { isAvailable: false, openDateText: "Unavailable" };
   }
 
   const SECONDS_IN_DAY = 86400;
@@ -517,7 +396,6 @@ function determineAvailability(startDateUnix, weekOpen, customisations = []) {
 
   const latestWithDate = sortedCustomisations.find((c) => c.specific_date);
   console.log("  latestWithDate:", latestWithDate);
-
   const latestWithOffset = sortedCustomisations.find(
     (c) => c.days_to_offset !== null && c.days_to_offset !== undefined
   );
@@ -529,11 +407,13 @@ function determineAvailability(startDateUnix, weekOpen, customisations = []) {
         ? latestWithDate.specific_date
         : latestWithDate.specific_date * 1000;
     console.log("  Using specific_date, openDateUnix:", openDateUnix);
+  } else if (weekOpen === 0) {
+    console.log("  weekOpen=0, available anytime");
+    return { isAvailable: true, openDateText: "Available anytime" };
   } else {
     openDateUnix = (startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000;
     openDateUnix = getSydneyMidnightTimestamp(openDateUnix);
     console.log("  After weekOpen, raw openDateUnix:", openDateUnix);
-
     if (latestWithOffset) {
       openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
       console.log("  After offset, raw openDateUnix:", openDateUnix);
@@ -551,6 +431,73 @@ function determineAvailability(startDateUnix, weekOpen, customisations = []) {
   });
   return { isAvailable, openDateText, openDateUnix };
 }
+
+// function determineAvailability(startDateUnix, weekOpen, customisations = []) {
+//   console.log("determineAvailability called with:", {
+//     startDateUnix,
+//     weekOpen,
+//     customisations,
+//   });
+
+//   const todayUnix = getSydneyUnixFromLocalNow();
+//   console.log("  todayUnix:", todayUnix);
+
+//   if (!startDateUnix) {
+//     console.log("  No startDateUnix, returning unavailable");
+//     return { isAvailable: false, openDateText: "No Start Date" };
+//   }
+
+//   // 🔴 New logic: if weekOpen is null or 0, it's unavailable no matter what
+//   if (weekOpen === null || weekOpen === 0) {
+//     console.log("  weekOpen is null or 0, returning unavailable");
+//     return { isAvailable: false, openDateText: "Unavailable" };
+//   }
+
+//   const SECONDS_IN_DAY = 86400;
+//   const SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
+//   let openDateUnix;
+
+//   const sortedCustomisations = [...customisations].sort(
+//     (a, b) => new Date(b.created_at) - new Date(a.created_at)
+//   );
+//   console.log("  sortedCustomisations:", sortedCustomisations);
+
+//   const latestWithDate = sortedCustomisations.find((c) => c.specific_date);
+//   console.log("  latestWithDate:", latestWithDate);
+
+//   const latestWithOffset = sortedCustomisations.find(
+//     (c) => c.days_to_offset !== null && c.days_to_offset !== undefined
+//   );
+//   console.log("  latestWithOffset:", latestWithOffset);
+
+//   if (latestWithDate) {
+//     openDateUnix =
+//       latestWithDate.specific_date > 9999999999
+//         ? latestWithDate.specific_date
+//         : latestWithDate.specific_date * 1000;
+//     console.log("  Using specific_date, openDateUnix:", openDateUnix);
+//   } else {
+//     openDateUnix = (startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000;
+//     openDateUnix = getSydneyMidnightTimestamp(openDateUnix);
+//     console.log("  After weekOpen, raw openDateUnix:", openDateUnix);
+
+//     if (latestWithOffset) {
+//       openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
+//       console.log("  After offset, raw openDateUnix:", openDateUnix);
+//       openDateUnix = getSydneyMidnightTimestamp(openDateUnix);
+//       console.log("  Snapped to Sydney midnight, openDateUnix:", openDateUnix);
+//     }
+//   }
+
+//   const isAvailable = todayUnix <= openDateUnix;
+//   const openDateText = `Unlocks on ${formatDateNew(openDateUnix)}`;
+//   console.log("  determineAvailability returning:", {
+//     isAvailable,
+//     openDateText,
+//     openDateUnix,
+//   });
+//   return { isAvailable, openDateText, openDateUnix };
+// }
 
 
 function determineAssessmentDueDateUnified(
