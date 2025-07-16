@@ -141,31 +141,37 @@ function formatDueString(date) {
   const minutes = date.getMinutes().toString().padStart(2, "0");
   const monthAbbr = months[date.getMonth()];
   const dayOfMonth = date.getDate();
-  return `Due By ${dayOfMonth} ${monthAbbr}`;
+  return `Due By ${dayOfMonth} ${monthAbbr} - 11:59 pm`;
+
 }
 
 // Due date calculations (unchanged)
 function computeDueDateFromAssessment(startDate, dueEndOfWeekValue) {
   dueEndOfWeekValue = parseInt(dueEndOfWeekValue, 10);
   if (!dueEndOfWeekValue || dueEndOfWeekValue === 0) return null;
+
   const totalDays = (dueEndOfWeekValue - 1) * 7;
   const dueDate = new Date(startDate);
   dueDate.setDate(startDate.getDate() + totalDays);
-  const adjusted = setSydneyTime(dueDate, 23, 59);
+  const adjusted = setSydneyTime(dueDate, 23, 59); // ✅ Good
   return adjusted;
 }
+
 
 function computeDueDateFromCustomization(startDate, daysOffset) {
   let dueDate = new Date(startDate);
   dueDate.setDate(startDate.getDate() + parseInt(daysOffset, 10));
-  dueDate = setSydneyTime(date, 23, 59);
+  dueDate = setSydneyTime(dueDate, 23, 59);
+
   if (dueDate < startDate) {
     let adjusted = new Date(startDate);
     adjusted = setSydneyTime(adjusted, 23, 59);
     return adjusted;
   }
+
   return dueDate;
 }
+
 
 // Convert global classStartDate (Unix seconds) into a Date using UTC values.
 function getStartDate() {
@@ -187,55 +193,94 @@ function debounce(func, delay) {
 }
 
 // New function for due date calculation based on customization fields
-function computeAssessmentDueDateFromCustomization(
-  customization,
-  classStartDate
-) {
-  if (customization.Specific_Date && !isNaN(customization.Specific_Date)) {
-    const date = new Date(customization.Specific_Date * 1000);
-    date = setSydneyTime(date, 23, 59); 
-    return date;
-  }
+// function computeAssessmentDueDateFromCustomization(
+//   customization,
+//   classStartDate
+// ) {
+//   if (customization.Specific_Date && !isNaN(customization.Specific_Date)) {
+//     const date = new Date(customization.Specific_Date * 1000);
+//     date = setSydneyTime(date, 23, 59); 
+//     return date;
+//   }
 
-  let weekOpen = parseInt(customization.Module_Week_Open_from_Start_Date, 10);
-  if (isNaN(weekOpen) || weekOpen < 1) weekOpen = 1;
+//   let weekOpen = parseInt(customization.Module_Week_Open_from_Start_Date, 10);
+//   if (isNaN(weekOpen) || weekOpen < 1) weekOpen = 1;
 
-  let moduleOpenDate = new Date(classStartDate);
-  moduleOpenDate.setDate(moduleOpenDate.getDate() + (weekOpen - 1) * 7);
+//   let moduleOpenDate = new Date(classStartDate);
+//   moduleOpenDate.setDate(moduleOpenDate.getDate() + (weekOpen - 1) * 7);
 
-  if (
-    customization.Days_to_Offset !== null &&
-    customization.Days_to_Offset !== undefined &&
-    customization.Days_to_Offset !== ""
-  ) {
-    const dueDate = new Date(moduleOpenDate);
-    dueDate.setDate(
-      dueDate.getDate() + parseInt(customization.Days_to_Offset, 10)
-    );
-    return setSydneyTime(dueDate, 23, 59);
-  }
+//   if (
+//     customization.Days_to_Offset !== null &&
+//     customization.Days_to_Offset !== undefined &&
+//     customization.Days_to_Offset !== ""
+//   ) {
+//     const dueDate = new Date(moduleOpenDate);
+//     dueDate.setDate(
+//       dueDate.getDate() + parseInt(customization.Days_to_Offset, 10)
+//     );
+//     return setSydneyTime(dueDate, 23, 59);
+//   }
 
-  if (
-    customization.Lesson_To_Modify_Due_days_after_module_open_date !== null &&
-    customization.Lesson_To_Modify_Due_days_after_module_open_date !==
-      undefined &&
-    customization.Lesson_To_Modify_Due_days_after_module_open_date !== ""
-  ) {
-    const dueDate = new Date(moduleOpenDate);
-    dueDate.setDate(
-      dueDate.getDate() +
-        parseInt(
-          customization.Lesson_To_Modify_Due_days_after_module_open_date,
-          10
-        )
-    );
-    date = setSydneyTime(date, 23, 59);  // Or 00:00 if needed
-    return dueDate;
-  }
+//   if (
+//     customization.Lesson_To_Modify_Due_days_after_module_open_date !== null &&
+//     customization.Lesson_To_Modify_Due_days_after_module_open_date !==
+//       undefined &&
+//     customization.Lesson_To_Modify_Due_days_after_module_open_date !== ""
+//   ) {
+//     const dueDate = new Date(moduleOpenDate);
+//     dueDate.setDate(
+//       dueDate.getDate() +
+//         parseInt(
+//           customization.Lesson_To_Modify_Due_days_after_module_open_date,
+//           10
+//         )
+//     );
+//     date = setSydneyTime(date, 23, 59);  // Or 00:00 if needed
+//     return dueDate;
+//   }
 
-  const fallback = new Date(classStartDate);
-  fallback = setSydneyTime(fallback, 23, 59);
-  return fallback;
+//   const fallback = new Date(classStartDate);
+//   fallback = setSydneyTime(fallback, 23, 59);
+//   return fallback;
+// }
+
+function computeAssessmentDueDateFromCustomization(customization, classStartDate) {
+    if (customization.Specific_Date && !isNaN(customization.Specific_Date)) {
+        const date = new Date(customization.Specific_Date * 1000);
+        date = setSydneyTime(date, 23, 59);
+        return date;
+    }
+
+    let weekOpen = parseInt(customization.Module_Week_Open_from_Start_Date, 10);
+    if (isNaN(weekOpen) || weekOpen < 1) weekOpen = 1;
+
+    let moduleOpenDate = new Date(classStartDate);
+    moduleOpenDate.setDate(moduleOpenDate.getDate() + (weekOpen - 1) * 7);
+
+    if (customization.Days_to_Offset !== null && customization.Days_to_Offset !== undefined && customization.Days_to_Offset !== "") {
+        const dueDate = new Date(moduleOpenDate);
+        dueDate.setDate(dueDate.getDate() + parseInt(customization.Days_to_Offset, 10));
+        return setSydneyTime(dueDate, 23, 59);
+    }
+
+    if (customization.Lesson_To_Modify_Due_days_after_module_open_date !== null &&
+        customization.Lesson_To_Modify_Due_days_after_module_open_date !==
+        undefined &&
+        customization.Lesson_To_Modify_Due_days_after_module_open_date !== ""
+    ) {
+        const dueDate = new Date(moduleOpenDate);
+        dueDate.setDate(
+            dueDate.getDate() +
+            parseInt(
+                customization.Lesson_To_Modify_Due_days_after_module_open_date,
+                10
+            )
+        );
+        return setSydneyTime(dueDate, 23, 59); 
+    }
+
+    let fallback = new Date(classStartDate);
+    return setSydneyTime(fallback, 23, 59); // ✅ Also correct this
 }
 
 // Load assignments and then filter based on the frontend search query.
@@ -304,9 +349,8 @@ async function loadAssignments() {
         );
       } else {
         // NEW:
-        let fallback = new Date(startDate);
-        fallback = setSydneyTime(fallback, 23, 59);
-        dueDate = fallback;
+        dueDate = setSydneyTime(new Date(startDate), 23, 59);
+
       }
       dueDates.push({
         lessonID: lesson.ID,
