@@ -7,9 +7,16 @@ function getClassUid() {
   const params = new URL(window.location.href).searchParams;
   return params.get('classUID')?.replace(/'/g, '') ?? null;
 }
+const classUid = getClassUid();
+console.log("Class uid is ", classUid);	
+
+function getClassUidNew() {
+  const params = new URL(window.location.href).searchParams;
+  return params.get('classUid')?.replace(/'/g, '') ?? null;
+}
 
 document.addEventListener("DOMContentLoaded", function(){
-	const classUid = getClassUid();
+	const classUid = getClassUidNew();
 	console.log("Class uid is ", classUid);	
 });
 
