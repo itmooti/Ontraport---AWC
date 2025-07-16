@@ -161,7 +161,7 @@ function computeDueDateFromCustomization(startDate, daysOffset) {
   date = setSydneyTime(date, 23, 59);  // Or 00:00 if needed
   if (dueDate < startDate) {
     let adjusted = new Date(startDate);
-    adjusted.setHours(0, 0, 0, 0);
+    adjusted = setSydneyTime(adjusted, 23, 59);
     return adjusted;
   }
   return dueDate;
