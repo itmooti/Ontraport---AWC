@@ -15,10 +15,6 @@ function getClassUidNew() {
   return params.get('classUid')?.replace(/'/g, '') ?? null;
 }
 
-document.addEventListener("DOMContentLoaded", function(){
-	const classUid = getClassUidNew();
-	console.log("Class uid is ", classUid);	
-});
 
     let completedQueryForTeacher;
     let inProgressQueryForTeacher;
