@@ -104,7 +104,7 @@
     hour12: true,
     timeZone: "Australia/Sydney"
       }).toLowerCase();
-    return `${day} ${month} - ${time}`;
+    return `${day} ${month}`;
     }
 
     // Extract file upload link and name
