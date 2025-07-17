@@ -580,16 +580,18 @@ async function initializeSocketGeneric(containerType, limit = 50) {
     };
 }
 
-let socketInited = false;
 document.addEventListener("DOMContentLoaded", () => {
-  if (socketInited) return;
-  const bodyExists = !!document.getElementById("parentNotificationTemplatesInBody");
-  const navExists  = !!document.getElementById("secondaryNotificationContainer");
-  if (bodyExists) initializeSocketGeneric("body", 100);
-  else if (navExists) initializeSocketGeneric("nav", 50000);
-  socketInited = true;
-});
+    const bodyContainerExists = document.getElementById("parentNotificationTemplatesInBody");
+    const navContainerExists = document.getElementById("secondaryNotificationContainer");
 
+    if (bodyContainerExists) {
+        initializeSocketGeneric("body", 100);
+    }
+
+    if (navContainerExists) {
+        initializeSocketGeneric("nav", 50000);
+    }
+});
 
 
 
