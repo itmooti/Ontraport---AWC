@@ -352,70 +352,95 @@ const MARK_READ_MUTATION = `
     }
 `;
 
-// --- Per-container notification system ---
+const container = document.getElementById("parentNotificationTemplatesInBody");
+const readAnnouncements = new Set();
+const pendingAnnouncements = new Set();
+const notificationIDs = new Set();
+const notificationData = [];
+const cardMap = new Map();
+const displayedNotifications = new Set();
 
-function createNotificationSystem(containerElement, limit) {
-    // Per-container state
-    let notificationData = [];
-    let cardMap = new Map();
-    let displayedNotifications = new Set();
-
-    // Utility functions (per-container)
-    function processNotification(notification) {
-        const id = Number(notification.ID);
-        if (displayedNotifications.has(id)) return;
-        displayedNotifications.add(id);
-        const isRead = readAnnouncements.has(id);
-        const card = createNotificationCard(notification, isRead);
-        containerElement.prepend(card);
-        cardMap.set(id, card);
-        notificationData.push(notification);
-        updateNoNotificationMessages();
-    }
-
-    function updateNoNotificationMessages() {
-        // You may want to adapt this for your UI
-        // Example: show/hide a 'no notifications' message
-        const noMsg = containerElement.querySelector('.no-notifications-message');
-        if (noMsg) {
-            noMsg.classList.toggle('hidden', notificationData.length > 0);
-        }
-    }
-
-    function clearNotifications() {
-        displayedNotifications.clear();
-        cardMap.clear();
-        notificationData = [];
-        containerElement.innerHTML = "";
-    }
-
-    // Main handler for incoming notifications
-    function handleNotifications(notifications) {
-        clearNotifications();
-        // Limit if needed
-        const toShow = limit ? notifications.slice(0, limit) : notifications;
-        toShow.forEach(processNotification);
-    }
-
-    return {
-        handleNotifications,
-        clearNotifications,
-        cardMap,
-        notificationData
-    };
+function getQueryParamss(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
 }
 
-// --- Socket logic ---
+const enrollID = getQueryParamss("eid");
+
+function timeAgo(unixTimestamp) {
+    const now = new Date();
+    const date = new Date(unixTimestamp * 1000);
+    const seconds = Math.floor((now - date) / 1000);
+    let interval = Math.floor(seconds / 31536000);
+    if (interval >= 1)
+        return interval + " year" + (interval > 1 ? "s" : "") + " ago";
+    interval = Math.floor(seconds / 2592000);
+    if (interval >= 1)
+        return interval + " month" + (interval > 1 ? "s" : "") + " ago";
+    interval = Math.floor(seconds / 86400);
+    if (interval >= 1)
+        return interval + " day" + (interval > 1 ? "s" : "") + " ago";
+    interval = Math.floor(seconds / 3600);
+    if (interval >= 1)
+        return interval + " hour" + (interval > 1 ? "s" : "") + " ago";
+    interval = Math.floor(seconds / 60);
+    if (interval >= 1)
+        return interval + " min" + (interval > 1 ? "s" : "") + " ago";
+    return "Just now";
+}
+
+let cachedClassIds = null;
+let socketConnections = new Map();
+//
+async function fetchClassIds() {
+    if (cachedClassIds !== null) return cachedClassIds;
+    const query = `
+    query calcEnrolments {
+      calcEnrolments(
+        query: [
+          { where: { student_id: ${loggedInContactIdIntAwc} } }
+        ]
+        limit: 5000 
+        offset: 0
+      ) {
+        Class_ID: field(arg: ["class_id"])
+      }
+    }
+  `;
+    try {
+        const response = await fetch(graphQlApiEndpointUrlAwc, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Api-Key": graphQlApiKeyAwc,
+            },
+            body: JSON.stringify({ query }),
+        });
+        const result = await response.json();
+        if (result.data && result.data.calcEnrolments) {
+            cachedClassIds = result.data.calcEnrolments.map(
+                (enrolment) => enrolment.Class_ID
+            );
+            return cachedClassIds;
+        }
+        return [];
+    } catch (error) {
+        return [];
+    }
+}
+
+let totalSockets = 0;
+let completedSockets = 0;
+const startTime = Date.now();
+let spinnerRemoved = false;
+
 
 async function initializeSocketGeneric(containerType, limit = 50) {
     const containerElement = containerType === "body"
-        ? document.getElementById("secondaryNotificationContainer")
-        : document.getElementById("parentNotificationTemplatesInBody");
-    if (!containerElement) return;
+        ? document.getElementById("parentNotificationTemplatesInBody")
+        : document.getElementById("secondaryNotificationContainer");
 
-    const notificationSystem = createNotificationSystem(containerElement, limit);
-
-    const loaderId = containerType === "body" ? "socketLoadersec" : "socketLoader";
+    const loaderId = containerType === "body" ? "socketLoader" : "socketLoadersec";
     const loader = document.getElementById(loaderId);
     loader?.classList.remove("hidden");
 
@@ -443,8 +468,19 @@ async function initializeSocketGeneric(containerType, limit = 50) {
         if (data.type !== "GQL_DATA") return;
         const result = data.payload?.data?.subscribeToAnnouncements;
         if (!result) return;
+
         const notifications = Array.isArray(result) ? result : [result];
-        // Filtering logic (unchanged)
+        const userId = Number(loggedInContactIdIntAwc);
+
+        notifications.forEach((notification) => {
+            if (
+                notification.Read_Contacts_Data?.some(
+                    (read) => Number(read.read_contact_id) === userId
+                )
+            ) readAnnouncements.add(Number(notification.ID));
+        });
+
+        // Filter notifications based on type and user preferences
         const filtered = notifications.filter((notification) => {
             const userId = Number(loggedInContactIdIntAwc);
             switch (notification.Notification_Type) {
@@ -506,28 +542,57 @@ async function initializeSocketGeneric(containerType, limit = 50) {
                     return false;
             }
         });
-        notificationSystem.handleNotifications(filtered);
+
+
+        if (filtered.length === 0) return;
+
+        filtered.forEach((notification) => {
+            notificationIDs.add(Number(notification.ID));
+            notificationData.push(notification);
+        });
+
+        notificationData.sort((a, b) => a.Date_Added - b.Date_Added);
+        displayedNotifications.clear();
+        containerElement.innerHTML = "";
+
+        notificationData.forEach((notification) => {
+            if (!displayedNotifications.has(Number(notification.ID))) {
+                processNotification(notification);
+            }
+        });
+
+        if (notificationData.length === 0) {
+            document.getElementById("noAllMessage")?.classList.remove("hidden");
+            document.getElementById("noAnnouncementsMessage")?.classList.remove("hidden");
+        } else {
+            document.getElementById("noAllMessage")?.classList.add("hidden");
+            document.getElementById("noAnnouncementsMessage")?.classList.add("hidden");
+            document.getElementById("parentNotificationTemplatesInBody")?.classList.remove("hidden");
+        }
+
         loader?.classList.add("hidden");
+        updateMarkAllReadVisibility();
     };
 
-    socket.onerror = () => {};
+    socket.onerror = () => {
+        // Optional: log errors
+    };
+
     socket.onclose = () => {
         setTimeout(() => initializeSocketGeneric(containerType, limit), 28000);
     };
 }
 
-// --- DOMContentLoaded handler ---
 document.addEventListener("DOMContentLoaded", () => {
-    const navContainerExists = document.getElementById("parentNotificationTemplatesInBody");
-    const bodyContainerExists = document.getElementById("secondaryNotificationContainer");
+    const bodyContainerExists = document.getElementById("parentNotificationTemplatesInBody");
+    const navContainerExists = document.getElementById("secondaryNotificationContainer");
+
+    if (bodyContainerExists) {
+        initializeSocketGeneric("body", 1000);
+    }
 
     if (navContainerExists) {
-        // Always show a few in nav
-        initializeSocketGeneric("nav", 10);
-    }
-    if (isViewAllPage && bodyContainerExists) {
-        // Only on view all page, show all in body
-        initializeSocketGeneric("body", 50000);
+        initializeSocketGeneric("nav", 50000);
     }
 });
 
@@ -732,19 +797,38 @@ function createNotificationCard(notification, isRead) {
     return card;
 }
 
+function processNotification(notification) {
+    const container1 = document.getElementById(
+        "parentNotificationTemplatesInBody"
+    );
+    const container2 = document.getElementById("secondaryNotificationContainer");
+    const id = Number(notification.ID);
+    if (displayedNotifications.has(id)) return;
+    displayedNotifications.add(id);
+    const isRead = readAnnouncements.has(id);
+    const card = createNotificationCard(notification, isRead);
+    container1.prepend(card);
+    let cardClone = null;
+    if (container2) {
+        cardClone = createNotificationCard(notification, isRead);
+        container2.prepend(cardClone);
+    }
+    cardMap.set(id, { original: card, clone: cardClone });
+    updateNoNotificationMessages();
+    updateNoNotificationMessagesSec();
+}
+
 function updateNotificationReadStatus() {
-    // This function needs to be adapted to work per-container
-    // For now, it will only update the original card if it exists
     cardMap.forEach((cards, id) => {
         if (readAnnouncements.has(id)) {
-            // This part needs to be adapted to work with the new cardMap structure
-            // For now, it will only update the original card if it exists
-            if (cards.original) {
-                cards.original
-                    .querySelector(".notification-content")
-                    .classList.remove("bg-unread");
-                cards.original.querySelector(".notification-content").classList.add("bg-white");
-            }
+            [cards.original, cards.clone].forEach((card) => {
+                if (card) {
+                    card
+                        .querySelector(".notification-content")
+                        .classList.remove("bg-unread");
+                    card.querySelector(".notification-content").classList.add("bg-white");
+                }
+            });
         }
     });
 }
@@ -813,8 +897,6 @@ async function markAsRead(announcementId) {
 }
 
 function markAllAsRead() {
-    // This function needs to be adapted to work per-container
-    // For now, it will only mark as read if the original card exists
     cardMap.forEach((cards, id) => {
         if (!readAnnouncements.has(id) && !pendingAnnouncements.has(id)) {
             markAsRead(id);
@@ -833,8 +915,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function updateNoNotificationMessages() {
-    // This function needs to be adapted to work per-container
-    // For now, it will only update the original message if it exists
     const noAllMessage = document.getElementById("noAllMessage");
     const noAnnouncementsMessage = document.getElementById(
         "noAnnouncementsMessage"
@@ -842,7 +922,7 @@ function updateNoNotificationMessages() {
     document.getElementById("socketLoader")?.classList.add("hidden");
     if (!noAllMessage || !noAnnouncementsMessage) return;
     const visibleCards = [...cardMap.values()].filter(
-        (card) => card && !card.classList.contains("hidden")
+        ({ original }) => original && !original.classList.contains("hidden")
     );
     const hasNotifications = visibleCards.length > 0;
     noAllMessage.classList.toggle("hidden", hasNotifications);
@@ -850,8 +930,6 @@ function updateNoNotificationMessages() {
 }
 
 function updateNoNotificationMessagesSec() {
-    // This function needs to be adapted to work per-container
-    // For now, it will only update the original message if it exists
     const noAllMessageSec = document.getElementById("noAllMessageSec");
     const noAnnouncementsMessageSec = document.getElementById(
         "noAnnouncementsMessageSec"
@@ -859,7 +937,7 @@ function updateNoNotificationMessagesSec() {
     document.getElementById("socketLoadersec")?.classList.add("hidden");
     if (!noAllMessageSec || !noAnnouncementsMessageSec) return;
     const hasVisible = [...cardMap.values()].some(
-        (card) => card && !card.classList.contains("hidden")
+        ({ clone }) => clone && !clone.classList.contains("hidden")
     );
     noAllMessageSec.classList.toggle("hidden", hasVisible);
     noAnnouncementsMessageSec.classList.add("hidden");
@@ -918,7 +996,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (!notification) return;
             if (notification.Type === "Announcement") {
                 const isUnread = original
-                    ?.querySelector(".notification-content")
+                    .querySelector(".notification-content")
                     .classList.contains("bg-unread");
                 if (original) {
                     original.classList.toggle("hidden", showUnreadMode && !isUnread);
@@ -938,7 +1016,7 @@ document.addEventListener("DOMContentLoaded", function () {
         let hasVisible = false;
         cardMap.forEach(({ original }) => {
             const isUnread = original
-                ?.querySelector(".notification-content")
+                .querySelector(".notification-content")
                 .classList.contains("bg-unread");
             if (original) {
                 original.classList.toggle("hidden", showUnreadAllMode && !isUnread);
@@ -1073,8 +1151,6 @@ document.addEventListener("DOMContentLoaded", function () {
 document.addEventListener("DOMContentLoaded", function () {
     updateMarkAllReadVisibility();
     setTimeout(() => {
-        // This part needs to be adapted to work per-container
-        // For now, it will only update if the original card exists
         if (notificationData.length === 0) {
             updateNoNotificationMessages();
             updateNoNotificationMessagesSec();
