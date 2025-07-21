@@ -2,18 +2,17 @@
 let createdAt;
 var dateElements = document.querySelectorAll("[data-date-enrolled]");
 var dates = [];
-
 dateElements.forEach(function (el) {
     var timestamp = parseInt(el.getAttribute("data-date-enrolled"), 10);
     if (!isNaN(timestamp)) {
         dates.push(timestamp);
     }
 });
-
 if (dates.length > 0) {
     createdAt = Math.min.apply(null, dates);
     window.earliestEnrollmentDate = createdAt;
 }
+
 
 //Set user preferences
 const POSTS_TYPE =
@@ -128,11 +127,7 @@ async function getEnrolmentIdsByCourseUid(classIDForNotifications) {
 
 function getSubscriptionQueryForAllClasses() {
     return `
-    subscription subscribeToAnnouncements(
-    $class_id: [AwcClassID]
-    $limit: IntScalar
-    $offset: IntScalar
-    ) {
+    subscription subscribeToAnnouncements($class_id: [AwcClassID]) {
       subscribeToAnnouncements(
         query: [{ whereIn: { class_id: $class_id } }
           {
@@ -259,9 +254,9 @@ function getSubscriptionQueryForAllClasses() {
             ]
           }
         ]
-        limit: $limit
-        offset: $offset
-        orderBy: [{ path: ["created_at"], type: desc }]
+        limit: 5000000
+        offset: 0
+        orderBy: [{ path: ["created_at"], type: asc }]
       ) {
         ID: id
         Class_ID: class_id
@@ -278,120 +273,63 @@ function getSubscriptionQueryForAllClasses() {
         Type: type
         Unique_ID: unique_id
         Class {
-        id
-        unique_id
-        class_name
-        Enrolments {
-            id
-        }
-        Active_Course {
-            unique_id
-            course_name
-            Lessons {
-            unique_id
-            }
-        }
-        Course {
-            unique_id
-            course_name
-        }
-        }
-        Post(limit: $limit, offset: $offset) {
-        post_copy
-        author_id
-        Author {
-            display_name
-            first_name
-            last_name
-        }
-        Mentions {
-            display_name
-            first_name
-            last_name
-            id
-        }
-        }
-        Mentions(limit: $limit, offset: $offset) {
-        id
-        }
-        Submissions(limit: $limit, offset: $offset) {
-        submission_note
-        unique_id
-        Student {
-            student_id
-            Student {
-            display_name
-            first_name
-            last_name
-            }
-        }
-        Announcements {
-            Course {
-            Lessons {
+                id 
                 unique_id
-            }
-            }
+                class_name
+                Enrolments { id }
+                Active_Course {
+                unique_id
+                course_name
+                Lessons { unique_id }
         }
-        Assessment {
-            type
-            Lesson {
+         Course {
             unique_id
-            }
-        }
-        Submission_Mentions {
-            id
-        }
-        ForumComments(limit: $limit, offset: $offset) {
-            Author {
-            display_name
-            first_name
-            last_name
-            }
+            course_name
         }
         }
-        Comment(limit: $limit, offset: $offset) {
-        comment
-        id
-        author_id
-        reply_to_comment_id
-        Reply_to_Comment {
+        Post {
+         post_copy
+          author_id
+          Author { display_name first_name last_name }
+          Mentions { display_name first_name last_name id }
+        }
+        Mentions { id }
+        Submissions {
+        submission_note
+        unique_id 
+          Student {
+            student_id
+            Student { display_name first_name last_name }
+          }
+          Announcements { Course { Lessons { unique_id } } }
+          Assessment {type  Lesson { unique_id } }
+          Submission_Mentions { id }
+          ForumComments { Author { display_name first_name last_name } }
+        }
+        Comment { 
+        comment 
+          id  
+          author_id 
+          reply_to_comment_id 
+          Reply_to_Comment{
             author_id
-        }
-        parent_announcement_id
-        Mentions {
-            id
-        }
-        Forum_Post {
+          } 
+          parent_announcement_id
+          Mentions { id }
+          Forum_Post {
             author_id
-            Author {
-            first_name
-            last_name
-            }
+            Author { first_name last_name }
+          }
+          Author { display_name first_name last_name }
         }
-        Author {
-            display_name
-            first_name
-            last_name
+        Instructor { display_name first_name last_name }
+        ForumComments {
+          Author { display_name first_name last_name }
+          Parent_Announcement { instructor_id }
         }
-        }
-        Instructor {
-        display_name
-        first_name
-        last_name
-        }
-        ForumComments(limit: $limit, offset: $offset) {
-        Author {
-            display_name
-            first_name
-            last_name
-        }
-        Parent_Announcement {
-            instructor_id
-        }
-        }
-        Read_Contacts_Data(limit: $limit, offset: $offset) {
-        read_announcement_id
-        read_contact_id
+        Read_Contacts_Data {
+          read_announcement_id
+          read_contact_id
         }
       }
     }
@@ -399,27 +337,26 @@ function getSubscriptionQueryForAllClasses() {
 }
 
 const MARK_READ_MUTATION = `
-    mutation createOReadContactReadAnnouncement($payload: OReadContactReadAnnouncementCreateInput = null) {
-        createOReadContactReadAnnouncement(payload: $payload) {
-            Read_Announcement_ID: read_announcement_id 
-            Read_Contact_ID: read_contact_id 
-        }
-    }
+mutation createOReadContactReadAnnouncement($payload: OReadContactReadAnnouncementCreateInput = null) {
+createOReadContactReadAnnouncement(payload: $payload) {
+Read_Announcement_ID: read_announcement_id 
+Read_Contact_ID: read_contact_id 
+}
+}
 `;
 
 const container = document.getElementById("parentNotificationTemplatesInBody");
+const displayedNotifications = new Set();
 const readAnnouncements = new Set();
 const pendingAnnouncements = new Set();
+const cardMap = new Map();
 const notificationIDs = new Set();
 const notificationData = [];
-const cardMap = new Map();
-const displayedNotifications = new Set();
 
 function getQueryParamss(param) {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get(param);
 }
-
 const enrollID = getQueryParamss("eid");
 
 function timeAgo(unixTimestamp) {
@@ -483,36 +420,42 @@ async function fetchClassIds() {
         return [];
     }
 }
-
 let totalSockets = 0;
 let completedSockets = 0;
 const startTime = Date.now();
 let spinnerRemoved = false;
 
 
-async function initializeSocketGeneric(containerType, limit=100) {
-    const containerElement = containerType === "body"
-        ? document.getElementById("parentNotificationTemplatesInBody")
-        : document.getElementById("secondaryNotificationContainer");
+async function initializeSocket() {
+    document.getElementById("socketLoader")?.classList.remove("hidden");
+    document.getElementById("parentNotificationTemplatesInBody")?.classList.add("hidden");
+    document.getElementById("noAllMessage")?.classList.add("hidden");
+    document.getElementById("noAnnouncementsMessage")?.classList.add("hidden");
 
-    const loaderId = containerType === "body" ? "socketLoader" : "socketLoadersec";
-    const loader = document.getElementById(loaderId);
-    loader?.classList.remove("hidden");
+    if (document.hidden) return;
 
     const classIds = await fetchClassIds();
     if (!classIds || classIds.length === 0) return;
 
     const socket = new WebSocket(graphQlWsEndpointUrlAwc, "vitalstats");
+    let keepAliveInterval;
 
     socket.onopen = () => {
+        keepAliveInterval = setInterval(() => {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: "KEEP_ALIVE" }));
+            }
+        }, 28000);
+
         socket.send(JSON.stringify({ type: "connection_init" }));
+
         socket.send(
             JSON.stringify({
-                id: `subscription_${containerType}`,
+                id: "subscription_all_classes",
                 type: "GQL_START",
                 payload: {
                     query: getSubscriptionQueryForAllClasses(),
-                    variables: { class_id: classIds, offset: 0, limit}
+                    variables: { class_id: classIds }
                 }
             })
         );
@@ -521,22 +464,26 @@ async function initializeSocketGeneric(containerType, limit=100) {
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         if (data.type !== "GQL_DATA") return;
-        const result = data.payload?.data?.subscribeToAnnouncements;
+        if (!data.payload || !data.payload.data) return;
+
+        const result = data.payload.data.subscribeToAnnouncements;
         if (!result) return;
-
         const notifications = Array.isArray(result) ? result : [result];
-        const userId = Number(loggedInContactIdIntAwc);
 
+        // Existing logic for read status
         notifications.forEach((notification) => {
             if (
-                notification.Read_Contacts_Data?.some(
-                    (read) => Number(read.read_contact_id) === userId
+                notification.Read_Contacts_Data &&
+                notification.Read_Contacts_Data.some(
+                    (read) => Number(read.read_contact_id) === Number(loggedInContactIdIntAwc)
                 )
-            ) readAnnouncements.add(Number(notification.ID));
+            ) {
+                readAnnouncements.add(Number(notification.ID));
+            }
         });
 
         // Filter notifications based on type and user preferences
-        const filtered = notifications.filter((notification) => {
+        const filteredNotifications = notifications.filter((notification) => {
             const userId = Number(loggedInContactIdIntAwc);
             switch (notification.Notification_Type) {
                 case "Posts": {
@@ -599,16 +546,16 @@ async function initializeSocketGeneric(containerType, limit=100) {
         });
 
 
-        if (filtered.length === 0) return;
+        if (filteredNotifications.length === 0) return;
 
-        filtered.forEach((notification) => {
+        filteredNotifications.forEach((notification) => {
             notificationIDs.add(Number(notification.ID));
             notificationData.push(notification);
         });
 
         notificationData.sort((a, b) => a.Date_Added - b.Date_Added);
         displayedNotifications.clear();
-        containerElement.innerHTML = "";
+        container.innerHTML = "";
 
         notificationData.forEach((notification) => {
             if (!displayedNotifications.has(Number(notification.ID))) {
@@ -616,6 +563,7 @@ async function initializeSocketGeneric(containerType, limit=100) {
             }
         });
 
+        document.getElementById("socketLoader")?.classList.add("hidden");
         if (notificationData.length === 0) {
             document.getElementById("noAllMessage")?.classList.remove("hidden");
             document.getElementById("noAnnouncementsMessage")?.classList.remove("hidden");
@@ -625,27 +573,22 @@ async function initializeSocketGeneric(containerType, limit=100) {
             document.getElementById("parentNotificationTemplatesInBody")?.classList.remove("hidden");
         }
 
-        loader?.classList.add("hidden");
         updateMarkAllReadVisibility();
     };
 
+    socket.onerror = () => {
+        // Optional: log errors
+    };
+
     socket.onclose = () => {
-        setTimeout(() => initializeSocketGeneric(containerType), 28000);
+        clearInterval(keepAliveInterval);
+        setTimeout(() => {
+            if (!document.hidden) initializeSocket(); // retry on disconnect
+        }, 28000);
     };
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    const bodyContainerExists = document.getElementById("parentNotificationTemplatesInBody");
-    const navContainerExists = document.getElementById("secondaryNotificationContainer");
-
-    if (bodyContainerExists) {
-        initializeSocketGeneric("body", 100);
-    }
-
-    if (navContainerExists) {
-        initializeSocketGeneric("nav", 50000);
-    }
-});
+initializeSocket();
 
 function createNotificationCard(notification, isRead) {
     const assessmentType = notification.Submissions?.Assessment?.type;
@@ -848,6 +791,10 @@ function createNotificationCard(notification, isRead) {
     return card;
 }
 
+
+
+
+
 function processNotification(notification) {
     const container1 = document.getElementById(
         "parentNotificationTemplatesInBody"
@@ -993,7 +940,6 @@ function updateNoNotificationMessagesSec() {
     noAllMessageSec.classList.toggle("hidden", hasVisible);
     noAnnouncementsMessageSec.classList.add("hidden");
 }
-
 document.addEventListener("DOMContentLoaded", function () {
     const onlySeeBtn = document.getElementById("OnlyseeAnnouncements");
     const noAllMessage = document.getElementById("noAllMessage");
