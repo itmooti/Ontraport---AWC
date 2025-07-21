@@ -432,7 +432,7 @@ const startTime = Date.now();
 let spinnerRemoved = false;
 
 
-async function initializeSocketGeneric(containerType, limit = 50) {
+async function initializeSocketGeneric(containerType, limit = 50000) {
     const containerElement = containerType === "body"
         ? document.getElementById("parentNotificationTemplatesInBody")
         : document.getElementById("secondaryNotificationContainer");
