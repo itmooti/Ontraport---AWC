@@ -467,6 +467,8 @@ async function buildSubmissionsQueryClass() {
       }
     }
     ForumComments(
+    limit: 50000
+    offset: 0
     orderBy: [{ path: ["created_at"], type: asc }]
     ) {
       id
@@ -487,6 +489,8 @@ async function buildSubmissionsQueryClass() {
         voter_id:member_comment_upvote_id
       }
       ForumComments(
+        limit: 50000
+        offset: 0
         orderBy: [{ path: ["created_at"], type: asc }]
       ) {
       reply_to_comment_id 
