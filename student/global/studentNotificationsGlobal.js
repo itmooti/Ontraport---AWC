@@ -1,5 +1,3 @@
-const isViewAllPage = !!document.getElementById("secondaryNotificationContainer");
-
 // get created at date to  get notifications only after user has enrolled
 let createdAt;
 var dateElements = document.querySelectorAll("[data-date-enrolled]");
@@ -435,7 +433,7 @@ const startTime = Date.now();
 let spinnerRemoved = false;
 
 
-async function initializeSocketGeneric(containerType, limit = 50) {
+async function initializeSocketGeneric(containerType, limit = 50000) {
     const containerElement = containerType === "body"
         ? document.getElementById("parentNotificationTemplatesInBody")
         : document.getElementById("secondaryNotificationContainer");
@@ -588,7 +586,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const navContainerExists = document.getElementById("secondaryNotificationContainer");
 
     if (bodyContainerExists) {
-        initializeSocketGeneric("body", 1000);
+        initializeSocketGeneric("body", 50000);
     }
 
     if (navContainerExists) {
