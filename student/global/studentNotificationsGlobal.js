@@ -432,10 +432,10 @@ const startTime = Date.now();
 let spinnerRemoved = false;
 
 
-async function initializeSocketGeneric(containerType, limit = 50000) {
+async function initializeSocketGeneric(containerType, limit = 50) {
     const containerElement = containerType === "body"
-        ? document.getElementById("parentNotificationTemplatesInBody")
-        : document.getElementById("secondaryNotificationContainer");
+        ? document.getElementById("secondaryNotificationContainer")
+        : document.getElementById("parentNotificationTemplatesInBody");
 
     const loaderId = containerType === "body" ? "socketLoader" : "socketLoadersec";
     const loader = document.getElementById(loaderId);
@@ -585,10 +585,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const navContainerExists = document.getElementById("secondaryNotificationContainer");
 
     if (bodyContainerExists) {
-        initializeSocketGeneric("body", 50000);
+        // BODY: show only 50
+        initializeSocketGeneric("body", 50);
     }
 
     if (navContainerExists) {
+        // NAVBAR: show all (use a very high limit)
         initializeSocketGeneric("nav", 50000);
     }
 });
