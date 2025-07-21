@@ -1,4 +1,6 @@
-// get created at date to  get notifications only after user has enrolled  
+const isViewAllPage = !!document.getElementById("secondaryNotificationContainer");
+
+// get created at date to  get notifications only after user has enrolled
 let createdAt;
 var dateElements = document.querySelectorAll("[data-date-enrolled]");
 var dates = [];
@@ -14,7 +16,6 @@ if (dates.length > 0) {
     createdAt = Math.min.apply(null, dates);
     window.earliestEnrollmentDate = createdAt;
 }
-
 
 //Set user preferences
 const POSTS_TYPE =
@@ -343,26 +344,27 @@ function getSubscriptionQueryForAllClasses() {
 }
 
 const MARK_READ_MUTATION = `
-mutation createOReadContactReadAnnouncement($payload: OReadContactReadAnnouncementCreateInput = null) {
-createOReadContactReadAnnouncement(payload: $payload) {
-Read_Announcement_ID: read_announcement_id 
-Read_Contact_ID: read_contact_id 
-}
-}
+    mutation createOReadContactReadAnnouncement($payload: OReadContactReadAnnouncementCreateInput = null) {
+        createOReadContactReadAnnouncement(payload: $payload) {
+            Read_Announcement_ID: read_announcement_id 
+            Read_Contact_ID: read_contact_id 
+        }
+    }
 `;
 
 const container = document.getElementById("parentNotificationTemplatesInBody");
-const displayedNotifications = new Set();
 const readAnnouncements = new Set();
 const pendingAnnouncements = new Set();
-const cardMap = new Map();
 const notificationIDs = new Set();
 const notificationData = [];
+const cardMap = new Map();
+const displayedNotifications = new Set();
 
 function getQueryParamss(param) {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get(param);
 }
+
 const enrollID = getQueryParamss("eid");
 
 function timeAgo(unixTimestamp) {
@@ -426,6 +428,7 @@ async function fetchClassIds() {
         return [];
     }
 }
+
 let totalSockets = 0;
 let completedSockets = 0;
 const startTime = Date.now();
@@ -433,14 +436,9 @@ let spinnerRemoved = false;
 
 
 async function initializeSocketGeneric(containerType, limit = 50) {
-    const containerElement = containerType === "nav"
-        ? document.getElementById("parentNotificationTemplatesInBody")      // NAVBAR: show all
-        : document.getElementById("secondaryNotificationContainer");        // BODY: show 50
-
-    if (!containerElement) {
-        console.warn(`Container element for type "${containerType}" not found.`);
-        return;
-    }
+    const containerElement = containerType === "body"
+        ? document.getElementById("parentNotificationTemplatesInBody")
+        : document.getElementById("secondaryNotificationContainer");
 
     const loaderId = containerType === "body" ? "socketLoader" : "socketLoadersec";
     const loader = document.getElementById(loaderId);
@@ -586,17 +584,15 @@ async function initializeSocketGeneric(containerType, limit = 50) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    const navContainerExists = document.getElementById("parentNotificationTemplatesInBody");
-    const bodyContainerExists = document.getElementById("secondaryNotificationContainer");
-
-    if (navContainerExists) {
-        // NAVBAR: show all
-        initializeSocketGeneric("nav", 50000);
-    }
+    const bodyContainerExists = document.getElementById("parentNotificationTemplatesInBody");
+    const navContainerExists = document.getElementById("secondaryNotificationContainer");
 
     if (bodyContainerExists) {
-        // BODY: show only 50
-        initializeSocketGeneric("body", 50);
+        initializeSocketGeneric("body", 10);
+    }
+
+    if (navContainerExists) {
+        initializeSocketGeneric("nav", 50000);
     }
 });
 
@@ -801,10 +797,6 @@ function createNotificationCard(notification, isRead) {
     return card;
 }
 
-
-
-
-
 function processNotification(notification) {
     const container1 = document.getElementById(
         "parentNotificationTemplatesInBody"
@@ -950,6 +942,7 @@ function updateNoNotificationMessagesSec() {
     noAllMessageSec.classList.toggle("hidden", hasVisible);
     noAnnouncementsMessageSec.classList.add("hidden");
 }
+
 document.addEventListener("DOMContentLoaded", function () {
     const onlySeeBtn = document.getElementById("OnlyseeAnnouncements");
     const noAllMessage = document.getElementById("noAllMessage");
