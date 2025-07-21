@@ -588,7 +588,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const navContainerExists = document.getElementById("secondaryNotificationContainer");
 
     if (bodyContainerExists) {
-        initializeSocketGeneric("body", 10);
+        initializeSocketGeneric("body", 1000);
     }
 
     if (navContainerExists) {
