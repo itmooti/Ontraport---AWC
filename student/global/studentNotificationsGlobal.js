@@ -433,9 +433,14 @@ let spinnerRemoved = false;
 
 
 async function initializeSocketGeneric(containerType, limit = 50) {
-    const containerElement = containerType === "body"
-        ? document.getElementById("secondaryNotificationContainer")
-        : document.getElementById("parentNotificationTemplatesInBody");
+    const containerElement = containerType === "nav"
+        ? document.getElementById("parentNotificationTemplatesInBody")
+        : document.getElementById("secondaryNotificationContainer");
+
+    if (!containerElement) {
+        console.warn(`Container element for type "${containerType}" not found.`);
+        return;
+    }
 
     const loaderId = containerType === "body" ? "socketLoader" : "socketLoadersec";
     const loader = document.getElementById(loaderId);
