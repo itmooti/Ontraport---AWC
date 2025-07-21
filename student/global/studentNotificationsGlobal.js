@@ -575,7 +575,7 @@ async function initializeSocketGeneric(containerType) {
     };
 
     socket.onclose = () => {
-        setTimeout(() => initializeSocketGeneric(containerType, limit), 28000);
+        setTimeout(() => initializeSocketGeneric(containerType), 28000);
     };
 }
 
