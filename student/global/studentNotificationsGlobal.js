@@ -434,8 +434,8 @@ let spinnerRemoved = false;
 
 async function initializeSocketGeneric(containerType, limit = 50) {
     const containerElement = containerType === "nav"
-        ? document.getElementById("parentNotificationTemplatesInBody")
-        : document.getElementById("secondaryNotificationContainer");
+        ? document.getElementById("parentNotificationTemplatesInBody")      // NAVBAR: show all
+        : document.getElementById("secondaryNotificationContainer");        // BODY: show 50
 
     if (!containerElement) {
         console.warn(`Container element for type "${containerType}" not found.`);
@@ -586,21 +586,19 @@ async function initializeSocketGeneric(containerType, limit = 50) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    const bodyContainerExists = document.getElementById("parentNotificationTemplatesInBody");
-    const navContainerExists = document.getElementById("secondaryNotificationContainer");
+    const navContainerExists = document.getElementById("parentNotificationTemplatesInBody");
+    const bodyContainerExists = document.getElementById("secondaryNotificationContainer");
+
+    if (navContainerExists) {
+        // NAVBAR: show all
+        initializeSocketGeneric("nav", 50000);
+    }
 
     if (bodyContainerExists) {
         // BODY: show only 50
         initializeSocketGeneric("body", 50);
     }
-
-    if (navContainerExists) {
-        // NAVBAR: show all (use a very high limit)
-        initializeSocketGeneric("nav", 50000);
-    }
 });
-
-
 
 function createNotificationCard(notification, isRead) {
     const assessmentType = notification.Submissions?.Assessment?.type;
