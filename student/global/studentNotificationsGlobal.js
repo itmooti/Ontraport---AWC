@@ -1,4 +1,4 @@
-// get created at date to  get notifications only after user has enrolled 
+// get created at date to  get notifications only after user has enrolled  
 let createdAt;
 var dateElements = document.querySelectorAll("[data-date-enrolled]");
 var dates = [];
