@@ -130,8 +130,6 @@ function getSubscriptionQueryForAllClasses() {
     return `
     subscription subscribeToAnnouncements(
     $class_id: [AwcClassID]
-    $limit: IntScalar
-    $offset: IntScalar
     ) {
       subscribeToAnnouncements(
         query: [{ whereIn: { class_id: $class_id } }
@@ -259,8 +257,8 @@ function getSubscriptionQueryForAllClasses() {
             ]
           }
         ]
-        limit: $limit
-        offset: $offset
+        limit: 50000
+        offset: 0
         orderBy: [{ path: ["created_at"], type: desc }]
       ) {
         ID: id
@@ -433,7 +431,7 @@ const startTime = Date.now();
 let spinnerRemoved = false;
 
 
-async function initializeSocketGeneric(containerType, limit = 50000) {
+async function initializeSocketGeneric(containerType) {
     const containerElement = containerType === "body"
         ? document.getElementById("parentNotificationTemplatesInBody")
         : document.getElementById("secondaryNotificationContainer");
@@ -455,7 +453,7 @@ async function initializeSocketGeneric(containerType, limit = 50000) {
                 type: "GQL_START",
                 payload: {
                     query: getSubscriptionQueryForAllClasses(),
-                    variables: { class_id: classIds, offset: 0, limit }
+                    variables: { class_id: classIds}
                 }
             })
         );
@@ -586,11 +584,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const navContainerExists = document.getElementById("secondaryNotificationContainer");
 
     if (bodyContainerExists) {
-        initializeSocketGeneric("body", 50000);
+        initializeSocketGeneric("body");
     }
 
     if (navContainerExists) {
-        initializeSocketGeneric("nav", 50000);
+        initializeSocketGeneric("nav");
     }
 });
 
