@@ -130,6 +130,8 @@ function getSubscriptionQueryForAllClasses() {
     return `
     subscription subscribeToAnnouncements(
     $class_id: [AwcClassID]
+    $limit: IntScalar
+    $offset: IntScalar
     ) {
       subscribeToAnnouncements(
         query: [{ whereIn: { class_id: $class_id } }
@@ -257,8 +259,8 @@ function getSubscriptionQueryForAllClasses() {
             ]
           }
         ]
-        limit: 50000
-        offset: 0
+        limit: $limit
+        offset: $offset
         orderBy: [{ path: ["created_at"], type: desc }]
       ) {
         ID: id
@@ -276,63 +278,120 @@ function getSubscriptionQueryForAllClasses() {
         Type: type
         Unique_ID: unique_id
         Class {
-                id 
-                unique_id
-                class_name
-                Enrolments { id }
-                Active_Course {
-                unique_id
-                course_name
-                Lessons { unique_id }
+        id
+        unique_id
+        class_name
+        Enrolments {
+            id
         }
-         Course {
+        Active_Course {
+            unique_id
+            course_name
+            Lessons {
+            unique_id
+            }
+        }
+        Course {
             unique_id
             course_name
         }
         }
-        Post {
-         post_copy
-          author_id
-          Author { display_name first_name last_name }
-          Mentions { display_name first_name last_name id }
+        Post(limit: $limit, offset: $offset) {
+        post_copy
+        author_id
+        Author {
+            display_name
+            first_name
+            last_name
         }
-        Mentions { id }
-        Submissions {
+        Mentions {
+            display_name
+            first_name
+            last_name
+            id
+        }
+        }
+        Mentions(limit: $limit, offset: $offset) {
+        id
+        }
+        Submissions(limit: $limit, offset: $offset) {
         submission_note
-        unique_id 
-          Student {
+        unique_id
+        Student {
             student_id
-            Student { display_name first_name last_name }
-          }
-          Announcements { Course { Lessons { unique_id } } }
-          Assessment {type  Lesson { unique_id } }
-          Submission_Mentions { id }
-          ForumComments { Author { display_name first_name last_name } }
+            Student {
+            display_name
+            first_name
+            last_name
+            }
         }
-        Comment { 
-        comment 
-          id  
-          author_id 
-          reply_to_comment_id 
-          Reply_to_Comment{
+        Announcements {
+            Course {
+            Lessons {
+                unique_id
+            }
+            }
+        }
+        Assessment {
+            type
+            Lesson {
+            unique_id
+            }
+        }
+        Submission_Mentions {
+            id
+        }
+        ForumComments(limit: $limit, offset: $offset) {
+            Author {
+            display_name
+            first_name
+            last_name
+            }
+        }
+        }
+        Comment(limit: $limit, offset: $offset) {
+        comment
+        id
+        author_id
+        reply_to_comment_id
+        Reply_to_Comment {
             author_id
-          } 
-          parent_announcement_id
-          Mentions { id }
-          Forum_Post {
+        }
+        parent_announcement_id
+        Mentions {
+            id
+        }
+        Forum_Post {
             author_id
-            Author { first_name last_name }
-          }
-          Author { display_name first_name last_name }
+            Author {
+            first_name
+            last_name
+            }
         }
-        Instructor { display_name first_name last_name }
-        ForumComments {
-          Author { display_name first_name last_name }
-          Parent_Announcement { instructor_id }
+        Author {
+            display_name
+            first_name
+            last_name
         }
-        Read_Contacts_Data {
-          read_announcement_id
-          read_contact_id
+        }
+        Instructor {
+        display_name
+        first_name
+        last_name
+        }
+        ForumComments(limit: $limit, offset: $offset) {
+        Author {
+            display_name
+            first_name
+            last_name
+        }
+        Parent_Announcement {
+            instructor_id
+        }
+        }
+        Read_Contacts_Data(limit: $limit, offset: $offset) {
+        read_announcement_id
+        read_contact_id
         }
       }
     }
@@ -431,7 +490,7 @@ const startTime = Date.now();
 let spinnerRemoved = false;
 
 
-async function initializeSocketGeneric(containerType) {
+async function initializeSocketGeneric(containerType, limit=100) {
     const containerElement = containerType === "body"
         ? document.getElementById("parentNotificationTemplatesInBody")
         : document.getElementById("secondaryNotificationContainer");
@@ -453,7 +512,7 @@ async function initializeSocketGeneric(containerType) {
                 type: "GQL_START",
                 payload: {
                     query: getSubscriptionQueryForAllClasses(),
-                    variables: { class_id: classIds}
+                    variables: { class_id: classIds, offset: 0, limit}
                 }
             })
         );
@@ -570,10 +629,6 @@ async function initializeSocketGeneric(containerType) {
         updateMarkAllReadVisibility();
     };
 
-    socket.onerror = () => {
-        // Optional: log errors
-    };
-
     socket.onclose = () => {
         setTimeout(() => initializeSocketGeneric(containerType), 28000);
     };
@@ -584,11 +639,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const navContainerExists = document.getElementById("secondaryNotificationContainer");
 
     if (bodyContainerExists) {
-        initializeSocketGeneric("body");
+        initializeSocketGeneric("body", 100);
     }
 
     if (navContainerExists) {
-        initializeSocketGeneric("nav");
+        initializeSocketGeneric("nav", 50000);
     }
 });
 
