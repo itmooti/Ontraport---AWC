@@ -221,43 +221,48 @@ document
             return;
         }
 
-        createdAnnouncement.Instructor = createdAnnouncement.Instructor || {
-            instructorDisplayName: "Unknown",
-            instructorProfileImage: DEFAULT_AVATAR,
+        // ——— Map to template shape ——————————————————
+        // 1) Extract & rename top‑level props
+        const ann = {
+            anouncementID: createdAnnouncement.ID,
+            anouncementTitle: createdAnnouncement.Title,
+            anouncementContent: createdAnnouncement.Content,
+            anouncementDateAdded: createdAnnouncement.Date_Added,
+            anouncementInstructorID: createdAnnouncement.instructor_id,
+            anouncementDisableComments:
+                createdAnnouncement.disable_comments,
+            anouncementStatus: createdAnnouncement.status,
+            // 2) Build the exact JSON string your template x‑data expects
+            anouncementAttachment: (() => {
+                if (!createdAnnouncement.attachment) return '""';
+                // we already parsed into attachmentObject above
+                return JSON.stringify(createdAnnouncement.attachmentObject);
+            })(),
+            // 3) Normalize Instructor fields to what your helpers use
+            Instructor: {
+                instructorDisplayName:
+                    createdAnnouncement.Instructor.display_name ||
+                    createdAnnouncement.Instructor.instructorDisplayName ||
+                    "Unknown",
+                instructorProfileImage:
+                    createdAnnouncement.Instructor.Profile_Image ||
+                    createdAnnouncement.Instructor.instructorProfileImage ||
+                    DEFAULT_AVATAR,
+            },
+            // 4) Defaults so your vote/comment helpers never crash
+            mainAnnouncementVotedContactID: [],
+            commentOnAnnouncement: [],
         };
-        
-        createdAnnouncement.mainAnnouncementVotedContactID =
-            createdAnnouncement.mainAnnouncementVotedContactID || [];
-        createdAnnouncement.commentOnAnnouncement = Array.isArray(
-            createdAnnouncement.commentOnAnnouncement
-        )
-            ? createdAnnouncement.commentOnAnnouncement
-            : [];
 
-        if (createdAnnouncement.attachment) {
-            let attachmentObject = {
-                link: "",
-                name: fileObject?.name || "Attachment"
-            };
-            try {
-                const parsed = JSON.parse(createdAnnouncement.attachment);
-                if (parsed && typeof parsed === "object" && parsed.link) {
-                    attachmentObject.link = parsed.link;
-                    attachmentObject.name = parsed.name || attachmentObject.name;
-                } else if (typeof parsed === "string") {
-                    attachmentObject.link = parsed;
-                }
-            } catch {
-                attachmentObject.link = createdAnnouncement.attachment.replace(/"/g, "");
-            }
-            createdAnnouncement.attachmentObject = attachmentObject;
-        }
-
-        await updateMentionedContacts(mentionedIds);
-
+        // ——— Optimistic render immediately —————————————————
         const template = $.templates("#announcementTemplate");
-        const htmlOutput = template.render({ announcements: [createdAnnouncement] });
-        $("#announcementsContainer").prepend(htmlOutput);
+        $("#announcementsContainer").prepend(
+            template.render({ announcements: [ann] })
+        );
+        // ————————————————————————————————————————————————
+
+        // Fire‑and‑forget mentions so UI isn’t blocked
+        updateMentionedContacts(mentionedIds).catch(console.error);
 
         announcementForm.classList.remove("opacity-50", "pointer-events-none", "cursor-not-allowed");
     });
