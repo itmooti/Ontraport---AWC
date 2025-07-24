@@ -225,34 +225,36 @@ document
             instructorDisplayName: "Unknown",
             instructorProfileImage: DEFAULT_AVATAR,
         };
+        
+        createdAnnouncement.mainAnnouncementVotedContactID =
+            createdAnnouncement.mainAnnouncementVotedContactID || [];
+        createdAnnouncement.commentOnAnnouncement = Array.isArray(
+            createdAnnouncement.commentOnAnnouncement
+        )
+            ? createdAnnouncement.commentOnAnnouncement
+            : [];
 
         if (createdAnnouncement.attachment) {
             let attachmentObject = {
                 link: "",
-                // use the original filename if we have it, else generic “Attachment”
                 name: fileObject?.name || "Attachment"
             };
             try {
                 const parsed = JSON.parse(createdAnnouncement.attachment);
                 if (parsed && typeof parsed === "object" && parsed.link) {
-                    // proper object with link, name, etc.
                     attachmentObject.link = parsed.link;
                     attachmentObject.name = parsed.name || attachmentObject.name;
                 } else if (typeof parsed === "string") {
-                    // JSON.parse returned a string literal
                     attachmentObject.link = parsed;
                 }
             } catch {
-                // fallback for raw string
                 attachmentObject.link = createdAnnouncement.attachment.replace(/"/g, "");
             }
             createdAnnouncement.attachmentObject = attachmentObject;
         }
 
-
         await updateMentionedContacts(mentionedIds);
 
-        // ⏱️ Render it immediately without waiting for fresh fetch
         const template = $.templates("#announcementTemplate");
         const htmlOutput = template.render({ announcements: [createdAnnouncement] });
         $("#announcementsContainer").prepend(htmlOutput);
