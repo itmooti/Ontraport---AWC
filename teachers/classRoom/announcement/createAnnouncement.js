@@ -124,9 +124,9 @@ async function loadAnnouncements(id) {
       body: JSON.stringify({ query }),
     });
     const jsonData = await response.json();
-    let announcements = jsonData.data.getAnnouncements;
-    const template = $.templates("#announcementTemplate");
-    const htmlOutput = template.render({ announcements: announcements });
+let announcements = sanitizeAnnouncements(jsonData.data.getAnnouncements || []);
+const template = $.templates("#announcementTemplate");
+const htmlOutput = template.render({ announcements });
     const noAnnouncementSvg = document.querySelector(".noAnnouncementSVG");
     if (noAnnouncementSvg) {
       noAnnouncementSvg.classList.add("hidden");
