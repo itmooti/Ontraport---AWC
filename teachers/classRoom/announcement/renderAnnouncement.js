@@ -167,19 +167,22 @@ function hasVoted(likesArray, type) {
 // Sanitize fetched data to avoid null values
 function sanitizeAnnouncements(announcements) {
     return announcements.map((announcement) => {
-        // ==== unified attachment parsing ====
         if (typeof announcement.anouncementAttachment === "string" && announcement.anouncementAttachment.trim() !== "") {
-            let link = "";
             try {
                 const parsed = JSON.parse(announcement.anouncementAttachment);
-                link = parsed.link || "";
+                // If it's a valid JSON with expected fields
+                announcement.attachmentObject = {
+                    link: parsed.link || "",
+                    name: parsed.name || "Attachment", // 👈 Default if not present
+                };
             } catch {
-                link = announcement.anouncementAttachment.replace(/"/g, "");
+                // If it's just a plain quoted string URL
+                const cleaned = announcement.anouncementAttachment.replace(/^"+|"+$/g, ""); // remove outer quotes
+                announcement.attachmentObject = {
+                    link: cleaned,
+                    name: "Attachment", // 👈 Default name
+                };
             }
-            announcement.attachmentObject = {
-                link,
-                name: "Attachment"
-            };
         } else {
             announcement.attachmentObject = null;
         }
