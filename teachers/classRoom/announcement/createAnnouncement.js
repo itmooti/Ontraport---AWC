@@ -213,9 +213,18 @@ document
         const createdAnnouncement = await createAnnouncement(payload);
 
         if (!createdAnnouncement) {
-            announcementForm.classList.remove("opacity-50", "pointer-events-none", "cursor-not-allowed");
+            announcementForm.classList.remove(
+                "opacity-50",
+                "pointer-events-none",
+                "cursor-not-allowed"
+            );
             return;
         }
+
+        createdAnnouncement.Instructor = createdAnnouncement.Instructor || {
+            instructorDisplayName: "Unknown",
+            instructorProfileImage: DEFAULT_AVATAR,
+        };
 
         if (createdAnnouncement.attachment) {
             let attachmentObject = {
@@ -240,11 +249,6 @@ document
             createdAnnouncement.attachmentObject = attachmentObject;
         }
 
-        // Fallback if Instructor is missing
-        createdAnnouncement.Instructor = createdAnnouncement.Instructor || {
-            instructorDisplayName: "Unknown",
-            instructorProfileImage: DEFAULT_AVATAR,
-        };
 
         await updateMentionedContacts(mentionedIds);
 
