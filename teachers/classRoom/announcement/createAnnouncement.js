@@ -138,113 +138,98 @@ async function loadAnnouncements(id) {
   }
 }
 
+//=======================================================//
 document
-  .getElementById("announcementForm")
-  .addEventListener("submit", async (e) => {
-    e.preventDefault();
+    .getElementById("announcementForm")
+    .addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (e.submitter && e.submitter.id !== "postNow") return;
 
-    if (e.submitter && e.submitter.id !== "postNow") return;
+        const announcementForm = document.getElementById("announcementForm");
 
-    const announcementForm = document.getElementById("announcementForm");
-    const title = document.getElementById("announcementTitle").value.trim();
-    const content = document.getElementById("announcementContent").innerHTML.trim();
-    const disableComments = document.getElementById("postCheck").checked;
+        const title = document.getElementById("announcementTitle").value.trim();
+        const content = document
+            .getElementById("announcementContent")
+            .innerHTML.trim();
+        //const mentionedUsers = gatherMentionsFromElementt(announcementForm.querySelector(".mentionable"));
+        const disableComments = document.getElementById("postCheck").checked;
+        document.querySelector(".attachBtn").style.display = "flex";
+        document.querySelector(".refreshBtn").classList.add("hidden");
+        document.querySelector(".deleteBtn").classList.add("hidden");
+        document.querySelector(".filePreviewWrapper").classList.add("hidden");
+        const tempContainer = document.createElement("div");
+        tempContainer.innerHTML = content;
+        let mentionedIds = [];
+        tempContainer.querySelectorAll(".mention").forEach((mention) => {
+            const id = mention.dataset.contactId;
+            if (id && !mentionedIds.includes(Number(id)))
+                mentionedIds.push(Number(id));
+        });
 
-    document.querySelector(".attachBtn").style.display = "flex";
-    document.querySelector(".refreshBtn").classList.add("hidden");
-    document.querySelector(".deleteBtn").classList.add("hidden");
-    document.querySelector(".filePreviewWrapper").classList.add("hidden");
+        // Use Tailwind classes to disable the form
+        announcementForm.classList.add(
+            "opacity-50",
+            "pointer-events-none",
+            "cursor-not-allowed"
+        );
 
-    const tempContainer = document.createElement("div");
-    tempContainer.innerHTML = content;
-    let mentionedIds = [];
-    tempContainer.querySelectorAll(".mention").forEach((mention) => {
-      const id = mention.dataset.contactId;
-      if (id && !mentionedIds.includes(Number(id))) {
-        mentionedIds.push(Number(id));
-      }
+        let fileData = "";
+        const fileInput = document.getElementById("attachment-file-input");
+        const file = fileInput.files[0];
+        if (file) {
+            const fileFields = [{ fieldName: "attachment", file: file }];
+            const toSubmitFields = {};
+            try {
+                await processFileFields(
+                    toSubmitFields,
+                    fileFields,
+                    awsParam,
+                    awsParamUrl
+                );
+                fileData = toSubmitFields.attachment || "";
+                tempAnnouncement.Attachment = JSON.stringify({
+                    link: fileData,
+                    name: file.name,
+                });
+                tempAnnouncement.attachmentObject = {
+                    link: fileData,
+                    name: file.name,
+                };
+            } catch (err) {
+                // handle error as needed
+            }
+        }
+
+        const payload = {
+            title,
+            content,
+            instructor_id: LOGGED_IN_USER_ID,
+            class_id: classID,
+            type: "Announcement",
+            created_at: Math.floor(Date.now() / 1000),
+            disable_comments: disableComments,
+            when_to_post: "Post Now",
+            status: "Published",
+            attachment: fileData,
+            Mentions: mentionedIds.map((id) => ({
+                id: id,
+            })),
+            notification__type: "Announcements",
+        };
+
+        announcementForm.reset();
+        document.getElementById("scheduleOptions").classList.add("hidden");
+        const createdAnnouncement = await createAnnouncement(payload);
+        const createdAnnouncementId = createdAnnouncement.ID;
+        await updateMentionedContacts(mentionedIds);
+        loadAnnouncements(createdAnnouncementId);
+        document.getElementById("announcementContent").innerHTML = "";
+        announcementForm.classList.remove(
+            "opacity-50",
+            "pointer-events-none",
+            "cursor-not-allowed"
+        );
     });
-
-    announcementForm.classList.add("opacity-50", "pointer-events-none", "cursor-not-allowed");
-
-    let fileData = "";
-    const fileInput = document.getElementById("attachment-file-input");
-    const file = fileInput.files[0];
-    let fileObject = null;
-
-    if (file) {
-      const fileFields = [{ fieldName: "attachment", file }];
-      const toSubmitFields = {};
-      try {
-        await processFileFields(toSubmitFields, fileFields, awsParam, awsParamUrl);
-        fileData = toSubmitFields.attachment || "";
-        fileObject = {
-          link: JSON.parse(fileData).link || "",
-          name: file.name,
-          type: file.type,
-          s3_id: JSON.parse(fileData).s3_id || "",
-        };
-      } catch (err) {
-        console.error("File upload failed:", err);
-      }
-    }
-
-    const payload = {
-      title,
-      content,
-      instructor_id: LOGGED_IN_USER_ID,
-      class_id: classID,
-      type: "Announcement",
-      created_at: Math.floor(Date.now() / 1000),
-      disable_comments: disableComments,
-      when_to_post: "Post Now",
-      status: "Published",
-      attachment: fileData,
-      Mentions: mentionedIds.map((id) => ({ id })),
-      notification__type: "Announcements",
-    };
-
-    // Clear the form
-    announcementForm.reset();
-    document.getElementById("scheduleOptions").classList.add("hidden");
-    document.getElementById("announcementContent").innerHTML = "";
-
-    const createdAnnouncement = await createAnnouncement(payload);
-
-    if (!createdAnnouncement) {
-      announcementForm.classList.remove("opacity-50", "pointer-events-none", "cursor-not-allowed");
-      return;
-    }
-
-    // 🔧 Ensure attachment renders immediately
-    if (createdAnnouncement.attachment) {
-      try {
-        const parsed = JSON.parse(createdAnnouncement.attachment);
-        createdAnnouncement.attachmentObject = parsed;
-      } catch (e) {
-        createdAnnouncement.attachmentObject = {
-          link: createdAnnouncement.attachment.replace(/"/g, ""),
-          name: "Download file",
-        };
-      }
-    }
-
-    // Fallback if Instructor is missing
-    createdAnnouncement.Instructor = createdAnnouncement.Instructor || {
-      instructorDisplayName: "Unknown",
-      instructorProfileImage: DEFAULT_AVATAR,
-    };
-
-    await updateMentionedContacts(mentionedIds);
-
-    // ⏱️ Render it immediately without waiting for fresh fetch
-    const template = $.templates("#announcementTemplate");
-    const htmlOutput = template.render({ announcements: [createdAnnouncement] });
-    $("#announcementsContainer").prepend(htmlOutput);
-
-    announcementForm.classList.remove("opacity-50", "pointer-events-none", "cursor-not-allowed");
-  });
-
 //=======================================================//
 
 // "Post Later" button handler
