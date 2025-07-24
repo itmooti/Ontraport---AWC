@@ -219,17 +219,19 @@ document
 
         // 🔧 Ensure attachment renders immediately
         if (createdAnnouncement.attachment) {
+            const attachmentObject = {
+                link: "",
+                name: fileObject?.name || "Attachment"
+            };
             try {
                 const parsed = JSON.parse(createdAnnouncement.attachment);
-                createdAnnouncement.attachmentObject = parsed;
-            } catch (e) {
-                createdAnnouncement.attachmentObject = {
-                    link: createdAnnouncement.attachment.replace(/"/g, ""),
-                    name: "Download file",
-                };
+                attachmentObject.link = parsed.link || "";
+            } catch {
+                attachmentObject.link = createdAnnouncement.attachment.replace(/"/g, "");
             }
+            createdAnnouncement.attachmentObject = attachmentObject;
         }
-
+        
         // Fallback if Instructor is missing
         createdAnnouncement.Instructor = createdAnnouncement.Instructor || {
             instructorDisplayName: "Unknown",
@@ -556,3 +558,63 @@ document.getElementById("scheduledTabs").addEventListener("click", async () => {
     document.getElementById("allTabs").classList.remove("activeTab");
     fetchAnnouncements();
 });
+
+
+// this is the initial response as soon as an announcement is created
+// {
+//     "data": {
+//         "createAnnouncement": {
+//             "ID": 9313,
+//             "class_id": 560,
+//             "type": "Announcement",
+//             "Title": "1",
+//             "Content": "2",
+//             "Date_Added": 1753347354,
+//             "disable_comments": false,
+//             "when_to_post": "Post Now",
+//             "post_later_date_time": null,
+//             "instructor_id": 13064,
+//             "status": "Published",
+//             "attachment": "\"https://t.writerscentre.com.au/s/dl?token=WzI2NTg0OCwxMDAxMSwiMjY1ODQ4XzY4ODFmNTE4NjU4Mjg5LjE3MjY5ODY4X2NyZWF0ZUFubm91bmNlbWVudC5qcyIsImNyZWF0ZUFubm91bmNlbWVudC5qcyIsIjAiLCJmYjhkN2I4NTEwYzYzYjUzNmU0YjYxNWZjZjM0Y2U4MiJd\"",
+//             "notification__type": "Announcements",
+//             "Mentions": null,
+//             "Instructor": null
+//         }
+//     },
+//     "extensions": {
+//         "pkMap": {
+//             "D0sKy2gAiWulHuXi6WliR": 9313
+//         },
+//         "statusCode": 200
+//     }
+// }
+
+
+// this is after a while and this is where the file renders correctly
+// {
+//     "data": {
+//         "getAnnouncements": [
+//             {
+//                 "anouncementID": 9313,
+//                 "anouncementTitle": "1",
+//                 "anouncementContent": "2",
+//                 "anouncementDateAdded": 1753347354,
+//                 "anouncementInstructorID": 13064,
+//                 "anouncementDisableComments": false,
+//                 "anouncementStatus": "Published",
+//                 "anouncementFileAttachement": null,
+//                 "anouncementPostLaterDateTime": null,
+//                 "anouncementAttachment": "{\"link\":\"https://t.writerscentre.com.au/s/dl?token=WzI2NTg0OCwxMDAxMSwiMjY1ODQ4XzY4ODFmNTE4NjU4Mjg5LjE3MjY5ODY4X2NyZWF0ZUFubm91bmNlbWVudC5qcyIsImNyZWF0ZUFubm91bmNlbWVudC5qcyIsIjAiLCJmYjhkN2I4NTEwYzYzYjUzNmU0YjYxNWZjZjM0Y2U4MiJd\",\"name\":\"createAnnouncement.js\",\"type\":\"text/javascript\",\"s3_id\":\"265848_6881f518658289.17269868_createAnnouncement.js\"}",
+//                 "Instructor": {
+//                     "instructorFirstName": "Valerie",
+//                     "instructorLastName": "Khoo",
+//                     "instructorDisplayName": "Valerie Khoo",
+//                     "instructorProfileImage": "https://files.ontraport.com/media/b0456fe87439430680b173369cc54cea.php03bzcx?Expires=4895186056&Signature=fw-mkSjms67rj5eIsiDF9QfHb4EAe29jfz~yn3XT0--8jLdK4OGkxWBZR9YHSh26ZAp5EHj~6g5CUUncgjztHHKU9c9ymvZYfSbPO9JGht~ZJnr2Gwmp6vsvIpYvE1pEywTeoigeyClFm1dHrS7VakQk9uYac4Sw0suU4MpRGYQPFB6w3HUw-eO5TvaOLabtuSlgdyGRie6Ve0R7kzU76uXDvlhhWGMZ7alNCTdS7txSgUOT8oL9pJP832UsasK4~M~Na0ku1oY-8a7GcvvVv6j7yE0V0COB9OP0FbC8z7eSdZ8r7avFK~f9Wl0SEfS6MkPQR2YwWjr55bbJJhZnZA__&Key-Pair-Id=APKAJVAAMVW6XQYWSTNA"
+//                 },
+//                 "mainAnnouncementVotedContactID": null,
+//                 "commentOnAnnouncement": null
+//             }
+//         ]
+//     },
+//     "extensions": {}
+// }
