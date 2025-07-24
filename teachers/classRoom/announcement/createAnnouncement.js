@@ -221,56 +221,7 @@ document
             return;
         }
 
-        // ——— Map to template shape ——————————————————
-        // 1) Extract & rename top‑level props
-        const ann = {
-            anouncementID: createdAnnouncement.ID,
-            anouncementTitle: createdAnnouncement.Title,
-            anouncementContent: createdAnnouncement.Content,
-            anouncementDateAdded: createdAnnouncement.Date_Added,
-            anouncementInstructorID: createdAnnouncement.instructor_id,
-            anouncementDisableComments: createdAnnouncement.disable_comments,
-            anouncementStatus: createdAnnouncement.status,
-
-            anouncementAttachment: (() => {
-                try {
-                    if (fileObject) {
-                        return JSON.stringify(fileObject);
-                    }
-                    if (createdAnnouncement.attachment && typeof createdAnnouncement.attachment === 'string') {
-                        const link = createdAnnouncement.attachment.replace(/"/g, "");
-                        return JSON.stringify({ link, name: "Attachment", type: "unknown", s3_id: "" });
-                    }
-                } catch (e) {
-                    console.warn("Attachment parse error", e);
-                }
-                return '""';
-            })(),
-
-            Instructor: {
-                instructorDisplayName:
-                    createdAnnouncement.Instructor?.display_name ||
-                    createdAnnouncement.Instructor?.instructorDisplayName ||
-                    "Unknown",
-                instructorProfileImage:
-                    createdAnnouncement.Instructor?.Profile_Image ||
-                    createdAnnouncement.Instructor?.instructorProfileImage ||
-                    DEFAULT_AVATAR,
-            },
-
-            mainAnnouncementVotedContactID: [],
-            commentOnAnnouncement: [],
-        };
-
-
-        // ——— Optimistic render immediately —————————————————
-        const template = $.templates("#announcementTemplate");
-        $("#announcementsContainer").prepend(
-            template.render({ announcements: [ann] })
-        );
-        // ————————————————————————————————————————————————
-
-        // Fire‑and‑forget mentions so UI isn’t blocked
+        await loadAnnouncements(createdAnnouncement.ID);
         updateMentionedContacts(mentionedIds).catch(console.error);
 
         announcementForm.classList.remove("opacity-50", "pointer-events-none", "cursor-not-allowed");
