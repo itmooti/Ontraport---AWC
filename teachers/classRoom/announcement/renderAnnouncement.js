@@ -165,6 +165,23 @@ function hasVoted(likesArray, type) {
 // Sanitize fetched data to avoid null values
 function sanitizeAnnouncements(announcements) {
   return announcements.map((announcement) => {
+    if (announcement.anouncementAttachment && typeof announcement.anouncementAttachment === "string") {
+    try {
+        const attachment = JSON.parse(announcement.anouncementAttachment);
+        if (attachment && attachment.link && attachment.name) {
+            announcement.attachmentObject = attachment;
+        }
+    } catch (e) {
+        // fallback for raw string
+        announcement.attachmentObject = {
+            link: announcement.anouncementAttachment.replace(/"/g, ""),
+            name: "Download file",
+        };
+    }
+    } else {
+        announcement.attachmentObject = null;
+    }
+
     // Set default Instructor if missing
     announcement.Instructor = announcement.Instructor || {
       instructorDisplayName: "Unknown",
