@@ -86,6 +86,7 @@ async function createForumCommentRequest(
 
     return result;
   } catch (error) {
+      console.log("Error is", error);
     return null;
   }
 }
@@ -93,8 +94,8 @@ async function createForumCommentRequest(
 document.addEventListener("submit", async function (e) {
   if (e.target.closest("form")) {
     e.preventDefault();
-    console.log("Form", form);
     const form = e.target;
+    console.log("Form", form);
     const mentionableDiv = form.querySelector(".mentionable");
     // const mentionIds = mentionableDiv?._mentionIds || [];
     const mentionSpans = mentionableDiv?.querySelectorAll("span.mention") || [];
