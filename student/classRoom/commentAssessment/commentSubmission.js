@@ -118,12 +118,14 @@ document.addEventListener("submit", async function (e) {
     let fileCategory = "File";
     let fileName = "file.txt";
     const fileInputForComment = form.querySelector(".formFileInput");
+      console.log("fileInputForComment", fileInputForComment);
     const awsParam = "ee037b98f52d6f86c4d3a4cc4522de1e";
     const awsParamUrl = "https://courses.writerscentre.com.au/s/aws";
 
     form.classList.add("opacity-50", "cursor-not-allowed");
     if (fileInputForComment) {
       const file = fileInputForComment.files[0];
+        console.log("File", file);
 
       if (file) {
         const fileFields = [{ fieldName: "attachment", file: file }];
@@ -137,6 +139,7 @@ document.addEventListener("submit", async function (e) {
           );
           fileData = toSubmitFields.attachment || "";
         } catch (err) {
+            console.log("File Error is", err);
           return;
         }
       }
@@ -151,7 +154,10 @@ document.addEventListener("submit", async function (e) {
           } else if (fileData.type.startsWith("audio/")) {
             fileCategory = "Audio";
           }
-        } catch (err) {}
+        } catch (err) {
+            
+            console.log("File Error is", err);
+        }
       }
     }
     const result = await createForumCommentRequest(
