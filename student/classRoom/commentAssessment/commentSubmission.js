@@ -61,6 +61,7 @@ async function createForumCommentRequest(
     },
   };
 
+    console.log(payload);
   try {
     const response = await fetch(endpointForComment, {
       method: "POST",
