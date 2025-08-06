@@ -143,8 +143,8 @@ function getSubscriptionQueryForAllClasses() {
             ]
           }
         ]
-        limit: 50
-        offset: 0
+        limit: $limit
+        offset: $offset
         orderBy: [{ path: ["created_at"], type: desc }]
       ) {
         ID: id
