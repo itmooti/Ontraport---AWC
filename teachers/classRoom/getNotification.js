@@ -89,7 +89,7 @@ async function initializeSocket() {
           query: getSubscriptionQueryForAllClasses(), // this function should return your new query
           variables: { 
               class_id: classIds,
-              limit: 50,
+              limit: 500000,
               offset: 0
           }
         }
