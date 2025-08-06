@@ -566,7 +566,10 @@ async function fetchSubmissions() {
   //return data.getSubmissions;
   const submissions = data.getSubmissions || [];
   window.totalSubmissionCount = submissions.length;
-
+    let globalSubmissionCounter =  document.getElementById("globalSubmissionCounter");
+    if(globalSubmissionCounter){
+     globalSubmissionCounter.textContent = window.totalSubmissionCount;
+    }
   return submissions;
 }
 
