@@ -563,7 +563,11 @@ async function fetchSubmissions() {
     body: JSON.stringify({ query: querySub }),
   });
   const { data } = await res.json();
-  return data.getSubmissions;
+  //return data.getSubmissions;
+  const submissions = data.getSubmissions || [];
+  window.totalSubmissionCount = submissions.length;
+
+  return submissions;
 }
 
 $(async function () {
