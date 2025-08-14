@@ -1180,6 +1180,7 @@ $(document).ready(async function () {
                 const isAdmin = adminSet.has(Number(contactId));
                 const teacherUrl = isTeacher ? buildRoleUrl(originUrl, 'teachers') : undefined;
                 const adminUrl = isAdmin ? buildRoleUrl(originUrl, 'admin') : undefined;
+                const parentClassId = Number(classIdForForumChat || window.classID) || undefined;
                 return {
                   alert_type: isMentioned ? "Post Mention" : "Post",
                   title: isMentioned
@@ -1193,6 +1194,7 @@ $(document).ready(async function () {
                   origin_url: originUrl,
                   origin_url_teacher: teacherUrl,
                   origin_url_admin: adminUrl,
+                  parent_class_id: parentClassId,
                   parent_post_id: postId,
                 };
               });
