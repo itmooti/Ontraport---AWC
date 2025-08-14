@@ -1048,11 +1048,86 @@ $(document).ready(async function () {
       uploadedFileInfo = { name: file.name, type: file.type };
     }
 
-    function submitNewPost(finalPayload) {
+  function submitNewPost(finalPayload) {
       ForumAPI.createPost(finalPayload)
 
         .then((created) => {
           const mentionIds = finalPayload.Mentions.map((m) => m.id);
+
+          // Fire-and-forget: create alerts for each student in class
+          try {
+            (async function createPostAlerts() {
+              // 1) Fetch student contact IDs for this class
+              const clsId = String(classIdForForumChat || window.classID || "");
+              if (!clsId) return;
+              const q = `
+                query calcClasses($id: AwcClassID) {
+                  calcClasses(query: [{ where: { id: $id } }]) {
+                    Contact_Contact_ID: field(arg: ["Enrolments", "Student", "id"])
+                  }
+                }
+              `;
+              const res = await fetch(graphqlApiEndpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
+                body: JSON.stringify({ query: q, variables: { id: clsId } }),
+              }).then(r => r.ok ? r.json() : Promise.reject("calcClasses query failed"));
+
+              let ids = res?.data?.calcClasses?.[0]?.Contact_Contact_ID ?? [];
+              if (typeof ids === "string") {
+                // Some backends serialise as comma-separated string
+                ids = ids.split(",").map(s => Number(String(s).trim())).filter(Boolean);
+              } else if (Array.isArray(ids)) {
+                ids = ids.map(x => Number(x)).filter(Boolean);
+              } else {
+                ids = [];
+              }
+
+              // Exclude the author to avoid self-alert
+              const authorId = Number(created.author_id || visitorContactID);
+              const audience = ids.filter(id => Number(id) !== authorId);
+              if (!audience.length) return;
+
+              // 2) Build alert payloads
+              const container = document.createElement("div");
+              container.innerHTML = String(finalPayload.post_copy || "");
+              const textContent = (container.textContent || "").trim();
+              const content = textContent;
+              const originUrl = window.location.href;
+              const createdAt = new Date().toISOString();
+              const postId = Number(created.id);
+
+              const alerts = audience.map((contactId) => {
+                const isMentioned = mentionIds.includes(Number(contactId));
+                return {
+                  alert_type: isMentioned ? "Post Mention" : "Post",
+                  title: isMentioned
+                    ? "You are mentioned in a post"
+                    : "A post has been created",
+                  content,
+                  created_at: createdAt,
+                  is_mentioned: !!isMentioned,
+                  is_read: false,
+                  notified_contact_id: Number(contactId),
+                  origin_url: originUrl,
+                  parent_post_id: postId,
+                };
+              });
+
+              // 3) Create alerts via global helper if available
+              if (window.AWC && typeof window.AWC.createAlerts === "function") {
+                try {
+                  await window.AWC.createAlerts(alerts, { concurrency: 4 });
+                } catch (e) {
+                  console.error("Failed to create alerts via AWC.createAlerts", e);
+                }
+              }
+            })();
+          } catch (e) {
+            console.error("Alert creation error (post)", e);
+          }
+
+          // Update has__new__notification for mentioned contacts
           return Promise.all(
             mentionIds.map((id) =>
               ForumAPI.updateContact(id, { has__new__notification: true })
@@ -1713,3 +1788,5 @@ function applyLinkPreviewsAndLinkify() {
   const containers = document.querySelectorAll(".content-container");
   containers.forEach((el) => linkifyElement(el));
 }
+
+
