@@ -1067,10 +1067,11 @@ $(document).ready(async function () {
               if (!clsId) return;
               console.groupCollapsed && console.groupCollapsed("[ForumAlerts] Begin alert creation for post", created?.id);
               try { console.log("[ForumAlerts] Using class ID", clsId); } catch(_) {}
+              // Prefer getClasses -> Enrolments -> Student ids for complete roster
               const q = `
-                query calcClasses($id: AwcClassID) {
-                  calcClasses(query: [{ where: { id: $id } }]) {
-                    Contact_Contact_ID: field(arg: ["Enrolments", "Student", "id"])
+                query getClassStudents($id: AwcClassID) {
+                  getClasses(query: [{ where: { id: $id } }]) {
+                    Enrolments { Student { id } }
                   }
                 }
               `;
@@ -1080,27 +1081,21 @@ $(document).ready(async function () {
                 body: JSON.stringify({ query: q, variables: { id: clsId } }),
               }).then(r => r.ok ? r.json() : Promise.reject("calcClasses query failed"));
               try { console.log("[ForumAlerts] calcClasses raw response", res); } catch(_) {}
-              // Collect IDs from all rows and normalise types
-              const rows = Array.isArray(res?.data?.calcClasses) ? res.data.calcClasses : [];
+              // Extract student IDs from getClasses response
+              const classes = Array.isArray(res?.data?.getClasses) ? res.data.getClasses : [];
               let ids = [];
-              for (const row of rows) {
-                const raw = row?.Contact_Contact_ID;
-                if (raw == null) continue;
-                if (Array.isArray(raw)) {
-                  ids.push(...raw);
-                } else if (typeof raw === "string") {
-                  // Could be CSV or a single numeric string
-                  ids.push(...raw.split(","));
-                } else if (typeof raw === "number") {
-                  ids.push(raw);
-                } else {
-                  // Fallback: attempt to coerce
-                  ids.push(raw);
+              for (const cls of classes) {
+                const enrols = Array.isArray(cls?.Enrolments) ? cls.Enrolments : [];
+                for (const enr of enrols) {
+                  const sid = enr?.Student?.id;
+                  if (sid != null) ids.push(sid);
                 }
               }
+              // Normalise, uniquify, and validate
+              const seen = new Set();
               ids = ids
                 .map(v => Number(String(v).trim()))
-                .filter(n => Number.isFinite(n) && n > 0);
+                .filter(n => Number.isFinite(n) && n > 0 && (seen.has(n) ? false : (seen.add(n), true)));
               try { console.log("[ForumAlerts] Student IDs parsed", { count: ids.length, ids }); } catch(_) {}
               // Exclude the author to avoid self-alert
               const authorId = Number(created.author_id || visitorContactID);
