@@ -1080,15 +1080,27 @@ $(document).ready(async function () {
                 body: JSON.stringify({ query: q, variables: { id: clsId } }),
               }).then(r => r.ok ? r.json() : Promise.reject("calcClasses query failed"));
               try { console.log("[ForumAlerts] calcClasses raw response", res); } catch(_) {}
-              let ids = res?.data?.calcClasses?.[0]?.Contact_Contact_ID ?? [];
-              if (typeof ids === "string") {
-                // Some backends serialise as comma-separated string
-                ids = ids.split(",").map(s => Number(String(s).trim())).filter(Boolean);
-              } else if (Array.isArray(ids)) {
-                ids = ids.map(x => Number(x)).filter(Boolean);
-              } else {
-                ids = [];
+              // Collect IDs from all rows and normalise types
+              const rows = Array.isArray(res?.data?.calcClasses) ? res.data.calcClasses : [];
+              let ids = [];
+              for (const row of rows) {
+                const raw = row?.Contact_Contact_ID;
+                if (raw == null) continue;
+                if (Array.isArray(raw)) {
+                  ids.push(...raw);
+                } else if (typeof raw === "string") {
+                  // Could be CSV or a single numeric string
+                  ids.push(...raw.split(","));
+                } else if (typeof raw === "number") {
+                  ids.push(raw);
+                } else {
+                  // Fallback: attempt to coerce
+                  ids.push(raw);
+                }
               }
+              ids = ids
+                .map(v => Number(String(v).trim()))
+                .filter(n => Number.isFinite(n) && n > 0);
               try { console.log("[ForumAlerts] Student IDs parsed", { count: ids.length, ids }); } catch(_) {}
               // Exclude the author to avoid self-alert
               const authorId = Number(created.author_id || visitorContactID);
@@ -1805,4 +1817,3 @@ function applyLinkPreviewsAndLinkify() {
   const containers = document.querySelectorAll(".content-container");
   containers.forEach((el) => linkifyElement(el));
 }
-
