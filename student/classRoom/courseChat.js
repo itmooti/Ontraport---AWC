@@ -1017,6 +1017,7 @@ $(document).ready(async function () {
     const postEditor = document.getElementById("post-editor");
     const postOuterWrapper = document.getElementById("postOuterWrapper");
     const htmlContent = postEditor.innerHTML.trim();
+    try { console.log("[Forum] Submit post clicked", { classId: classIdForForumChat || window.classID, contentLength: htmlContent.length }); } catch(_) {}
     const fileInput = $("#postFile")[0];
     const responseMessage = $("#responseMessage");
     const submitButton = $(this);
@@ -1033,6 +1034,7 @@ $(document).ready(async function () {
       if (id && !mentionedIds.includes(Number(id)))
         mentionedIds.push(Number(id));
     });
+    try { console.log("[Forum] Mentions parsed", { count: mentionedIds.length, mentionedIds }); } catch(_) {}
     let payload = {
       post_copy: htmlContent,
       author_id: visitorContactID,
@@ -1046,13 +1048,16 @@ $(document).ready(async function () {
     if (fileInput.files && fileInput.files[0]) {
       const file = fileInput.files[0];
       uploadedFileInfo = { name: file.name, type: file.type };
+      try { console.log("[Forum] File selected for post", uploadedFileInfo); } catch(_) {}
     }
 
-  function submitNewPost(finalPayload) {
+    function submitNewPost(finalPayload) {
+      try { console.log("[Forum] Submitting post payload", { class_id: finalPayload.class_id, hasFile: !!finalPayload.file, mentions: (finalPayload.Mentions||[]).map(m=>m.id) }); } catch(_) {}
       ForumAPI.createPost(finalPayload)
 
         .then((created) => {
           const mentionIds = finalPayload.Mentions.map((m) => m.id);
+          try { console.log("[Forum] Post created", { postId: created?.id, author_id: created?.author_id, mentionCount: mentionIds.length }); } catch(_) {}
 
           // Fire-and-forget: create alerts for each student in class
           try {
@@ -1060,6 +1065,8 @@ $(document).ready(async function () {
               // 1) Fetch student contact IDs for this class
               const clsId = String(classIdForForumChat || window.classID || "");
               if (!clsId) return;
+              console.groupCollapsed && console.groupCollapsed("[ForumAlerts] Begin alert creation for post", created?.id);
+              try { console.log("[ForumAlerts] Using class ID", clsId); } catch(_) {}
               const q = `
                 query calcClasses($id: AwcClassID) {
                   calcClasses(query: [{ where: { id: $id } }]) {
@@ -1072,7 +1079,7 @@ $(document).ready(async function () {
                 headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
                 body: JSON.stringify({ query: q, variables: { id: clsId } }),
               }).then(r => r.ok ? r.json() : Promise.reject("calcClasses query failed"));
-
+              try { console.log("[ForumAlerts] calcClasses raw response", res); } catch(_) {}
               let ids = res?.data?.calcClasses?.[0]?.Contact_Contact_ID ?? [];
               if (typeof ids === "string") {
                 // Some backends serialise as comma-separated string
@@ -1082,10 +1089,11 @@ $(document).ready(async function () {
               } else {
                 ids = [];
               }
-
+              try { console.log("[ForumAlerts] Student IDs parsed", { count: ids.length, ids }); } catch(_) {}
               // Exclude the author to avoid self-alert
               const authorId = Number(created.author_id || visitorContactID);
               const audience = ids.filter(id => Number(id) !== authorId);
+              try { console.log("[ForumAlerts] Audience computed", { total: ids.length, excludedAuthorId: authorId, audienceCount: audience.length }); } catch(_) {}
               if (!audience.length) return;
 
               // 2) Build alert payloads
@@ -1096,7 +1104,7 @@ $(document).ready(async function () {
               const originUrl = window.location.href;
               const createdAt = new Date().toISOString();
               const postId = Number(created.id);
-
+              try { console.log("[ForumAlerts] Alert content prepared", { contentPreview: content.slice(0, 120), createdAt, originUrl, postId }); } catch(_) {}
               const alerts = audience.map((contactId) => {
                 const isMentioned = mentionIds.includes(Number(contactId));
                 return {
@@ -1113,21 +1121,26 @@ $(document).ready(async function () {
                   parent_post_id: postId,
                 };
               });
-
+              try { console.log("[ForumAlerts] Alerts prepared", { count: alerts.length, sample: alerts[0] }); } catch(_) {}
               // 3) Create alerts via global helper if available
               if (window.AWC && typeof window.AWC.createAlerts === "function") {
                 try {
-                  await window.AWC.createAlerts(alerts, { concurrency: 4 });
+                  const result = await window.AWC.createAlerts(alerts, { concurrency: 4 });
+                  try { console.log("[ForumAlerts] Alerts creation result", result); } catch(_) {}
                 } catch (e) {
                   console.error("Failed to create alerts via AWC.createAlerts", e);
                 }
+              } else {
+                try { console.warn("[ForumAlerts] window.AWC.createAlerts not available"); } catch(_) {}
               }
+              console.groupEnd && console.groupEnd();
             })();
           } catch (e) {
             console.error("Alert creation error (post)", e);
           }
 
           // Update has__new__notification for mentioned contacts
+          try { console.log("[Forum] Updating has__new__notification for mentions", mentionIds); } catch(_) {}
           return Promise.all(
             mentionIds.map((id) =>
               ForumAPI.updateContact(id, { has__new__notification: true })
@@ -1138,6 +1151,7 @@ $(document).ready(async function () {
         .then((data) => {
           responseMessage.text("Post created successfully!");
           resetFileAttachmentUI();
+          try { console.log("[Forum] Refreshing post after creation", { postId: data?.id }); } catch(_) {}
           return ForumAPI.fetchPostById(data.id);
         })
         .then((post) => {
@@ -1154,6 +1168,7 @@ $(document).ready(async function () {
           $("#forumContainer").prepend(htmlOutput);
           postEditor.innerHTML = "";
           $(fileInput).val("");
+          try { console.log("[Forum] Post rendered and input reset", { postId: post?.id }); } catch(_) {}
         })
         .catch((error) => {
           console.error("Error creating post:", error);
@@ -1168,6 +1183,7 @@ $(document).ready(async function () {
     }
     if (fileInput.files && fileInput.files[0]) {
       const filesToUpload = [{ file: fileInput.files[0], fieldName: "file" }];
+      try { console.log("[Forum] Processing file upload for post", { name: fileInput.files[0].name, type: fileInput.files[0].type }); } catch(_) {}
       FileUploader.processFileFields(
         payload,
         filesToUpload,
@@ -1182,6 +1198,7 @@ $(document).ready(async function () {
           $("#post-editor").attr("contenteditable", true);
         });
     } else {
+      try { console.log("[Forum] No file attached, submitting post now"); } catch(_) {}
       submitNewPost(payload);
     }
   });
@@ -1788,5 +1805,4 @@ function applyLinkPreviewsAndLinkify() {
   const containers = document.querySelectorAll(".content-container");
   containers.forEach((el) => linkifyElement(el));
 }
-
 
