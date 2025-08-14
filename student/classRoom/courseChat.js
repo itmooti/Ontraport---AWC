@@ -1067,30 +1067,54 @@ $(document).ready(async function () {
               if (!clsId) return;
               console.groupCollapsed && console.groupCollapsed("[ForumAlerts] Begin alert creation for post", created?.id);
               try { console.log("[ForumAlerts] Using class ID", clsId); } catch(_) {}
-              // Prefer getClasses -> Enrolments -> Student ids for complete roster
-              const q = `
+              // Gather roster via getClasses and calcEnrolments to avoid pagination
+              const qClasses = `
                 query getClassStudents($id: AwcClassID) {
                   getClasses(query: [{ where: { id: $id } }]) {
                     Enrolments { Student { id } }
                   }
                 }
               `;
-              const res = await fetch(graphqlApiEndpoint, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
-                body: JSON.stringify({ query: q, variables: { id: clsId } }),
-              }).then(r => r.ok ? r.json() : Promise.reject("calcClasses query failed"));
-              try { console.log("[ForumAlerts] calcClasses raw response", res); } catch(_) {}
-              // Extract student IDs from getClasses response
-              const classes = Array.isArray(res?.data?.getClasses) ? res.data.getClasses : [];
-              let ids = [];
+              const qEnrol = `
+                query getClassEnrolmentStudents($id: AwcClassID) {
+                  calcEnrolments(query: [{ where: { class_id: $id } }]) {
+                    Student_ID: field(arg: ["Student", "id"])
+                  }
+                }
+              `;
+              const [resClasses, resEnrol] = await Promise.all([
+                fetch(graphqlApiEndpoint, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
+                  body: JSON.stringify({ query: qClasses, variables: { id: clsId } }),
+                }).then(r => r.ok ? r.json() : Promise.reject("getClasses query failed")),
+                fetch(graphqlApiEndpoint, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
+                  body: JSON.stringify({ query: qEnrol, variables: { id: clsId } }),
+                }).then(r => r.ok ? r.json() : Promise.reject("calcEnrolments query failed")),
+              ]);
+              try { console.log("[ForumAlerts] Roster responses", { resClasses, resEnrol }); } catch(_) {}
+              // Extract student IDs
+              let idsFromClasses = [];
+              const classes = Array.isArray(resClasses?.data?.getClasses) ? resClasses.data.getClasses : [];
               for (const cls of classes) {
                 const enrols = Array.isArray(cls?.Enrolments) ? cls.Enrolments : [];
                 for (const enr of enrols) {
                   const sid = enr?.Student?.id;
-                  if (sid != null) ids.push(sid);
+                  if (sid != null) idsFromClasses.push(sid);
                 }
               }
+              let idsFromEnrol = [];
+              const enrolRows = Array.isArray(resEnrol?.data?.calcEnrolments) ? resEnrol.data.calcEnrolments : [];
+              for (const row of enrolRows) {
+                const raw = row?.Student_ID;
+                if (raw == null) continue;
+                if (Array.isArray(raw)) idsFromEnrol.push(...raw);
+                else idsFromEnrol.push(raw);
+              }
+              let ids = [...idsFromClasses, ...idsFromEnrol];
+              try { console.log("[ForumAlerts] Roster extracted", { fromClasses: idsFromClasses, fromEnrol: idsFromEnrol }); } catch(_) {}
               // Normalise, uniquify, and validate
               const seen = new Set();
               ids = ids
