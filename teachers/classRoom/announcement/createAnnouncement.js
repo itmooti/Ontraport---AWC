@@ -221,6 +221,74 @@ document
             return;
         }
 
+        // Fire-and-forget: create alerts for a new announcement (skip scheduled/drafts)
+        try {
+            (async function createAnnouncementAlerts() {
+                const status = String(createdAnnouncement?.status || '').toLowerCase();
+                if (status && status !== 'published') return;
+                const clsId = Number(createdAnnouncement?.class_id || classID);
+                if (!Number.isFinite(clsId)) return;
+                const authorId = Number(createdAnnouncement?.instructor_id || LOGGED_IN_USER_ID);
+
+                // Build roster
+                const qClasses = `
+                  query getClassStudents($id: AwcClassID) { getClasses(query: [{ where: { id: $id } }]) { Enrolments { Student { id } } } }
+                `;
+                const qEnrol = `
+                  query getClassEnrolmentStudents($id: AwcClassID) { calcEnrolments(query: [{ where: { class_id: $id } }]) { Student_ID: field(arg: ["Student","id"]) } }
+                `;
+                const qTeacher = `
+                  query calcClasses($id: AwcClassID) { calcClasses(query: [{ where: { id: $id } }]) { Teacher_Contact_ID: field(arg: ["Teacher","id"]) } }
+                `;
+                const [resClasses, resEnrol, resTeacher] = await Promise.all([
+                    fetch(apiUrlForAnouncement, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKeyForAnouncement }, body: JSON.stringify({ query: qClasses, variables: { id: clsId } }) }).then(r => r.ok ? r.json() : Promise.reject('getClasses failed')),
+                    fetch(apiUrlForAnouncement, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKeyForAnouncement }, body: JSON.stringify({ query: qEnrol, variables: { id: clsId } }) }).then(r => r.ok ? r.json() : Promise.reject('calcEnrolments failed')),
+                    fetch(apiUrlForAnouncement, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKeyForAnouncement }, body: JSON.stringify({ query: qTeacher, variables: { id: clsId } }) }).then(r => r.ok ? r.json() : Promise.reject('calcClasses failed')),
+                ]);
+                const norm = (list) => (Array.isArray(list) ? list : [list]).map(v => Number(v)).filter(n => Number.isFinite(n) && n > 0);
+                const classes = Array.isArray(resClasses?.data?.getClasses) ? resClasses.data.getClasses : [];
+                const idsFromClasses = classes.flatMap(c => (Array.isArray(c?.Enrolments) ? c.Enrolments : []).map(e => e?.Student?.id).filter(Boolean));
+                const enrolRows = Array.isArray(resEnrol?.data?.calcEnrolments) ? resEnrol.data.calcEnrolments : [];
+                const idsFromEnrol = enrolRows.flatMap(row => norm(row?.Student_ID));
+                let teacherIds = [];
+                const tRaw = resTeacher?.data?.calcClasses?.[0]?.Teacher_Contact_ID; if (tRaw != null) teacherIds = norm(tRaw);
+                const adminIds = [10435];
+                const seen = new Set();
+                let audience = norm([...idsFromClasses, ...idsFromEnrol, ...teacherIds, ...adminIds])
+                    .filter(n => (seen.has(n) ? false : (seen.add(n), true)))
+                    .filter(id => id !== authorId);
+                if (!audience.length) return;
+
+                const buildRoleUrl = (url, role) => {
+                    try { const u = new URL(url); const patterns = [/(\/students\/)/, /(\/student\/)/, /(\/teachers\/)/, /(\/teacher\/)/, /(\/admin\/)/]; for (const re of patterns) { if (re.test(u.pathname)) { u.pathname = u.pathname.replace(re, `/${role}/`); return u.toString(); } } return u.toString(); } catch(_) { return url; }
+                };
+                const originUrl = window.location.href;
+                const teacherUrl = buildRoleUrl(originUrl, 'teachers');
+                const adminUrl = buildRoleUrl(originUrl, 'admin');
+                const tmp = document.createElement('div'); tmp.innerHTML = String(content || createdAnnouncement?.Content || '');
+                const contentText = (tmp.textContent || '').trim();
+                const createdAt = new Date().toISOString();
+                const mentionSet = new Set((mentionedIds || []).map(Number));
+                const alerts = audience.map(contactId => ({
+                    alert_type: mentionSet.has(Number(contactId)) ? 'Announcement Mention' : 'Announcement',
+                    title: mentionSet.has(Number(contactId)) ? 'You are mentioned in an announcement' : 'An announcement has been posted',
+                    content: contentText,
+                    created_at: createdAt,
+                    is_mentioned: mentionSet.has(Number(contactId)),
+                    is_read: false,
+                    notified_contact_id: Number(contactId),
+                    origin_url: originUrl,
+                    origin_url_teacher: teacherUrl,
+                    origin_url_admin: adminUrl,
+                    parent_class_id: clsId,
+                    parent_announcement_id: Number(createdAnnouncement?.ID || createdAnnouncement?.id),
+                }));
+                if (window.AWC && typeof window.AWC.createAlerts === 'function') {
+                    try { await window.AWC.createAlerts(alerts, { concurrency: 4 }); } catch (e) { console.error('Failed to create announcement alerts', e); }
+                }
+            })();
+        } catch (e) { console.error('Announcement alert error', e); }
+
         await loadAnnouncements(createdAnnouncement.ID);
         updateMentionedContacts(mentionedIds).catch(console.error);
 
