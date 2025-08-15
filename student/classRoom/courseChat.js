@@ -1377,7 +1377,194 @@ $(document).on("submit", ".commentForm", function (event) {
     ForumAPI.createComment(finalPayload)
 
       .then((created) => {
-        const mentionIds = payload.Mentions.map((m) => m.id);
+        const mentionIds = (finalPayload.Mentions || []).map((m) => Number(m.id));
+
+        // Fire-and-forget: create alerts for class roster with special handling for mentions and parent owners
+        try {
+          (async function createCommentAlerts() {
+            const clsId = String(classIdForForumChat || window.classID || "");
+            if (!clsId) return;
+
+            // Build roster sets (students + teacher + admin)
+            const qClasses = `
+              query getClassStudents($id: AwcClassID) {
+                getClasses(query: [{ where: { id: $id } }]) {
+                  Enrolments { Student { id } }
+                }
+              }
+            `;
+            const qEnrol = `
+              query getClassEnrolmentStudents($id: AwcClassID) {
+                calcEnrolments(query: [{ where: { class_id: $id } }]) {
+                  Student_ID: field(arg: ["Student", "id"])
+                }
+              }
+            `;
+            const qTeacher = `
+              query calcClasses($id: AwcClassID) {
+                calcClasses(query: [{ where: { id: $id } }]) {
+                  Teacher_Contact_ID: field(arg: ["Teacher", "id"])
+                }
+              }
+            `;
+            // Parent entity author queries
+            const qParentPost = `
+              query getPostAuthor($id: AwcForumPostID!) { getForumPosts(query: [{ where: { id: $id } }]) { id author_id } }
+            `;
+            const qParentComment = `
+              query getCommentAuthor($id: AwcForumCommentID) { getForumComments(query: [{ where: { id: $id } }]) { id author_id forum_post_id } }
+            `;
+            // Current actor name (commenter)
+            const qMe = `
+              query getMe($id: AwcContactID!) { getContact(query: [{ where: { id: $id } }]) { display_name first_name last_name id } }
+            `;
+
+            const [resClasses, resEnrol, resTeacher, resParent, resMe] = await Promise.all([
+              fetch(graphqlApiEndpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
+                body: JSON.stringify({ query: qClasses, variables: { id: clsId } }),
+              }).then(r => r.ok ? r.json() : Promise.reject("getClasses query failed")),
+              fetch(graphqlApiEndpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
+                body: JSON.stringify({ query: qEnrol, variables: { id: clsId } }),
+              }).then(r => r.ok ? r.json() : Promise.reject("calcEnrolments query failed")),
+              fetch(graphqlApiEndpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
+                body: JSON.stringify({ query: qTeacher, variables: { id: clsId } }),
+              }).then(r => r.ok ? r.json() : Promise.reject("calcClasses query failed")),
+              fetch(graphqlApiEndpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
+                body: JSON.stringify({ query: parentType === 'post' ? qParentPost : qParentComment, variables: { id: parentId } }),
+              }).then(r => r.ok ? r.json() : Promise.reject("parent author query failed")),
+              fetch(graphqlApiEndpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
+                body: JSON.stringify({ query: qMe, variables: { id: Number(visitorContactID) } }),
+              }).then(r => r.ok ? r.json() : Promise.reject("me query failed")),
+            ]);
+
+            // Extract roster
+            let idsFromClasses = [];
+            const classes = Array.isArray(resClasses?.data?.getClasses) ? resClasses.data.getClasses : [];
+            for (const cls of classes) {
+              const enrols = Array.isArray(cls?.Enrolments) ? cls.Enrolments : [];
+              for (const enr of enrols) {
+                const sid = enr?.Student?.id;
+                if (sid != null) idsFromClasses.push(sid);
+              }
+            }
+            let idsFromEnrol = [];
+            const enrolRows = Array.isArray(resEnrol?.data?.calcEnrolments) ? resEnrol.data.calcEnrolments : [];
+            for (const row of enrolRows) {
+              const raw = row?.Student_ID;
+              if (raw == null) continue;
+              if (Array.isArray(raw)) idsFromEnrol.push(...raw);
+              else idsFromEnrol.push(raw);
+            }
+            // Teacher/admin sets
+            let teacherIds = [];
+            try {
+              const tRaw = resTeacher?.data?.calcClasses?.[0]?.Teacher_Contact_ID;
+              if (tRaw != null) {
+                if (Array.isArray(tRaw)) teacherIds.push(...tRaw);
+                else teacherIds.push(tRaw);
+              }
+            } catch (_) {}
+            const adminIds = [10435];
+
+            // Parent authors
+            let parentAuthorId = null;
+            if (parentType === 'post') {
+              parentAuthorId = Number(resParent?.data?.getForumPosts?.[0]?.author_id ?? 0) || null;
+            } else {
+              parentAuthorId = Number(resParent?.data?.getForumComments?.[0]?.author_id ?? 0) || null;
+            }
+
+            // Actor name
+            const me = resMe?.data?.getContact || {};
+            const actorName = me?.display_name || [me?.first_name, me?.last_name].filter(Boolean).join(' ') || 'Someone';
+
+            // Audience
+            const normalize = (list) => (Array.isArray(list) ? list : [list])
+              .map(v => Number(String(v).trim()))
+              .filter(n => Number.isFinite(n) && n > 0);
+            const teacherSet = new Set(normalize(teacherIds));
+            const adminSet = new Set(normalize(adminIds));
+            const seen = new Set();
+            let ids = [...idsFromClasses, ...idsFromEnrol, ...teacherIds, ...adminIds];
+            ids = normalize(ids).filter(n => (seen.has(n) ? false : (seen.add(n), true)));
+            const authorId = Number(created.author_id || visitorContactID);
+            const audience = ids.filter(id => id !== authorId);
+            if (!audience.length) return;
+
+            // Prepare content and URLs
+            const container = document.createElement("div");
+            container.innerHTML = String(finalPayload.comment || "");
+            const content = (container.textContent || "").trim();
+            const createdAt = new Date().toISOString();
+            const originUrl = window.location.href;
+            const buildRoleUrl = (url, role) => {
+              try {
+                const u = new URL(url);
+                const replaced = u.pathname.replace(/\/(students)\//, `/${role}/`);
+                if (replaced !== u.pathname) { u.pathname = replaced; return u.toString(); }
+              } catch (_) {}
+              return url;
+            };
+
+            // Build alerts
+            const alerts = audience.map((contactId) => {
+              const isMentioned = mentionIds.includes(Number(contactId));
+              const isTeacher = teacherSet.has(Number(contactId));
+              const isAdmin = adminSet.has(Number(contactId));
+              const teacherUrl = isTeacher ? buildRoleUrl(originUrl, 'teachers') : undefined;
+              const adminUrl = isAdmin ? buildRoleUrl(originUrl, 'admin') : undefined;
+              const parentClassId = Number(classIdForForumChat || window.classID) || undefined;
+              const alertType = isMentioned ? 'Post Comment Mention' : 'Post Comment';
+
+              let title;
+              if (isMentioned) {
+                title = 'You are mentioned in a comment';
+              } else if (parentAuthorId && Number(contactId) === Number(parentAuthorId)) {
+                title = parentType === 'post'
+                  ? `${actorName} commented on your post`
+                  : `${actorName} replied to your comment`;
+              } else {
+                title = parentType === 'post'
+                  ? 'A comment has been added to a post'
+                  : 'A reply has been added to a comment';
+              }
+
+              return {
+                alert_type: alertType,
+                title,
+                content,
+                created_at: createdAt,
+                is_mentioned: !!isMentioned,
+                is_read: false,
+                notified_contact_id: Number(contactId),
+                origin_url: originUrl,
+                origin_url_teacher: teacherUrl,
+                origin_url_admin: adminUrl,
+                parent_class_id: parentClassId,
+                parent_post_id: Number(forumPostId),
+                parent_comment_id: Number(created.id),
+              };
+            });
+
+            if (window.AWC && typeof window.AWC.createAlerts === 'function') {
+              try { await window.AWC.createAlerts(alerts, { concurrency: 4 }); } catch (e) { console.error('Failed to create alerts (comment)', e); }
+            }
+          })();
+        } catch (e) {
+          console.error('Alert creation error (comment)', e);
+        }
+
+        // Update has__new__notification for mentioned contacts
         return Promise.all(
           mentionIds.map((id) =>
             ForumAPI.updateContact(id, { has__new__notification: true })
@@ -1882,3 +2069,4 @@ function applyLinkPreviewsAndLinkify() {
   const containers = document.querySelectorAll(".content-container");
   containers.forEach((el) => linkifyElement(el));
 }
+
