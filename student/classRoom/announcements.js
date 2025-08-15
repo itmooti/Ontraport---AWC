@@ -467,6 +467,119 @@ mutation createForumComment($payload: ForumCommentCreateInput) {
   const newCommentId = result.data.createForumComment.id;
   await updateMentionedContacts(mentionedIds);
 
+  // Fire-and-forget: Create alerts for student comment/reply on announcement
+  try {
+    (async function createAnnouncementCommentAlertsForStudent() {
+      // Resolve class id
+      let clsId = Number(classIdFromEidForAnnouncement || 0);
+      if (!Number.isFinite(clsId) || clsId <= 0) {
+        const cid = await getAnnouncementClassId();
+        if (!cid) return; clsId = Number(cid);
+        classIdFromEidForAnnouncement = String(clsId);
+      }
+
+      // Build roster and fetch parent authors
+      const qClasses = `
+        query getClassStudents($id: AwcClassID) { getClasses(query: [{ where: { id: $id } }]) { Enrolments { Student { id } } } }
+      `;
+      const qEnrol = `
+        query getClassEnrolmentStudents($id: AwcClassID) { calcEnrolments(query: [{ where: { class_id: $id } }]) { Student_ID: field(arg: ["Student","id"]) } }
+      `;
+      const qTeacher = `
+        query calcClasses($id: AwcClassID) { calcClasses(query: [{ where: { id: $id } }]) { Teacher_Contact_ID: field(arg: ["Teacher","id"]) } }
+      `;
+      const qAnnouncement = `
+        query getAnnouncement($id: AwcAnnouncementID) { getAnnouncements(query: [{ where: { id: $id } }]) { id instructor_id class_id status title content } }
+      `;
+      const qParentComment = `
+        query getCommentAuthor($id: AwcForumCommentID) { getForumComments(query: [{ where: { id: $id } }]) { id author_id parent_announcement_id } }
+      `;
+      const qMe = `
+        query getMe($id: AwcContactID!) { getContact(query: [{ where: { id: $id } }]) { id display_name first_name last_name } }
+      `;
+
+      const [resClasses, resEnrol, resTeacher, resAnnouncement, resParentCmt, resMe] = await Promise.all([
+        fetch(apiUrlForAnouncement, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKeyForAnouncement }, body: JSON.stringify({ query: qClasses, variables: { id: clsId } }) }).then(r => r.ok ? r.json() : Promise.reject('getClasses failed')),
+        fetch(apiUrlForAnouncement, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKeyForAnouncement }, body: JSON.stringify({ query: qEnrol, variables: { id: clsId } }) }).then(r => r.ok ? r.json() : Promise.reject('calcEnrolments failed')),
+        fetch(apiUrlForAnouncement, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKeyForAnouncement }, body: JSON.stringify({ query: qTeacher, variables: { id: clsId } }) }).then(r => r.ok ? r.json() : Promise.reject('calcClasses failed')),
+        fetch(apiUrlForAnouncement, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKeyForAnouncement }, body: JSON.stringify({ query: qAnnouncement, variables: { id: parentAnnouncementId } }) }).then(r => r.ok ? r.json() : Promise.reject('getAnnouncement failed')),
+        parentCommentID ? fetch(apiUrlForAnouncement, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKeyForAnouncement }, body: JSON.stringify({ query: qParentComment, variables: { id: parentCommentID } }) }).then(r => r.ok ? r.json() : Promise.reject('getParentComment failed')) : Promise.resolve({}),
+        fetch(apiUrlForAnouncement, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKeyForAnouncement }, body: JSON.stringify({ query: qMe, variables: { id: Number(currentPageUserID) } }) }).then(r => r.ok ? r.json() : Promise.reject('getMe failed')),
+      ]);
+
+      const norm = (list) => (Array.isArray(list) ? list : [list]).map(v => Number(v)).filter(n => Number.isFinite(n) && n > 0);
+      const classes = Array.isArray(resClasses?.data?.getClasses) ? resClasses.data.getClasses : [];
+      const idsFromClasses = classes.flatMap(c => (Array.isArray(c?.Enrolments) ? c.Enrolments : []).map(e => e?.Student?.id).filter(Boolean));
+      const enrolRows = Array.isArray(resEnrol?.data?.calcEnrolments) ? resEnrol.data.calcEnrolments : [];
+      const idsFromEnrol = enrolRows.flatMap(row => norm(row?.Student_ID));
+      let teacherIds = [];
+      const tRaw = resTeacher?.data?.calcClasses?.[0]?.Teacher_Contact_ID; if (tRaw != null) teacherIds = norm(tRaw);
+      const adminIds = [10435];
+
+      const announcement = resAnnouncement?.data?.getAnnouncements?.[0] || {};
+      const announcementAuthorId = Number(announcement?.instructor_id || 0) || null;
+      const parentCommentAuthorId = Number(resParentCmt?.data?.getForumComments?.[0]?.author_id || 0) || null;
+
+      const seen = new Set();
+      let ids = [...idsFromClasses, ...idsFromEnrol, ...teacherIds, ...adminIds];
+      if (announcementAuthorId) ids.push(announcementAuthorId);
+      if (parentCommentAuthorId) ids.push(parentCommentAuthorId);
+      const audience = norm(ids).filter(n => (seen.has(n) ? false : (seen.add(n), true))).filter(id => id !== Number(currentPageUserID));
+      if (!audience.length) return;
+
+      // Build content and role URLs
+      const contentContainer = document.createElement('div');
+      contentContainer.innerHTML = String(comments || '');
+      const contentText = (contentContainer.textContent || '').trim();
+      const createdAt = new Date().toISOString();
+      const originUrl = window.location.href;
+      const buildRoleUrl = (url, role) => { try { const u = new URL(url); const patterns = [/(\/students\/)/, /(\/student\/)/, /(\/teachers\/)/, /(\/teacher\/)/, /(\/admin\/)/]; for (const re of patterns) { if (re.test(u.pathname)) { u.pathname = u.pathname.replace(re, `/${role}/`); return u.toString(); } } return u.toString(); } catch(_) { return url; } };
+      const actor = resMe?.data?.getContact || {};
+      const actorName = actor?.display_name || [actor?.first_name, actor?.last_name].filter(Boolean).join(' ') || 'Someone';
+      const teacherUrl = buildRoleUrl(originUrl, 'teachers');
+      const adminUrl = buildRoleUrl(originUrl, 'admin');
+      const mentionSet = new Set((mentionedIds || []).map(Number));
+
+      // Resolve a valid announcement ID to include in alerts
+      const annIdCandidates = [ Number(parentAnnouncementId), Number(announcement?.id || announcement?.anouncementID || 0), Number(resParentCmt?.data?.getForumComments?.[0]?.parent_announcement_id || 0) ];
+      const effectiveAnnouncementId = annIdCandidates.find(v => Number.isFinite(v) && v > 0) || null;
+
+      const alerts = audience.map(contactId => {
+        const isMentioned = mentionSet.has(Number(contactId));
+        const alertType = isMentioned ? 'Announcement Comment Mention' : 'Announcement Comment';
+        let title;
+        if (isMentioned) title = 'You are mentioned in an announcement comment';
+        else if (Number(contactId) === announcementAuthorId) title = `${actorName} commented on your announcement`;
+        else if (parentCommentAuthorId && Number(contactId) === parentCommentAuthorId) title = `${actorName} replied to your comment`;
+        else title = parentCommentID ? 'A reply has been added to a comment' : 'A comment has been added to an announcement';
+        const base = {
+          alert_type: alertType,
+          title,
+          content: contentText,
+          created_at: createdAt,
+          is_mentioned: !!isMentioned,
+          is_read: false,
+          notified_contact_id: Number(contactId),
+          origin_url: originUrl,
+          origin_url_teacher: teacherUrl,
+          origin_url_admin: adminUrl,
+          parent_class_id: Number(clsId),
+        };
+        if (effectiveAnnouncementId) base.parent_announcement_id = effectiveAnnouncementId;
+        if (Number.isFinite(Number(newCommentId)) && Number(newCommentId) > 0) base.parent_comment_id = Number(newCommentId);
+        return base;
+      });
+
+      // Create alerts via GraphQL to avoid SDK cancellations
+      const createAlertMutation = `mutation createAlert($payload: AlertCreateInput) { createAlert(payload: $payload) { id } }`;
+      for (const ap of alerts) {
+        try {
+          await fetch(apiUrlForAnouncement, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKeyForAnouncement }, body: JSON.stringify({ query: createAlertMutation, variables: { payload: ap } }) });
+        } catch (e) { console.error('createAlert GraphQL failed (student)', e); }
+      }
+    })();
+  } catch (e) { console.error('Announcement comment alert error (student)', e); }
+
 
   const newComment = await fetchCommentById(newCommentId);
   if (parentCommentID === null) {
