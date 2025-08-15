@@ -1162,14 +1162,17 @@ $(document).ready(async function () {
               const buildRoleUrl = (url, role) => {
                 try {
                   const u = new URL(url);
-                  // Attempt to swap the '/students/' segment; fallback to same URL
-                  const replaced = u.pathname.replace(/\/(students)\//, `/${role}/`);
-                  if (replaced !== u.pathname) {
-                    u.pathname = replaced;
-                    return u.toString();
+                  // Replace any existing role segment with target role
+                  const patterns = [/\/(students)\//, /\/(student)\//, /\/(teachers)\//, /\/(teacher)\//, /\/(admin)\//];
+                  for (const re of patterns) {
+                    if (re.test(u.pathname)) {
+                      u.pathname = u.pathname.replace(re, `/${role}/`);
+                      return u.toString();
+                    }
                   }
-                } catch (_) {}
-                return url;
+                  // If no known role segment, leave as-is
+                  return u.toString();
+                } catch (_) { return url; }
               };
               const createdAt = new Date().toISOString();
               const postId = Number(created.id);
@@ -1178,8 +1181,8 @@ $(document).ready(async function () {
                 const isMentioned = mentionIds.includes(Number(contactId));
                 const isTeacher = teacherSet.has(Number(contactId));
                 const isAdmin = adminSet.has(Number(contactId));
-                const teacherUrl = isTeacher ? buildRoleUrl(originUrl, 'teachers') : undefined;
-                const adminUrl = isAdmin ? buildRoleUrl(originUrl, 'admin') : undefined;
+                const teacherUrl = buildRoleUrl(originUrl, 'teachers');
+                const adminUrl = buildRoleUrl(originUrl, 'admin');
                 const parentClassId = Number(classIdForForumChat || window.classID) || undefined;
                 return {
                   alert_type: isMentioned ? "Post Mention" : "Post",
@@ -1496,6 +1499,7 @@ $(document).on("submit", ".commentForm", function (event) {
             const adminSet = new Set(normalize(adminIds));
             const seen = new Set();
             let ids = [...idsFromClasses, ...idsFromEnrol, ...teacherIds, ...adminIds];
+            if (parentAuthorId) ids.push(Number(parentAuthorId));
             ids = normalize(ids).filter(n => (seen.has(n) ? false : (seen.add(n), true)));
             const authorId = Number(created.author_id || visitorContactID);
             const audience = ids.filter(id => id !== authorId);
@@ -1510,10 +1514,15 @@ $(document).on("submit", ".commentForm", function (event) {
             const buildRoleUrl = (url, role) => {
               try {
                 const u = new URL(url);
-                const replaced = u.pathname.replace(/\/(students)\//, `/${role}/`);
-                if (replaced !== u.pathname) { u.pathname = replaced; return u.toString(); }
-              } catch (_) {}
-              return url;
+                const patterns = [/\/(students)\//, /\/(student)\//, /\/(teachers)\//, /\/(teacher)\//, /\/(admin)\//];
+                for (const re of patterns) {
+                  if (re.test(u.pathname)) {
+                    u.pathname = u.pathname.replace(re, `/${role}/`);
+                    return u.toString();
+                  }
+                }
+                return u.toString();
+              } catch (_) { return url; }
             };
 
             // Build alerts
@@ -1521,8 +1530,8 @@ $(document).on("submit", ".commentForm", function (event) {
               const isMentioned = mentionIds.includes(Number(contactId));
               const isTeacher = teacherSet.has(Number(contactId));
               const isAdmin = adminSet.has(Number(contactId));
-              const teacherUrl = isTeacher ? buildRoleUrl(originUrl, 'teachers') : undefined;
-              const adminUrl = isAdmin ? buildRoleUrl(originUrl, 'admin') : undefined;
+              const teacherUrl = buildRoleUrl(originUrl, 'teachers');
+              const adminUrl = buildRoleUrl(originUrl, 'admin');
               const parentClassId = Number(classIdForForumChat || window.classID) || undefined;
               const alertType = isMentioned ? 'Post Comment Mention' : 'Post Comment';
 
@@ -2069,4 +2078,3 @@ function applyLinkPreviewsAndLinkify() {
   const containers = document.querySelectorAll(".content-container");
   containers.forEach((el) => linkifyElement(el));
 }
-
