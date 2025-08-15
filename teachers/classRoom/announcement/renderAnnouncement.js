@@ -460,7 +460,8 @@ async function createForumComment(
                 };
             });
             if (window.AWC && typeof window.AWC.createAlerts === 'function') {
-                try { await window.AWC.createAlerts(alerts, { concurrency: 4 }); } catch (e) { console.error('Failed to create announcement comment alerts', e); }
+                // Use concurrency 1 to avoid SDK cancelling parallel mutations during replies
+                try { await window.AWC.createAlerts(alerts, { concurrency: 1 }); } catch (e) { console.error('Failed to create announcement comment alerts', e); }
             }
         })();
     } catch (e) { console.error('Announcement comment alert error', e); }
