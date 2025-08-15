@@ -459,9 +459,16 @@ async function createForumComment(
                     parent_comment_id: Number(newCommentId),
                 };
             });
-            if (window.AWC && typeof window.AWC.createAlerts === 'function') {
-                // Use concurrency 1 to avoid SDK cancelling parallel mutations during replies
-                try { await window.AWC.createAlerts(alerts, { concurrency: 1 }); } catch (e) { console.error('Failed to create announcement comment alerts', e); }
+            // Create alerts directly via GraphQL to avoid SDK mutation cancellations
+            const createAlertMutation = `mutation createAlert($payload: AlertCreateInput) { createAlert(payload: $payload) { id } }`;
+            for (const payload of alerts) {
+                try {
+                    await fetch(apiUrlForAnouncement, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Api-Key': apiKeyForAnouncement },
+                        body: JSON.stringify({ query: createAlertMutation, variables: { payload } }),
+                    });
+                } catch (e) { console.error('createAlert GraphQL failed', e); }
             }
         })();
     } catch (e) { console.error('Announcement comment alert error', e); }
