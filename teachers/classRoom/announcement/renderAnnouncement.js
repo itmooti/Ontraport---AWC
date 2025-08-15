@@ -435,6 +435,14 @@ async function createForumComment(
             const adminUrl = buildRoleUrl(originUrl, 'admin');
             const mentionSet = new Set((mentionedIds || []).map(Number));
 
+            // Resolve a valid announcement ID (for replies, parentAnnouncementId can be missing)
+            const annIdCandidates = [
+                Number(parentAnnouncementId),
+                Number((announcement && (announcement.id || announcement.anouncementID)) || 0),
+                Number(resParentCmt?.data?.getForumComments?.[0]?.parent_announcement_id || 0),
+            ];
+            const effectiveAnnouncementId = annIdCandidates.find(v => Number.isFinite(v) && v > 0) || null;
+
             const alerts = audience.map(contactId => {
                 const isMentioned = mentionSet.has(Number(contactId));
                 const alertType = isMentioned ? 'Announcement Comment Mention' : 'Announcement Comment';
@@ -443,7 +451,7 @@ async function createForumComment(
                 else if (Number(contactId) === announcementAuthorId) title = `${actorName} commented on your announcement`;
                 else if (parentCommentAuthorId && Number(contactId) === parentCommentAuthorId) title = `${actorName} replied to your comment`;
                 else title = parentCommentID ? 'A reply has been added to a comment' : 'A comment has been added to an announcement';
-                return {
+                const base = {
                     alert_type: alertType,
                     title,
                     content: contentText,
@@ -455,9 +463,10 @@ async function createForumComment(
                     origin_url_teacher: teacherUrl,
                     origin_url_admin: adminUrl,
                     parent_class_id: Number(currentPageClassID),
-                    parent_announcement_id: Number(parentAnnouncementId),
-                    parent_comment_id: Number(newCommentId),
                 };
+                if (effectiveAnnouncementId) base.parent_announcement_id = effectiveAnnouncementId;
+                if (Number.isFinite(Number(newCommentId)) && Number(newCommentId) > 0) base.parent_comment_id = Number(newCommentId);
+                return base;
             });
             // Create alerts directly via GraphQL to avoid SDK mutation cancellations
             const createAlertMutation = `mutation createAlert($payload: AlertCreateInput) { createAlert(payload: $payload) { id } }`;
