@@ -1415,6 +1415,7 @@ $(document).on("submit", ".commentForm", function (event) {
               const adminSet = new Set(normalize(adminIds));
               const seen = new Set();
               let ids = [...idsFromClasses, ...idsFromEnrol, ...teacherIds, ...adminIds];
+              if (parentAuthorId) ids.push(Number(parentAuthorId));
               ids = normalize(ids).filter(n => (seen.has(n) ? false : (seen.add(n), true)));
               const authorId = Number(created.author_id || visitorContactID);
               const audience = ids.filter(id => id !== authorId);
@@ -1984,3 +1985,5 @@ function applyLinkPreviewsAndLinkify() {
   const containers = document.querySelectorAll(".content-container");
   containers.forEach((el) => linkifyElement(el));
 }
+
+ 
