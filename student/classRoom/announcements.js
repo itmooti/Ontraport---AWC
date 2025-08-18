@@ -480,7 +480,15 @@ mutation createForumComment($payload: ForumCommentCreateInput) {
 
       // Build roster and fetch parent authors
       const qClasses = `
-        query getClassStudents($id: AwcClassID) { getClasses(query: [{ where: { id: $id } }]) { Enrolments { Student { id } } } }
+        query getClassStudents($id: AwcClassID) {
+          getClasses(query: [{ where: { id: $id } }]) {
+            id
+            unique_id
+            class_name
+            Course { unique_id course_name }
+            Enrolments { Student { id } }
+          }
+        }
       `;
       const qEnrol = `
         query getClassEnrolmentStudents($id: AwcClassID) { calcEnrolments(query: [{ where: { class_id: $id } }]) { Student_ID: field(arg: ["Student","id"]) } }
@@ -509,7 +517,13 @@ mutation createForumComment($payload: ForumCommentCreateInput) {
 
       const norm = (list) => (Array.isArray(list) ? list : [list]).map(v => Number(v)).filter(n => Number.isFinite(n) && n > 0);
       const classes = Array.isArray(resClasses?.data?.getClasses) ? resClasses.data.getClasses : [];
-      const idsFromClasses = classes.flatMap(c => (Array.isArray(c?.Enrolments) ? c.Enrolments : []).map(e => e?.Student?.id).filter(Boolean));
+      let classUid, className, courseUid;
+      const idsFromClasses = classes.flatMap(c => {
+        if (!classUid && c?.unique_id) classUid = c.unique_id;
+        if (!className && c?.class_name) className = c.class_name;
+        if (!courseUid && c?.Course?.unique_id) courseUid = c.Course.unique_id;
+        return (Array.isArray(c?.Enrolments) ? c.Enrolments : []).map(e => e?.Student?.id).filter(Boolean);
+      });
       const enrolRows = Array.isArray(resEnrol?.data?.calcEnrolments) ? resEnrol.data.calcEnrolments : [];
       const idsFromEnrol = enrolRows.flatMap(row => norm(row?.Student_ID));
       let teacherIds = [];
@@ -532,10 +546,12 @@ mutation createForumComment($payload: ForumCommentCreateInput) {
       contentContainer.innerHTML = String(comments || '');
       const contentText = (contentContainer.textContent || '').trim();
       const createdAt = new Date().toISOString();
-      const originUrl = window.location.href;
-      const buildRoleUrl = (url, role) => { try { const u = new URL(url); const patterns = [/(\/students\/)/, /(\/student\/)/, /(\/teachers\/)/, /(\/teacher\/)/, /(\/admin\/)/]; for (const re of patterns) { if (re.test(u.pathname)) { u.pathname = u.pathname.replace(re, `/${role}/`); return u.toString(); } } return u.toString(); } catch(_) { return url; } };
+      const normalizeUrl = (url) => { try { const u = new URL(url); u.search = ''; u.hash = ''; return u.toString(); } catch(_) { return String(url).split('#')[0].split('?')[0]; } };
+      const buildRoleUrl = (url, role) => { try { const u = new URL(url); const patterns = [/(\/students\/)/, /(\/student\/)/, /(\/teachers\/)/, /(\/teacher\/)/, /(\/admin\/)/]; for (const re of patterns) { if (re.test(u.pathname)) { u.pathname = u.pathname.replace(re, `/${role}/`); } } u.search=''; u.hash=''; return u.toString(); } catch(_) { return url; } };
+      const originUrl = normalizeUrl(window.location.href);
       const actor = resMe?.data?.getContact || {};
       const actorName = actor?.display_name || [actor?.first_name, actor?.last_name].filter(Boolean).join(' ') || 'Someone';
+      const studentUrl = buildRoleUrl(originUrl, 'students');
       const teacherUrl = buildRoleUrl(originUrl, 'teachers');
       const adminUrl = buildRoleUrl(originUrl, 'admin');
       const mentionSet = new Set((mentionedIds || []).map(Number));
@@ -544,7 +560,22 @@ mutation createForumComment($payload: ForumCommentCreateInput) {
       const annIdCandidates = [ Number(parentAnnouncementId), Number(announcement?.id || announcement?.anouncementID || 0), Number(resParentCmt?.data?.getForumComments?.[0]?.parent_announcement_id || 0) ];
       const effectiveAnnouncementId = annIdCandidates.find(v => Number.isFinite(v) && v > 0) || null;
 
-      const alerts = audience.map(contactId => {
+      async function resolveStudentEid(studentId, clsId) {
+        try {
+          const cache = (window.__awcEidCache ||= new Map());
+          const k = String(clsId);
+          let byClass = cache.get(k);
+          if (!byClass) { byClass = new Map(); cache.set(k, byClass); }
+          const sid = Number(studentId);
+          if (byClass.has(sid)) return byClass.get(sid);
+          const q = `query getEnrolment($id: AwcContactID, $class_id: AwcClassID) { getEnrolment(query: [{ where: { student_id: $id } }, { andWhere: { class_id: $class_id } }]) { ID: id } }`;
+          const rs = await fetch(apiUrlForAnouncement, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKeyForAnouncement }, body: JSON.stringify({ query: q, variables: { id: Number(studentId), class_id: Number(clsId) } }) }).then(r => r.ok ? r.json() : null);
+          const eid = Number(rs?.data?.getEnrolment?.ID || 0);
+          if (Number.isFinite(eid) && eid > 0) { byClass.set(sid, eid); return eid; }
+          return undefined;
+        } catch (_) { return undefined; }
+      }
+      const alerts = await Promise.all(audience.map(async contactId => {
         const isMentioned = mentionSet.has(Number(contactId));
         const alertType = isMentioned ? 'Announcement Comment Mention' : 'Announcement Comment';
         let title;
@@ -552,6 +583,14 @@ mutation createForumComment($payload: ForumCommentCreateInput) {
         else if (Number(contactId) === announcementAuthorId) title = `${actorName} commented on your announcement`;
         else if (parentCommentAuthorId && Number(contactId) === parentCommentAuthorId) title = `${actorName} replied to your comment`;
         else title = parentCommentID ? 'A reply has been added to a comment' : 'A comment has been added to an announcement';
+        const isTeacher = teacherIds.includes(Number(contactId));
+        const isAdmin = adminIds.includes(Number(contactId));
+        const role = isAdmin ? 'admin' : (isTeacher ? 'teachers' : 'students');
+        let eid; if (role === 'students') eid = await resolveStudentEid(contactId, clsId);
+        const urlParams = { classId: Number(clsId), classUid, className, courseUid, eid, announcementId: Number(effectiveAnnouncementId || 0), commentId: Number(newCommentId || 0) };
+        const originForRecipient = (window.AWC && typeof window.AWC.buildAlertUrl === 'function')
+          ? window.AWC.buildAlertUrl(role, 'announcement', urlParams)
+          : (isAdmin ? adminUrl : (isTeacher ? teacherUrl : studentUrl));
         const base = {
           alert_type: alertType,
           title,
@@ -560,15 +599,15 @@ mutation createForumComment($payload: ForumCommentCreateInput) {
           is_mentioned: !!isMentioned,
           is_read: false,
           notified_contact_id: Number(contactId),
-          origin_url: originUrl,
-          origin_url_teacher: teacherUrl,
-          origin_url_admin: adminUrl,
+          origin_url: originForRecipient,
+          origin_url_teacher: (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teachers', 'announcement', urlParams) : teacherUrl,
+          origin_url_admin: (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'announcement', urlParams) : adminUrl,
           parent_class_id: Number(clsId),
         };
         if (effectiveAnnouncementId) base.parent_announcement_id = effectiveAnnouncementId;
         if (Number.isFinite(Number(newCommentId)) && Number(newCommentId) > 0) base.parent_comment_id = Number(newCommentId);
         return base;
-      });
+      }));
 
       // Create alerts via GraphQL to avoid SDK cancellations
       const createAlertMutation = `mutation createAlert($payload: AlertCreateInput) { createAlert(payload: $payload) { id } }`;
