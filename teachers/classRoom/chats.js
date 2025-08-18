@@ -1025,6 +1025,10 @@ $(document).ready(function () {
                 const qClasses = `
                   query getClassStudents($id: AwcClassID) {
                     getClasses(query: [{ where: { id: $id } }]) {
+                      id
+                      unique_id
+                      class_name
+                      Course { unique_id course_name }
                       Enrolments { Student { id } }
                     }
                   }
@@ -1064,8 +1068,12 @@ $(document).ready(function () {
 
                 let idsFromClasses = [];
                 const classes = Array.isArray(resClasses?.data?.getClasses) ? resClasses.data.getClasses : [];
+                let classUid, className, courseUid;
                 for (const cls of classes) {
                   const enrols = Array.isArray(cls?.Enrolments) ? cls.Enrolments : [];
+                  if (!classUid && cls?.unique_id) classUid = cls.unique_id;
+                  if (!className && cls?.class_name) className = cls.class_name;
+                  if (!courseUid && cls?.Course?.unique_id) courseUid = cls.Course.unique_id;
                   for (const enr of enrols) {
                     const sid = enr?.Student?.id;
                     if (sid != null) idsFromClasses.push(sid);
@@ -1106,7 +1114,8 @@ $(document).ready(function () {
                 container.innerHTML = String(finalPayload.post_copy || "");
                 const content = (container.textContent || "").trim();
                 const createdAt = new Date().toISOString();
-                const originUrl = window.location.href;
+                const normalizeUrl = (url) => { try { const u = new URL(url); u.search=''; u.hash=''; return u.toString(); } catch(_) { return String(url).split('#')[0].split('?')[0]; } };
+                const originUrl = normalizeUrl(window.location.href);
                 const buildRoleUrl = (url, role) => {
                   try {
                     const u = new URL(url);
@@ -1114,33 +1123,60 @@ $(document).ready(function () {
                     for (const re of patterns) {
                       if (re.test(u.pathname)) {
                         u.pathname = u.pathname.replace(re, `/${role}/`);
-                        return u.toString();
                       }
                     }
+                    u.search=''; u.hash='';
                     return u.toString();
                   } catch (_) { return url; }
                 };
 
-                const alerts = audience.map((contactId) => {
+                async function resolveStudentEid(studentId, clsId) {
+                  try {
+                    const cache = (window.__awcEidCache ||= new Map());
+                    const k = String(clsId);
+                    let byClass = cache.get(k);
+                    if (!byClass) { byClass = new Map(); cache.set(k, byClass); }
+                    const sid = Number(studentId);
+                    if (byClass.has(sid)) return byClass.get(sid);
+                    const q = `query getEnrolment($id: AwcContactID, $class_id: AwcClassID) { getEnrolment(query: [{ where: { student_id: $id } }, { andWhere: { class_id: $class_id } }]) { ID: id } }`;
+                    const rs = await fetch(graphqlApiEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiAccessKey }, body: JSON.stringify({ query: q, variables: { id: Number(studentId), class_id: Number(classId) } }) }).then(r => r.ok ? r.json() : null);
+                    const eid = Number(rs?.data?.getEnrolment?.ID || 0);
+                    if (Number.isFinite(eid) && eid > 0) { byClass.set(sid, eid); return eid; }
+                    return undefined;
+                  } catch (_) { return undefined; }
+                }
+                const alerts = await Promise.all(audience.map(async (contactId) => {
                   const isMentioned = mentionIds.includes(Number(contactId));
-                  const teacherUrl = buildRoleUrl(originUrl, 'teachers');
-                  const adminUrl = buildRoleUrl(originUrl, 'admin');
-                  const parentClassId = Number(classId) || undefined;
+                  const isTeacher = teacherSet.has(Number(contactId));
+                  const isAdmin = adminSet.has(Number(contactId));
+                  const role = isAdmin ? 'admin' : (isTeacher ? 'teachers' : 'students');
+                  let eid = undefined;
+                  if (role === 'students') eid = await resolveStudentEid(contactId, classId);
+                  const params = { classId: Number(classId), classUid, className, courseUid, eid, postId: Number(created.id) };
+                  const originUrlCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function')
+                    ? window.AWC.buildAlertUrl(role, 'post', params)
+                    : originUrl;
+                  const teacherUrlCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function')
+                    ? window.AWC.buildAlertUrl('teachers', 'post', params)
+                    : originUrl;
+                  const adminUrlCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function')
+                    ? window.AWC.buildAlertUrl('admin', 'post', params)
+                    : originUrl;
                   return {
-                    alert_type: isMentioned ? "Post Mention" : "Post",
-                    title: isMentioned ? "You are mentioned in a post" : "A post has been created",
+                    alert_type: isMentioned ? 'Post Mention' : 'Post',
+                    title: isMentioned ? 'You are mentioned in a post' : 'A post has been created',
                     content,
                     created_at: createdAt,
                     is_mentioned: !!isMentioned,
                     is_read: false,
                     notified_contact_id: Number(contactId),
-                    origin_url: originUrl,
-                    origin_url_teacher: teacherUrl,
-                    origin_url_admin: adminUrl,
-                    parent_class_id: parentClassId,
+                    origin_url: originUrlCanonical,
+                    origin_url_teacher: teacherUrlCanonical,
+                    origin_url_admin: adminUrlCanonical,
+                    parent_class_id: Number(classId),
                     parent_post_id: Number(created.id),
                   };
-                });
+                }));
 
                 if (window.AWC && typeof window.AWC.createAlerts === 'function') {
                   try { await window.AWC.createAlerts(alerts, { concurrency: 4 }); } catch (e) { console.error('Failed to create alerts (post)', e); }
@@ -1425,7 +1461,8 @@ $(document).on("submit", ".commentForm", function (event) {
               container.innerHTML = String(finalPayload.comment || "");
               const content = (container.textContent || "").trim();
               const createdAt = new Date().toISOString();
-              const originUrl = window.location.href;
+              const normalizeUrl = (url) => { try { const u = new URL(url); u.search=''; u.hash=''; return u.toString(); } catch(_) { return String(url).split('#')[0].split('?')[0]; } };
+              const originUrl = normalizeUrl(window.location.href);
               const buildRoleUrl = (url, role) => {
                 try {
                   const u = new URL(url);
@@ -1440,25 +1477,60 @@ $(document).on("submit", ".commentForm", function (event) {
                 } catch (_) { return url; }
               };
 
-              const alerts = audience.map((contactId) => {
+              // Fetch class meta for canonical URLs
+              let classUid, className, courseUid;
+              try {
+                const qMeta = `query getClassMeta($id: AwcClassID) { getClasses(query: [{ where: { id: $id } }]) { id unique_id class_name Course { unique_id } } }`;
+                const rs = await fetch(graphqlApiEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiAccessKey }, body: JSON.stringify({ query: qMeta, variables: { id: Number(classId) } }) }).then(r => r.ok ? r.json() : null);
+                const m = Array.isArray(rs?.data?.getClasses) ? rs.data.getClasses[0] : rs?.data?.getClasses;
+                classUid = m?.unique_id; className = m?.class_name; courseUid = m?.Course?.unique_id;
+              } catch (_) {}
+
+              // Resolve teacher ids to infer roles (fallback if not already in scope)
+              let teacherIdsRole = [];
+              try {
+                const qT = `query calcClasses($id: AwcClassID) { calcClasses(query: [{ where: { id: $id } }]) { Teacher_Contact_ID: field(arg: ["Teacher","id"]) } }`;
+                const rsT = await fetch(graphqlApiEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiAccessKey }, body: JSON.stringify({ query: qT, variables: { id: Number(classId) } }) }).then(r => r.ok ? r.json() : null);
+                const raw = rsT?.data?.calcClasses?.[0]?.Teacher_Contact_ID;
+                if (raw != null) teacherIdsRole = Array.isArray(raw) ? raw : [raw];
+              } catch (_) {}
+              const adminIdsRole = [10435];
+              async function resolveStudentEid2(studentId, clsId) {
+                try {
+                  const cache = (window.__awcEidCache ||= new Map());
+                  const k = String(clsId);
+                  let byClass = cache.get(k);
+                  if (!byClass) { byClass = new Map(); cache.set(k, byClass); }
+                  const sid = Number(studentId);
+                  if (byClass.has(sid)) return byClass.get(sid);
+                  const q = `query getEnrolment($id: AwcContactID, $class_id: AwcClassID) { getEnrolment(query: [{ where: { student_id: $id } }, { andWhere: { class_id: $class_id } }]) { ID: id } }`;
+                  const rs = await fetch(graphqlApiEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiAccessKey }, body: JSON.stringify({ query: q, variables: { id: Number(studentId), class_id: Number(clsId) } }) }).then(r => r.ok ? r.json() : null);
+                  const eid = Number(rs?.data?.getEnrolment?.ID || 0);
+                  if (Number.isFinite(eid) && eid > 0) { byClass.set(sid, eid); return eid; }
+                  return undefined;
+                } catch (_) { return undefined; }
+              }
+
+              const alerts = await Promise.all(audience.map(async (contactId) => {
                 const isMentioned = mentionIds.includes(Number(contactId));
-                const teacherUrl = buildRoleUrl(originUrl, 'teachers');
-                const adminUrl = buildRoleUrl(originUrl, 'admin');
                 const parentClassId = Number(classId) || undefined;
                 const alertType = isMentioned ? 'Post Comment Mention' : 'Post Comment';
                 let title;
                 if (isMentioned) {
                   title = 'You are mentioned in a comment';
                 } else if (parentAuthorId && Number(contactId) === Number(parentAuthorId)) {
-                  title = parentType === 'post'
-                    ? `${actorName} commented on your post`
-                    : `${actorName} replied to your comment`;
+                  title = parentType === 'post' ? `${actorName} commented on your post` : `${actorName} replied to your comment`;
                 } else {
-                  title = parentType === 'post'
-                    ? 'A comment has been added to a post'
-                    : 'A reply has been added to a comment';
+                  title = parentType === 'post' ? 'A comment has been added to a post' : 'A reply has been added to a comment';
                 }
-
+                const isTeacher = teacherIdsRole.map(Number).includes(Number(contactId));
+                const isAdmin = adminIdsRole.map(Number).includes(Number(contactId));
+                const role = isAdmin ? 'admin' : (isTeacher ? 'teachers' : 'students');
+                let eid; if (role === 'students') eid = await resolveStudentEid2(contactId, classId);
+                const params = { classId: parentClassId, classUid, className, courseUid, eid, postId: Number(forumPostId), commentId: Number(created.id) };
+                const originUrlCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl(role, 'post', params) : originUrl;
+                const teacherUrlCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teachers', 'post', params) : originUrl;
+                const adminUrlCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'post', params) : originUrl;
                 return {
                   alert_type: alertType,
                   title,
@@ -1467,14 +1539,14 @@ $(document).on("submit", ".commentForm", function (event) {
                   is_mentioned: !!isMentioned,
                   is_read: false,
                   notified_contact_id: Number(contactId),
-                  origin_url: originUrl,
-                  origin_url_teacher: teacherUrl,
-                  origin_url_admin: adminUrl,
+                  origin_url: originUrlCanonical,
+                  origin_url_teacher: teacherUrlCanonical,
+                  origin_url_admin: adminUrlCanonical,
                   parent_class_id: parentClassId,
                   parent_post_id: Number(forumPostId),
                   parent_comment_id: Number(created.id),
                 };
-              });
+              }));
 
               if (window.AWC && typeof window.AWC.createAlerts === 'function') {
                 try { await window.AWC.createAlerts(alerts, { concurrency: 4 }); } catch (e) { console.error('Failed to create alerts (comment)', e); }
