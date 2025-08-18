@@ -232,7 +232,15 @@ document
 
                 // Build roster
                 const qClasses = `
-                  query getClassStudents($id: AwcClassID) { getClasses(query: [{ where: { id: $id } }]) { Enrolments { Student { id } } } }
+                  query getClassStudents($id: AwcClassID) {
+                    getClasses(query: [{ where: { id: $id } }]) {
+                      id
+                      unique_id
+                      class_name
+                      Course { unique_id course_name }
+                      Enrolments { Student { id } }
+                    }
+                  }
                 `;
                 const qEnrol = `
                   query getClassEnrolmentStudents($id: AwcClassID) { calcEnrolments(query: [{ where: { class_id: $id } }]) { Student_ID: field(arg: ["Student","id"]) } }
@@ -247,7 +255,13 @@ document
                 ]);
                 const norm = (list) => (Array.isArray(list) ? list : [list]).map(v => Number(v)).filter(n => Number.isFinite(n) && n > 0);
                 const classes = Array.isArray(resClasses?.data?.getClasses) ? resClasses.data.getClasses : [];
-                const idsFromClasses = classes.flatMap(c => (Array.isArray(c?.Enrolments) ? c.Enrolments : []).map(e => e?.Student?.id).filter(Boolean));
+                let classUid, className, courseUid;
+                const idsFromClasses = classes.flatMap(c => {
+                    if (!classUid && c?.unique_id) classUid = c.unique_id;
+                    if (!className && c?.class_name) className = c.class_name;
+                    if (!courseUid && c?.Course?.unique_id) courseUid = c.Course.unique_id;
+                    return (Array.isArray(c?.Enrolments) ? c.Enrolments : []).map(e => e?.Student?.id).filter(Boolean);
+                });
                 const enrolRows = Array.isArray(resEnrol?.data?.calcEnrolments) ? resEnrol.data.calcEnrolments : [];
                 const idsFromEnrol = enrolRows.flatMap(row => norm(row?.Student_ID));
                 let teacherIds = [];
@@ -259,29 +273,49 @@ document
                     .filter(id => id !== authorId);
                 if (!audience.length) return;
 
-                const buildRoleUrl = (url, role) => {
-                    try { const u = new URL(url); const patterns = [/(\/students\/)/, /(\/student\/)/, /(\/teachers\/)/, /(\/teacher\/)/, /(\/admin\/)/]; for (const re of patterns) { if (re.test(u.pathname)) { u.pathname = u.pathname.replace(re, `/${role}/`); return u.toString(); } } return u.toString(); } catch(_) { return url; }
-                };
-                const originUrl = window.location.href;
-                const teacherUrl = buildRoleUrl(originUrl, 'teachers');
-                const adminUrl = buildRoleUrl(originUrl, 'admin');
+                async function resolveStudentEid(studentId, clsId) {
+                    try {
+                        const cache = (window.__awcEidCache ||= new Map());
+                        const k = String(clsId);
+                        let byClass = cache.get(k);
+                        if (!byClass) { byClass = new Map(); cache.set(k, byClass); }
+                        const sid = Number(studentId);
+                        if (byClass.has(sid)) return byClass.get(sid);
+                        const q = `query getEnrolment($id: AwcContactID, $class_id: AwcClassID) { getEnrolment(query: [{ where: { student_id: $id } }, { andWhere: { class_id: $class_id } }]) { ID: id } }`;
+                        const rs = await fetch(apiUrlForAnouncement, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKeyForAnouncement }, body: JSON.stringify({ query: q, variables: { id: Number(studentId), class_id: Number(clsId) } }) }).then(r => r.ok ? r.json() : null);
+                        const eid = Number(rs?.data?.getEnrolment?.ID || 0);
+                        if (Number.isFinite(eid) && eid > 0) { byClass.set(sid, eid); return eid; }
+                        return undefined;
+                    } catch (_) { return undefined; }
+                }
                 const tmp = document.createElement('div'); tmp.innerHTML = String(content || createdAnnouncement?.Content || '');
                 const contentText = (tmp.textContent || '').trim();
                 const createdAt = new Date().toISOString();
                 const mentionSet = new Set((mentionedIds || []).map(Number));
-                const alerts = audience.map(contactId => ({
-                    alert_type: mentionSet.has(Number(contactId)) ? 'Announcement Mention' : 'Announcement',
-                    title: mentionSet.has(Number(contactId)) ? 'You are mentioned in an announcement' : 'An announcement has been posted',
-                    content: contentText,
-                    created_at: createdAt,
-                    is_mentioned: mentionSet.has(Number(contactId)),
-                    is_read: false,
-                    notified_contact_id: Number(contactId),
-                    origin_url: originUrl,
-                    origin_url_teacher: teacherUrl,
-                    origin_url_admin: adminUrl,
-                    parent_class_id: clsId,
-                    parent_announcement_id: Number(createdAnnouncement?.ID || createdAnnouncement?.id),
+                const alerts = await Promise.all(audience.map(async contactId => {
+                    const isMentioned = mentionSet.has(Number(contactId));
+                    const isTeacher = teacherIds.includes(Number(contactId));
+                    const isAdmin = adminIds.includes(Number(contactId));
+                    const role = isAdmin ? 'admin' : (isTeacher ? 'teachers' : 'students');
+                    let eid; if (role === 'students') eid = await resolveStudentEid(contactId, clsId);
+                    const params = { classId: clsId, classUid, className, courseUid, eid, announcementId: Number(createdAnnouncement?.ID || createdAnnouncement?.id) };
+                    const originCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl(role, 'announcement', params) : undefined;
+                    const teacherCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teachers', 'announcement', params) : undefined;
+                    const adminCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'announcement', params) : undefined;
+                    return {
+                        alert_type: isMentioned ? 'Announcement Mention' : 'Announcement',
+                        title: isMentioned ? 'You are mentioned in an announcement' : 'An announcement has been posted',
+                        content: contentText,
+                        created_at: createdAt,
+                        is_mentioned: isMentioned,
+                        is_read: false,
+                        notified_contact_id: Number(contactId),
+                        origin_url: originCanonical || window.location.href,
+                        origin_url_teacher: teacherCanonical || window.location.href,
+                        origin_url_admin: adminCanonical || window.location.href,
+                        parent_class_id: clsId,
+                        parent_announcement_id: Number(createdAnnouncement?.ID || createdAnnouncement?.id),
+                    };
                 }));
                 if (window.AWC && typeof window.AWC.createAlerts === 'function') {
                     try { await window.AWC.createAlerts(alerts, { concurrency: 4 }); } catch (e) { console.error('Failed to create announcement alerts', e); }
