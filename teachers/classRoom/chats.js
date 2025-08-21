@@ -415,18 +415,72 @@ var myHelpers = {
 $.views.helpers(myHelpers);
 
 const ForumAPI = (function () {
+  // Lightweight toast helper; single source of truth for user-visible errors
+  function showToast(message, type = "error") {
+    try {
+      const id = "awc-toast-container";
+      let container = document.getElementById(id);
+      if (!container) {
+        container = document.createElement("div");
+        container.id = id;
+        container.style.position = "fixed";
+        container.style.right = "12px";
+        container.style.top = "12px";
+        container.style.zIndex = "999999";
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+        container.style.gap = "8px";
+        document.body.appendChild(container);
+      }
+      const el = document.createElement("div");
+      el.style.padding = "10px 12px";
+      el.style.borderRadius = "8px";
+      el.style.boxShadow = "0 6px 18px rgba(0,0,0,0.12)";
+      el.style.maxWidth = "360px";
+      el.style.fontSize = "14px";
+      el.style.color = "#0b0b0b";
+      el.style.background = type === "success" ? "#ecfdf5" : type === "info" ? "#eff6ff" : "#fef2f2";
+      el.style.border = type === "success" ? "1px solid #a7f3d0" : type === "info" ? "1px solid #bfdbfe" : "1px solid #fecaca";
+      el.textContent = String(message || "");
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.transition = "opacity 200ms ease";
+        el.style.opacity = "0";
+        setTimeout(() => el.remove(), 220);
+      }, 3000);
+    } catch (_) {}
+  }
+  try { window.__awcShowToast = window.__awcShowToast || showToast; } catch (_) {}
+
   function apiCall(query, variables = {}) {
     return fetch(graphqlApiEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
       body: JSON.stringify({ query, variables }),
     })
-      .then((response) => {
-        if (!response.ok) throw new Error("Network response was not ok");
-        return response.json();
+      .then(async (response) => {
+        let json;
+        if (!response.ok) {
+          let detail = "";
+          try { detail = await response.text(); } catch (_) {}
+          const err = new Error(`Request failed: ${response.status} ${response.statusText}`);
+          err.status = response.status;
+          err.detail = detail;
+          throw err;
+        }
+        try { json = await response.json(); } catch (e) { throw e; }
+        if (json && Array.isArray(json.errors) && json.errors.length) {
+          const err = new Error(json.errors.map(e => e.message).join(" | "));
+          err.status = 200;
+          err.errors = json.errors;
+          throw err;
+        }
+        return json;
       })
       .catch((error) => {
         console.error("API call error:", error);
+        // Single toast per failed operation
+        showToast("Please try again.", "error");
         throw error;
       });
   }
@@ -1011,18 +1065,18 @@ $(document).ready(function () {
       const file = fileInput.files[0];
       uploadedFileInfo = { name: file.name, type: file.type };
     }
-      function submitNewPost(finalPayload) {
-        ForumAPI.createPost(finalPayload)
-          .then((created) => {
-            const mentionIds = finalPayload.Mentions.map((m) => Number(m.id));
+    function submitNewPost(finalPayload) {
+      ForumAPI.createPost(finalPayload)
+        .then((created) => {
+          const mentionIds = finalPayload.Mentions.map((m) => Number(m.id));
 
-            // Fire-and-forget: create alerts for all class members + teacher + admin
-            try {
-              (async function createPostAlerts() {
-                const clsId = String(classId || "");
-                if (!clsId) return;
+          // Fire-and-forget: create alerts for all class members + teacher + admin
+          try {
+            (async function createPostAlerts() {
+              const clsId = String(classId || "");
+              if (!clsId) return;
 
-                const qClasses = `
+              const qClasses = `
                   query getClassStudents($id: AwcClassID) {
                     getClasses(query: [{ where: { id: $id } }]) {
                       id
@@ -1033,14 +1087,14 @@ $(document).ready(function () {
                     }
                   }
                 `;
-                const qEnrol = `
+              const qEnrol = `
                   query getClassEnrolmentStudents($id: AwcClassID) {
                     calcEnrolments(query: [{ where: { class_id: $id } }]) {
                       Student_ID: field(arg: ["Student", "id"])
                     }
                   }
                 `;
-                const qTeacher = `
+              const qTeacher = `
                   query calcClasses($id: AwcClassID) {
                     calcClasses(query: [{ where: { id: $id } }]) {
                       Teacher_Contact_ID: field(arg: ["Teacher", "id"])
@@ -1048,123 +1102,222 @@ $(document).ready(function () {
                   }
                 `;
 
-                const [resClasses, resEnrol, resTeacher] = await Promise.all([
-                  fetch(graphqlApiEndpoint, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
-                    body: JSON.stringify({ query: qClasses, variables: { id: clsId } }),
-                  }).then(r => r.ok ? r.json() : Promise.reject("getClasses query failed")),
-                  fetch(graphqlApiEndpoint, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
-                    body: JSON.stringify({ query: qEnrol, variables: { id: clsId } }),
-                  }).then(r => r.ok ? r.json() : Promise.reject("calcEnrolments query failed")),
-                  fetch(graphqlApiEndpoint, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
-                    body: JSON.stringify({ query: qTeacher, variables: { id: clsId } }),
-                  }).then(r => r.ok ? r.json() : Promise.reject("calcClasses query failed")),
-                ]);
+              const [resClasses, resEnrol, resTeacher] = await Promise.all([
+                fetch(graphqlApiEndpoint, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Api-Key": apiAccessKey,
+                  },
+                  body: JSON.stringify({
+                    query: qClasses,
+                    variables: { id: clsId },
+                  }),
+                }).then((r) =>
+                  r.ok ? r.json() : Promise.reject("getClasses query failed")
+                ),
+                fetch(graphqlApiEndpoint, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Api-Key": apiAccessKey,
+                  },
+                  body: JSON.stringify({
+                    query: qEnrol,
+                    variables: { id: clsId },
+                  }),
+                }).then((r) =>
+                  r.ok
+                    ? r.json()
+                    : Promise.reject("calcEnrolments query failed")
+                ),
+                fetch(graphqlApiEndpoint, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Api-Key": apiAccessKey,
+                  },
+                  body: JSON.stringify({
+                    query: qTeacher,
+                    variables: { id: clsId },
+                  }),
+                }).then((r) =>
+                  r.ok ? r.json() : Promise.reject("calcClasses query failed")
+                ),
+              ]);
 
-                let idsFromClasses = [];
-                const classes = Array.isArray(resClasses?.data?.getClasses) ? resClasses.data.getClasses : [];
-                let classUid, className, courseUid;
-                for (const cls of classes) {
-                  const enrols = Array.isArray(cls?.Enrolments) ? cls.Enrolments : [];
-                  if (!classUid && cls?.unique_id) classUid = cls.unique_id;
-                  if (!className && cls?.class_name) className = cls.class_name;
-                  if (!courseUid && cls?.Course?.unique_id) courseUid = cls.Course.unique_id;
-                  for (const enr of enrols) {
-                    const sid = enr?.Student?.id;
-                    if (sid != null) idsFromClasses.push(sid);
-                  }
+              let idsFromClasses = [];
+              const classes = Array.isArray(resClasses?.data?.getClasses)
+                ? resClasses.data.getClasses
+                : [];
+              let classUid, className, courseUid;
+              for (const cls of classes) {
+                const enrols = Array.isArray(cls?.Enrolments)
+                  ? cls.Enrolments
+                  : [];
+                if (!classUid && cls?.unique_id) classUid = cls.unique_id;
+                if (!className && cls?.class_name) className = cls.class_name;
+                if (!courseUid && cls?.Course?.unique_id)
+                  courseUid = cls.Course.unique_id;
+                for (const enr of enrols) {
+                  const sid = enr?.Student?.id;
+                  if (sid != null) idsFromClasses.push(sid);
                 }
-                let idsFromEnrol = [];
-                const enrolRows = Array.isArray(resEnrol?.data?.calcEnrolments) ? resEnrol.data.calcEnrolments : [];
-                for (const row of enrolRows) {
-                  const raw = row?.Student_ID;
-                  if (raw == null) continue;
-                  if (Array.isArray(raw)) idsFromEnrol.push(...raw);
-                  else idsFromEnrol.push(raw);
+              }
+              let idsFromEnrol = [];
+              const enrolRows = Array.isArray(resEnrol?.data?.calcEnrolments)
+                ? resEnrol.data.calcEnrolments
+                : [];
+              for (const row of enrolRows) {
+                const raw = row?.Student_ID;
+                if (raw == null) continue;
+                if (Array.isArray(raw)) idsFromEnrol.push(...raw);
+                else idsFromEnrol.push(raw);
+              }
+              let teacherIds = [];
+              try {
+                const tRaw =
+                  resTeacher?.data?.calcClasses?.[0]?.Teacher_Contact_ID;
+                if (tRaw != null) {
+                  if (Array.isArray(tRaw)) teacherIds.push(...tRaw);
+                  else teacherIds.push(tRaw);
                 }
-                let teacherIds = [];
+              } catch (_) {}
+              const adminIds = [10435];
+
+              const normalize = (list) =>
+                (Array.isArray(list) ? list : [list])
+                  .map((v) => Number(String(v).trim()))
+                  .filter((n) => Number.isFinite(n) && n > 0);
+              const teacherSet = new Set(normalize(teacherIds));
+              const adminSet = new Set(normalize(adminIds));
+              const seen = new Set();
+              let ids = [
+                ...idsFromClasses,
+                ...idsFromEnrol,
+                ...teacherIds,
+                ...adminIds,
+              ];
+              ids = normalize(ids).filter((n) =>
+                seen.has(n) ? false : (seen.add(n), true)
+              );
+
+              const authorId = Number(created.author_id || visitorContactID);
+              const audience = ids.filter((id) => id !== authorId);
+              if (!audience.length) return;
+
+              const container = document.createElement("div");
+              container.innerHTML = String(finalPayload.post_copy || "");
+              const content = (container.textContent || "").trim();
+              const createdAt = new Date().toISOString();
+              const normalizeUrl = (url) => {
                 try {
-                  const tRaw = resTeacher?.data?.calcClasses?.[0]?.Teacher_Contact_ID;
-                  if (tRaw != null) {
-                    if (Array.isArray(tRaw)) teacherIds.push(...tRaw);
-                    else teacherIds.push(tRaw);
-                  }
-                } catch (_) {}
-                const adminIds = [10435];
-
-                const normalize = (list) => (Array.isArray(list) ? list : [list])
-                  .map(v => Number(String(v).trim()))
-                  .filter(n => Number.isFinite(n) && n > 0);
-                const teacherSet = new Set(normalize(teacherIds));
-                const adminSet = new Set(normalize(adminIds));
-                const seen = new Set();
-                let ids = [...idsFromClasses, ...idsFromEnrol, ...teacherIds, ...adminIds];
-                ids = normalize(ids).filter(n => (seen.has(n) ? false : (seen.add(n), true)));
-
-                const authorId = Number(created.author_id || visitorContactID);
-                const audience = ids.filter(id => id !== authorId);
-                if (!audience.length) return;
-
-                const container = document.createElement("div");
-                container.innerHTML = String(finalPayload.post_copy || "");
-                const content = (container.textContent || "").trim();
-                const createdAt = new Date().toISOString();
-                const normalizeUrl = (url) => { try { const u = new URL(url); u.search=''; u.hash=''; return u.toString(); } catch(_) { return String(url).split('#')[0].split('?')[0]; } };
-                const originUrl = normalizeUrl(window.location.href);
-                const buildRoleUrl = (url, role) => {
-                  try {
-                    const u = new URL(url);
-                    const patterns = [/\/(students)\//, /\/(student)\//, /\/(teachers)\//, /\/(teacher)\//, /\/(admin)\//];
-                    for (const re of patterns) {
-                      if (re.test(u.pathname)) {
-                        u.pathname = u.pathname.replace(re, `/${role}/`);
-                      }
-                    }
-                    u.search=''; u.hash='';
-                    return u.toString();
-                  } catch (_) { return url; }
-                };
-
-                async function resolveStudentEid(studentId, clsId) {
-                  try {
-                    const cache = (window.__awcEidCache ||= new Map());
-                    const k = String(clsId);
-                    let byClass = cache.get(k);
-                    if (!byClass) { byClass = new Map(); cache.set(k, byClass); }
-                    const sid = Number(studentId);
-                    if (byClass.has(sid)) return byClass.get(sid);
-                    const q = `query getEnrolment($id: AwcContactID, $class_id: AwcClassID) { getEnrolment(query: [{ where: { student_id: $id } }, { andWhere: { class_id: $class_id } }]) { ID: id } }`;
-                    const rs = await fetch(graphqlApiEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiAccessKey }, body: JSON.stringify({ query: q, variables: { id: Number(studentId), class_id: Number(classId) } }) }).then(r => r.ok ? r.json() : null);
-                    const eid = Number(rs?.data?.getEnrolment?.ID || 0);
-                    if (Number.isFinite(eid) && eid > 0) { byClass.set(sid, eid); return eid; }
-                    return undefined;
-                  } catch (_) { return undefined; }
+                  const u = new URL(url);
+                  u.search = "";
+                  u.hash = "";
+                  return u.toString();
+                } catch (_) {
+                  return String(url).split("#")[0].split("?")[0];
                 }
-                const alerts = await Promise.all(audience.map(async (contactId) => {
+              };
+              const originUrl = normalizeUrl(window.location.href);
+              const buildRoleUrl = (url, role) => {
+                try {
+                  const u = new URL(url);
+                  const patterns = [
+                    /\/(students)\//,
+                    /\/(student)\//,
+                    /\/(teachers)\//,
+                    /\/(teacher)\//,
+                    /\/(admin)\//,
+                  ];
+                  for (const re of patterns) {
+                    if (re.test(u.pathname)) {
+                      u.pathname = u.pathname.replace(re, `/${role}/`);
+                    }
+                  }
+                  u.search = "";
+                  u.hash = "";
+                  return u.toString();
+                } catch (_) {
+                  return url;
+                }
+              };
+
+              async function resolveStudentEid(studentId, clsId) {
+                try {
+                  const cache = (window.__awcEidCache ||= new Map());
+                  const k = String(clsId);
+                  let byClass = cache.get(k);
+                  if (!byClass) {
+                    byClass = new Map();
+                    cache.set(k, byClass);
+                  }
+                  const sid = Number(studentId);
+                  if (byClass.has(sid)) return byClass.get(sid);
+                  const q = `query getEnrolment($id: AwcContactID, $class_id: AwcClassID) { getEnrolment(query: [{ where: { student_id: $id } }, { andWhere: { class_id: $class_id } }]) { ID: id } }`;
+                  const rs = await fetch(graphqlApiEndpoint, {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Api-Key": apiAccessKey,
+                    },
+                    body: JSON.stringify({
+                      query: q,
+                      variables: {
+                        id: Number(studentId),
+                        class_id: Number(classId),
+                      },
+                    }),
+                  }).then((r) => (r.ok ? r.json() : null));
+                  const eid = Number(rs?.data?.getEnrolment?.ID || 0);
+                  if (Number.isFinite(eid) && eid > 0) {
+                    byClass.set(sid, eid);
+                    return eid;
+                  }
+                  return undefined;
+                } catch (_) {
+                  return undefined;
+                }
+              }
+              const alerts = await Promise.all(
+                audience.map(async (contactId) => {
                   const isMentioned = mentionIds.includes(Number(contactId));
                   const isTeacher = teacherSet.has(Number(contactId));
                   const isAdmin = adminSet.has(Number(contactId));
-                  const role = isAdmin ? 'admin' : (isTeacher ? 'teachers' : 'students');
+                  const role = isAdmin
+                    ? "admin"
+                    : isTeacher
+                    ? "teachers"
+                    : "students";
                   let eid = undefined;
-                  if (role === 'students') eid = await resolveStudentEid(contactId, classId);
-                  const params = { classId: Number(classId), classUid, className, courseUid, eid, postId: Number(created.id) };
-                  const originUrlCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function')
-                    ? window.AWC.buildAlertUrl(role, 'post', params)
-                    : originUrl;
-                  const teacherUrlCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function')
-                    ? window.AWC.buildAlertUrl('teachers', 'post', params)
-                    : originUrl;
-                  const adminUrlCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function')
-                    ? window.AWC.buildAlertUrl('admin', 'post', params)
-                    : originUrl;
+                  if (role === "students")
+                    eid = await resolveStudentEid(contactId, classId);
+                  const params = {
+                    classId: Number(classId),
+                    classUid,
+                    className,
+                    courseUid,
+                    eid,
+                    postId: Number(created.id),
+                  };
+                  const originUrlCanonical =
+                    window.AWC && typeof window.AWC.buildAlertUrl === "function"
+                      ? window.AWC.buildAlertUrl(role, "post", params)
+                      : originUrl;
+                  const teacherUrlCanonical =
+                    window.AWC && typeof window.AWC.buildAlertUrl === "function"
+                      ? window.AWC.buildAlertUrl("teachers", "post", params)
+                      : originUrl;
+                  const adminUrlCanonical =
+                    window.AWC && typeof window.AWC.buildAlertUrl === "function"
+                      ? window.AWC.buildAlertUrl("admin", "post", params)
+                      : originUrl;
                   return {
-                    alert_type: isMentioned ? 'Post Mention' : 'Post',
-                    title: isMentioned ? 'You are mentioned in a post' : 'A post has been created',
+                    alert_type: isMentioned ? "Post Mention" : "Post",
+                    title: isMentioned
+                      ? "You are mentioned in a post"
+                      : "A post has been created",
                     content,
                     created_at: createdAt,
                     is_mentioned: !!isMentioned,
@@ -1176,23 +1329,28 @@ $(document).ready(function () {
                     parent_class_id: Number(classId),
                     parent_post_id: Number(created.id),
                   };
-                }));
+                })
+              );
 
-                if (window.AWC && typeof window.AWC.createAlerts === 'function') {
-                  try { await window.AWC.createAlerts(alerts, { concurrency: 4 }); } catch (e) { console.error('Failed to create alerts (post)', e); }
+              if (window.AWC && typeof window.AWC.createAlerts === "function") {
+                try {
+                  await window.AWC.createAlerts(alerts, { concurrency: 4 });
+                } catch (e) {
+                  console.error("Failed to create alerts (post)", e);
                 }
-              })();
-            } catch (e) {
-              console.error('Alert creation error (post)', e);
-            }
+              }
+            })();
+          } catch (e) {
+            console.error("Alert creation error (post)", e);
+          }
 
-            return Promise.all(
-              mentionIds.map((id) =>
-                ForumAPI.updateContact(id, { has__new__notification: true })
-              )
-            ).then(() => created);
-          })
-          .then((created) => ForumAPI.fetchPostById(created.id))
+          return Promise.all(
+            mentionIds.map((id) =>
+              ForumAPI.updateContact(id, { has__new__notification: true })
+            )
+          ).then(() => created);
+        })
+        .then((created) => ForumAPI.fetchPostById(created.id))
         .then((data) => {
           responseMessage.text("Post created successfully!");
           resetFileAttachmentUI();
@@ -1215,7 +1373,7 @@ $(document).ready(function () {
         })
         .catch((error) => {
           console.error("Error creating post:", error);
-          responseMessage.text("Error creating post.");
+          responseMessage.text("We couldn’t create your post. Please try again.");
         })
         .finally(() => {
           submitButton.prop("disabled", false);
@@ -1235,7 +1393,7 @@ $(document).ready(function () {
         .then((updatedPayload) => submitNewPost(updatedPayload))
         .catch((error) => {
           console.error("File processing error:", error);
-          responseMessage.text("Error processing file.");
+          responseMessage.text("We couldn’t process the file. Please try again.");
           submitButton.prop("disabled", false);
           $("#post-editor").attr("contenteditable", true);
         });
@@ -1264,7 +1422,8 @@ function handleDelete(button) {
       console.error("Error deleting post:", error);
       postCard.css("opacity", "1");
       $(button).prop("disabled", false);
-      alert("Error deleting post.");
+      responseMessage.text("We couldn’t delete this post. Please try again.");
+      setTimeout(() => responseMessage.addClass("hidden"), 1500);
     });
 }
 
@@ -1285,8 +1444,10 @@ function handleDeleteComment(button) {
     })
     .catch((error) => {
       console.error("Error deleting comment:", error);
+      commentContainer.css("opacity", "1");
       $(button).prop("disabled", false);
-      alert("Error deleting comment.");
+      responseMessage.text("We couldn’t delete this comment. Please try again.");
+      setTimeout(() => responseMessage.addClass("hidden"), 1500);
     });
 }
 
@@ -1337,200 +1498,366 @@ $(document).on("submit", ".commentForm", function (event) {
   }
   let createdCommentId = null;
 
-    function submitComment(finalPayload) {
-      ForumAPI.createComment(finalPayload)
-        .then((created) => {
-          const mentionIds = (finalPayload.Mentions || []).map((m) => Number(m.id));
+  function submitComment(finalPayload) {
+    ForumAPI.createComment(finalPayload)
+      .then((created) => {
+        const mentionIds = (finalPayload.Mentions || []).map((m) =>
+          Number(m.id)
+        );
 
-          // Fire-and-forget: create alerts for comments/replies
-          try {
-            (async function createCommentAlerts() {
-              const clsId = String(classId || "");
-              if (!clsId) return;
+        // Fire-and-forget: create alerts for comments/replies
+        try {
+          (async function createCommentAlerts() {
+            const clsId = String(classId || "");
+            if (!clsId) return;
 
-              const qClasses = `
+            const qClasses = `
                 query getClassStudents($id: AwcClassID) {
                   getClasses(query: [{ where: { id: $id } }]) {
                     Enrolments { Student { id } }
                   }
                 }
               `;
-              const qEnrol = `
+            const qEnrol = `
                 query getClassEnrolmentStudents($id: AwcClassID) {
                   calcEnrolments(query: [{ where: { class_id: $id } }]) {
                     Student_ID: field(arg: ["Student", "id"])
                   }
                 }
               `;
-              const qTeacher = `
+            const qTeacher = `
                 query calcClasses($id: AwcClassID) {
                   calcClasses(query: [{ where: { id: $id } }]) {
                     Teacher_Contact_ID: field(arg: ["Teacher", "id"])
                   }
                 }
               `;
-              const qParentPost = `
+            const qParentPost = `
                 query getPostAuthor($id: AwcForumPostID!) { getForumPosts(query: [{ where: { id: $id } }]) { id author_id } }
               `;
-              const qParentComment = `
+            const qParentComment = `
                 query getCommentAuthor($id: AwcForumCommentID) { getForumComments(query: [{ where: { id: $id } }]) { id author_id forum_post_id } }
               `;
-              const qMe = `
+            const qMe = `
                 query getMe($id: AwcContactID!) { getContact(query: [{ where: { id: $id } }]) { display_name first_name last_name id } }
               `;
 
-              const [resClasses, resEnrol, resTeacher, resParent, resMe] = await Promise.all([
+            const [resClasses, resEnrol, resTeacher, resParent, resMe] =
+              await Promise.all([
                 fetch(graphqlApiEndpoint, {
                   method: "POST",
-                  headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
-                  body: JSON.stringify({ query: qClasses, variables: { id: clsId } }),
-                }).then(r => r.ok ? r.json() : Promise.reject("getClasses query failed")),
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Api-Key": apiAccessKey,
+                  },
+                  body: JSON.stringify({
+                    query: qClasses,
+                    variables: { id: clsId },
+                  }),
+                }).then((r) =>
+                  r.ok ? r.json() : Promise.reject("getClasses query failed")
+                ),
                 fetch(graphqlApiEndpoint, {
                   method: "POST",
-                  headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
-                  body: JSON.stringify({ query: qEnrol, variables: { id: clsId } }),
-                }).then(r => r.ok ? r.json() : Promise.reject("calcEnrolments query failed")),
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Api-Key": apiAccessKey,
+                  },
+                  body: JSON.stringify({
+                    query: qEnrol,
+                    variables: { id: clsId },
+                  }),
+                }).then((r) =>
+                  r.ok
+                    ? r.json()
+                    : Promise.reject("calcEnrolments query failed")
+                ),
                 fetch(graphqlApiEndpoint, {
                   method: "POST",
-                  headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
-                  body: JSON.stringify({ query: qTeacher, variables: { id: clsId } }),
-                }).then(r => r.ok ? r.json() : Promise.reject("calcClasses query failed")),
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Api-Key": apiAccessKey,
+                  },
+                  body: JSON.stringify({
+                    query: qTeacher,
+                    variables: { id: clsId },
+                  }),
+                }).then((r) =>
+                  r.ok ? r.json() : Promise.reject("calcClasses query failed")
+                ),
                 fetch(graphqlApiEndpoint, {
                   method: "POST",
-                  headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
-                  body: JSON.stringify({ query: parentType === 'post' ? qParentPost : qParentComment, variables: { id: parentId } }),
-                }).then(r => r.ok ? r.json() : Promise.reject("parent author query failed")),
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Api-Key": apiAccessKey,
+                  },
+                  body: JSON.stringify({
+                    query: parentType === "post" ? qParentPost : qParentComment,
+                    variables: { id: parentId },
+                  }),
+                }).then((r) =>
+                  r.ok ? r.json() : Promise.reject("parent author query failed")
+                ),
                 fetch(graphqlApiEndpoint, {
                   method: "POST",
-                  headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
-                  body: JSON.stringify({ query: qMe, variables: { id: Number(visitorContactID) } }),
-                }).then(r => r.ok ? r.json() : Promise.reject("me query failed")),
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Api-Key": apiAccessKey,
+                  },
+                  body: JSON.stringify({
+                    query: qMe,
+                    variables: { id: Number(visitorContactID) },
+                  }),
+                }).then((r) =>
+                  r.ok ? r.json() : Promise.reject("me query failed")
+                ),
               ]);
 
-              // roster
-              let idsFromClasses = [];
-              const classes = Array.isArray(resClasses?.data?.getClasses) ? resClasses.data.getClasses : [];
-              for (const cls of classes) {
-                const enrols = Array.isArray(cls?.Enrolments) ? cls.Enrolments : [];
-                for (const enr of enrols) {
-                  const sid = enr?.Student?.id;
-                  if (sid != null) idsFromClasses.push(sid);
-                }
+            // roster
+            let idsFromClasses = [];
+            const classes = Array.isArray(resClasses?.data?.getClasses)
+              ? resClasses.data.getClasses
+              : [];
+            for (const cls of classes) {
+              const enrols = Array.isArray(cls?.Enrolments)
+                ? cls.Enrolments
+                : [];
+              for (const enr of enrols) {
+                const sid = enr?.Student?.id;
+                if (sid != null) idsFromClasses.push(sid);
               }
-              let idsFromEnrol = [];
-              const enrolRows = Array.isArray(resEnrol?.data?.calcEnrolments) ? resEnrol.data.calcEnrolments : [];
-              for (const row of enrolRows) {
-                const raw = row?.Student_ID;
-                if (raw == null) continue;
-                if (Array.isArray(raw)) idsFromEnrol.push(...raw);
-                else idsFromEnrol.push(raw);
+            }
+            let idsFromEnrol = [];
+            const enrolRows = Array.isArray(resEnrol?.data?.calcEnrolments)
+              ? resEnrol.data.calcEnrolments
+              : [];
+            for (const row of enrolRows) {
+              const raw = row?.Student_ID;
+              if (raw == null) continue;
+              if (Array.isArray(raw)) idsFromEnrol.push(...raw);
+              else idsFromEnrol.push(raw);
+            }
+            let teacherIds = [];
+            try {
+              const tRaw =
+                resTeacher?.data?.calcClasses?.[0]?.Teacher_Contact_ID;
+              if (tRaw != null) {
+                if (Array.isArray(tRaw)) teacherIds.push(...tRaw);
+                else teacherIds.push(tRaw);
               }
-              let teacherIds = [];
-              try {
-                const tRaw = resTeacher?.data?.calcClasses?.[0]?.Teacher_Contact_ID;
-                if (tRaw != null) {
-                  if (Array.isArray(tRaw)) teacherIds.push(...tRaw);
-                  else teacherIds.push(tRaw);
-                }
-              } catch (_) {}
-              const adminIds = [10435];
+            } catch (_) {}
+            const adminIds = [10435];
 
-              const parentAuthorId = Number(
-                parentType === 'post'
-                  ? (resParent?.data?.getForumPosts?.[0]?.author_id ?? 0)
-                  : (resParent?.data?.getForumComments?.[0]?.author_id ?? 0)
+            const parentAuthorId =
+              Number(
+                parentType === "post"
+                  ? resParent?.data?.getForumPosts?.[0]?.author_id ?? 0
+                  : resParent?.data?.getForumComments?.[0]?.author_id ?? 0
               ) || null;
 
-              const me = resMe?.data?.getContact || {};
-              const actorName = me?.display_name || [me?.first_name, me?.last_name].filter(Boolean).join(' ') || 'Someone';
+            const me = resMe?.data?.getContact || {};
+            const actorName =
+              me?.display_name ||
+              [me?.first_name, me?.last_name].filter(Boolean).join(" ") ||
+              "Someone";
 
-              const normalize = (list) => (Array.isArray(list) ? list : [list])
-                .map(v => Number(String(v).trim()))
-                .filter(n => Number.isFinite(n) && n > 0);
-              const teacherSet = new Set(normalize(teacherIds));
-              const adminSet = new Set(normalize(adminIds));
-              const seen = new Set();
-              let ids = [...idsFromClasses, ...idsFromEnrol, ...teacherIds, ...adminIds];
-              if (parentAuthorId) ids.push(Number(parentAuthorId));
-              ids = normalize(ids).filter(n => (seen.has(n) ? false : (seen.add(n), true)));
-              const authorId = Number(created.author_id || visitorContactID);
-              const audience = ids.filter(id => id !== authorId);
-              if (!audience.length) return;
+            const normalize = (list) =>
+              (Array.isArray(list) ? list : [list])
+                .map((v) => Number(String(v).trim()))
+                .filter((n) => Number.isFinite(n) && n > 0);
+            const teacherSet = new Set(normalize(teacherIds));
+            const adminSet = new Set(normalize(adminIds));
+            const seen = new Set();
+            let ids = [
+              ...idsFromClasses,
+              ...idsFromEnrol,
+              ...teacherIds,
+              ...adminIds,
+            ];
+            if (parentAuthorId) ids.push(Number(parentAuthorId));
+            ids = normalize(ids).filter((n) =>
+              seen.has(n) ? false : (seen.add(n), true)
+            );
+            const authorId = Number(created.author_id || visitorContactID);
+            const audience = ids.filter((id) => id !== authorId);
+            if (!audience.length) return;
 
-              const container = document.createElement("div");
-              container.innerHTML = String(finalPayload.comment || "");
-              const content = (container.textContent || "").trim();
-              const createdAt = new Date().toISOString();
-              const normalizeUrl = (url) => { try { const u = new URL(url); u.search=''; u.hash=''; return u.toString(); } catch(_) { return String(url).split('#')[0].split('?')[0]; } };
-              const originUrl = normalizeUrl(window.location.href);
-              const buildRoleUrl = (url, role) => {
-                try {
-                  const u = new URL(url);
-                  const patterns = [/\/(students)\//, /\/(student)\//, /\/(teachers)\//, /\/(teacher)\//, /\/(admin)\//];
-                  for (const re of patterns) {
-                    if (re.test(u.pathname)) {
-                      u.pathname = u.pathname.replace(re, `/${role}/`);
-                      return u.toString();
-                    }
-                  }
-                  return u.toString();
-                } catch (_) { return url; }
-              };
-
-              // Fetch class meta for canonical URLs
-              let classUid, className, courseUid;
+            const container = document.createElement("div");
+            container.innerHTML = String(finalPayload.comment || "");
+            const content = (container.textContent || "").trim();
+            const createdAt = new Date().toISOString();
+            const normalizeUrl = (url) => {
               try {
-                const qMeta = `query getClassMeta($id: AwcClassID) { getClasses(query: [{ where: { id: $id } }]) { id unique_id class_name Course { unique_id } } }`;
-                const rs = await fetch(graphqlApiEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiAccessKey }, body: JSON.stringify({ query: qMeta, variables: { id: Number(classId) } }) }).then(r => r.ok ? r.json() : null);
-                const m = Array.isArray(rs?.data?.getClasses) ? rs.data.getClasses[0] : rs?.data?.getClasses;
-                classUid = m?.unique_id; className = m?.class_name; courseUid = m?.Course?.unique_id;
-              } catch (_) {}
-
-              // Resolve teacher ids to infer roles (fallback if not already in scope)
-              let teacherIdsRole = [];
-              try {
-                const qT = `query calcClasses($id: AwcClassID) { calcClasses(query: [{ where: { id: $id } }]) { Teacher_Contact_ID: field(arg: ["Teacher","id"]) } }`;
-                const rsT = await fetch(graphqlApiEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiAccessKey }, body: JSON.stringify({ query: qT, variables: { id: Number(classId) } }) }).then(r => r.ok ? r.json() : null);
-                const raw = rsT?.data?.calcClasses?.[0]?.Teacher_Contact_ID;
-                if (raw != null) teacherIdsRole = Array.isArray(raw) ? raw : [raw];
-              } catch (_) {}
-              const adminIdsRole = [10435];
-              async function resolveStudentEid2(studentId, clsId) {
-                try {
-                  const cache = (window.__awcEidCache ||= new Map());
-                  const k = String(clsId);
-                  let byClass = cache.get(k);
-                  if (!byClass) { byClass = new Map(); cache.set(k, byClass); }
-                  const sid = Number(studentId);
-                  if (byClass.has(sid)) return byClass.get(sid);
-                  const q = `query getEnrolment($id: AwcContactID, $class_id: AwcClassID) { getEnrolment(query: [{ where: { student_id: $id } }, { andWhere: { class_id: $class_id } }]) { ID: id } }`;
-                  const rs = await fetch(graphqlApiEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiAccessKey }, body: JSON.stringify({ query: q, variables: { id: Number(studentId), class_id: Number(clsId) } }) }).then(r => r.ok ? r.json() : null);
-                  const eid = Number(rs?.data?.getEnrolment?.ID || 0);
-                  if (Number.isFinite(eid) && eid > 0) { byClass.set(sid, eid); return eid; }
-                  return undefined;
-                } catch (_) { return undefined; }
+                const u = new URL(url);
+                u.search = "";
+                u.hash = "";
+                return u.toString();
+              } catch (_) {
+                return String(url).split("#")[0].split("?")[0];
               }
+            };
+            const originUrl = normalizeUrl(window.location.href);
+            const buildRoleUrl = (url, role) => {
+              try {
+                const u = new URL(url);
+                const patterns = [
+                  /\/(students)\//,
+                  /\/(student)\//,
+                  /\/(teachers)\//,
+                  /\/(teacher)\//,
+                  /\/(admin)\//,
+                ];
+                for (const re of patterns) {
+                  if (re.test(u.pathname)) {
+                    u.pathname = u.pathname.replace(re, `/${role}/`);
+                    return u.toString();
+                  }
+                }
+                return u.toString();
+              } catch (_) {
+                return url;
+              }
+            };
 
-              const alerts = await Promise.all(audience.map(async (contactId) => {
+            // Fetch class meta for canonical URLs
+            let classUid, className, courseUid;
+            try {
+              const qMeta = `query getClassMeta($id: AwcClassID) { getClasses(query: [{ where: { id: $id } }]) { id unique_id class_name Course { unique_id } } }`;
+              const rs = await fetch(graphqlApiEndpoint, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Api-Key": apiAccessKey,
+                },
+                body: JSON.stringify({
+                  query: qMeta,
+                  variables: { id: Number(classId) },
+                }),
+              }).then((r) => (r.ok ? r.json() : null));
+              const m = Array.isArray(rs?.data?.getClasses)
+                ? rs.data.getClasses[0]
+                : rs?.data?.getClasses;
+              classUid = m?.unique_id;
+              className = m?.class_name;
+              courseUid = m?.Course?.unique_id;
+            } catch (_) {}
+
+            // Resolve teacher ids to infer roles (fallback if not already in scope)
+            let teacherIdsRole = [];
+            try {
+              const qT = `query calcClasses($id: AwcClassID) { calcClasses(query: [{ where: { id: $id } }]) { Teacher_Contact_ID: field(arg: ["Teacher","id"]) } }`;
+              const rsT = await fetch(graphqlApiEndpoint, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Api-Key": apiAccessKey,
+                },
+                body: JSON.stringify({
+                  query: qT,
+                  variables: { id: Number(classId) },
+                }),
+              }).then((r) => (r.ok ? r.json() : null));
+              const raw = rsT?.data?.calcClasses?.[0]?.Teacher_Contact_ID;
+              if (raw != null)
+                teacherIdsRole = Array.isArray(raw) ? raw : [raw];
+            } catch (_) {}
+            const adminIdsRole = [10435];
+            async function resolveStudentEid2(studentId, clsId) {
+              try {
+                const cache = (window.__awcEidCache ||= new Map());
+                const k = String(clsId);
+                let byClass = cache.get(k);
+                if (!byClass) {
+                  byClass = new Map();
+                  cache.set(k, byClass);
+                }
+                const sid = Number(studentId);
+                if (byClass.has(sid)) return byClass.get(sid);
+                const q = `query getEnrolment($id: AwcContactID, $class_id: AwcClassID) { getEnrolment(query: [{ where: { student_id: $id } }, { andWhere: { class_id: $class_id } }]) { ID: id } }`;
+                const rs = await fetch(graphqlApiEndpoint, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Api-Key": apiAccessKey,
+                  },
+                  body: JSON.stringify({
+                    query: q,
+                    variables: {
+                      id: Number(studentId),
+                      class_id: Number(clsId),
+                    },
+                  }),
+                }).then((r) => (r.ok ? r.json() : null));
+                const eid = Number(rs?.data?.getEnrolment?.ID || 0);
+                if (Number.isFinite(eid) && eid > 0) {
+                  byClass.set(sid, eid);
+                  return eid;
+                }
+                return undefined;
+              } catch (_) {
+                return undefined;
+              }
+            }
+
+            const alerts = await Promise.all(
+              audience.map(async (contactId) => {
                 const isMentioned = mentionIds.includes(Number(contactId));
                 const parentClassId = Number(classId) || undefined;
-                const alertType = isMentioned ? 'Post Comment Mention' : 'Post Comment';
+                const alertType = isMentioned
+                  ? "Post Comment Mention"
+                  : "Post Comment";
                 let title;
                 if (isMentioned) {
-                  title = 'You are mentioned in a comment';
-                } else if (parentAuthorId && Number(contactId) === Number(parentAuthorId)) {
-                  title = parentType === 'post' ? `${actorName} commented on your post` : `${actorName} replied to your comment`;
+                  title = "You are mentioned in a comment";
+                } else if (
+                  parentAuthorId &&
+                  Number(contactId) === Number(parentAuthorId)
+                ) {
+                  title =
+                    parentType === "post"
+                      ? `${actorName} commented on your post`
+                      : `${actorName} replied to your comment`;
                 } else {
-                  title = parentType === 'post' ? 'A comment has been added to a post' : 'A reply has been added to a comment';
+                  title =
+                    parentType === "post"
+                      ? "A comment has been added to a post"
+                      : "A reply has been added to a comment";
                 }
-                const isTeacher = teacherIdsRole.map(Number).includes(Number(contactId));
-                const isAdmin = adminIdsRole.map(Number).includes(Number(contactId));
-                const role = isAdmin ? 'admin' : (isTeacher ? 'teachers' : 'students');
-                let eid; if (role === 'students') eid = await resolveStudentEid2(contactId, classId);
-                const params = { classId: parentClassId, classUid, className, courseUid, eid, postId: Number(forumPostId), commentId: Number(created.id) };
-                const originUrlCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl(role, 'post', params) : originUrl;
-                const teacherUrlCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teachers', 'post', params) : originUrl;
-                const adminUrlCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'post', params) : originUrl;
+                const isTeacher = teacherIdsRole
+                  .map(Number)
+                  .includes(Number(contactId));
+                const isAdmin = adminIdsRole
+                  .map(Number)
+                  .includes(Number(contactId));
+                const role = isAdmin
+                  ? "admin"
+                  : isTeacher
+                  ? "teachers"
+                  : "students";
+                let eid;
+                if (role === "students")
+                  eid = await resolveStudentEid2(contactId, classId);
+                const params = {
+                  classId: parentClassId,
+                  classUid,
+                  className,
+                  courseUid,
+                  eid,
+                  postId: Number(forumPostId),
+                  commentId: Number(created.id),
+                };
+                const originUrlCanonical =
+                  window.AWC && typeof window.AWC.buildAlertUrl === "function"
+                    ? window.AWC.buildAlertUrl(role, "post", params)
+                    : originUrl;
+                const teacherUrlCanonical =
+                  window.AWC && typeof window.AWC.buildAlertUrl === "function"
+                    ? window.AWC.buildAlertUrl("teachers", "post", params)
+                    : originUrl;
+                const adminUrlCanonical =
+                  window.AWC && typeof window.AWC.buildAlertUrl === "function"
+                    ? window.AWC.buildAlertUrl("admin", "post", params)
+                    : originUrl;
                 return {
                   alert_type: alertType,
                   title,
@@ -1546,23 +1873,28 @@ $(document).on("submit", ".commentForm", function (event) {
                   parent_post_id: Number(forumPostId),
                   parent_comment_id: Number(created.id),
                 };
-              }));
+              })
+            );
 
-              if (window.AWC && typeof window.AWC.createAlerts === 'function') {
-                try { await window.AWC.createAlerts(alerts, { concurrency: 4 }); } catch (e) { console.error('Failed to create alerts (comment)', e); }
+            if (window.AWC && typeof window.AWC.createAlerts === "function") {
+              try {
+                await window.AWC.createAlerts(alerts, { concurrency: 4 });
+              } catch (e) {
+                console.error("Failed to create alerts (comment)", e);
               }
-            })();
-          } catch (e) {
-            console.error('Alert creation error (comment)', e);
-          }
+            }
+          })();
+        } catch (e) {
+          console.error("Alert creation error (comment)", e);
+        }
 
-          return Promise.all(
-            mentionIds.map((id) =>
-              ForumAPI.updateContact(id, { has__new__notification: true })
-            )
-          ).then(() => created);
-        })
-        .then((created) => ForumAPI.fetchPostById(forumPostId))
+        return Promise.all(
+          mentionIds.map((id) =>
+            ForumAPI.updateContact(id, { has__new__notification: true })
+          )
+        ).then(() => created);
+      })
+      .then((created) => ForumAPI.fetchPostById(forumPostId))
 
       .then((data) => {
         responseMessage.text("Comment created successfully!");
@@ -1589,7 +1921,7 @@ $(document).on("submit", ".commentForm", function (event) {
             let link = "";
             if (newComment.file) link = newComment.file.replace(/^"|"$/g, "");
             newComment.file = JSON.stringify({
-              link: link,
+              link: link,   
               name: uploadedFileInfo.name,
               type: uploadedFileInfo.type,
             });
@@ -1607,7 +1939,10 @@ $(document).on("submit", ".commentForm", function (event) {
           $(this).attr("contenteditable", true);
         });
       })
-      .catch((error) => {})
+      .catch((error) => {
+        console.error("Error creating comment:", error);
+        responseMessage.text("We couldn’t create your comment. Please try again.");
+      })
       .finally(() => {
         submitButton.prop("disabled", false);
         editor.setAttribute("contenteditable", true);
@@ -1629,9 +1964,11 @@ $(document).on("submit", ".commentForm", function (event) {
       .then((updatedPayload) => submitComment(updatedPayload))
       .catch((error) => {
         console.error("File processing error:", error);
-        alert("Error processing file.");
+        responseMessage.text("We couldn’t process the file. Please try again.");
         submitButton.prop("disabled", false);
+        form.removeClass("state-disabled");
         editor.setAttribute("contenteditable", true);
+        setTimeout(() => responseMessage.addClass("hidden"), 1500);
       });
   } else {
     submitComment(payload);
@@ -1662,7 +1999,6 @@ function handleVote(button) {
         .catch((error) => {
           console.error("Error removing post vote:", error);
           $btn.removeClass("state-disabled");
-          alert("Error removing vote.");
         });
     } else {
       // Vote addition: create a vote and update the UI.
@@ -1681,7 +2017,6 @@ function handleVote(button) {
         .catch((error) => {
           console.error("Error creating post vote:", error);
           $btn.removeClass("state-disabled");
-          alert("Error casting vote.");
         });
     }
   } else if (type === "comment") {
@@ -1699,7 +2034,6 @@ function handleVote(button) {
         .catch((error) => {
           console.error("Error removing comment vote:", error);
           $btn.removeClass("state-disabled");
-          alert("Error removing vote.");
         });
     } else {
       // Creating comment vote
@@ -1718,7 +2052,6 @@ function handleVote(button) {
         .catch((error) => {
           console.error("Error creating comment vote:", error);
           $btn.removeClass("state-disabled");
-          alert("Error casting vote.");
         });
     }
   }
@@ -2057,5 +2390,3 @@ function applyLinkPreviewsAndLinkify() {
   const containers = document.querySelectorAll(".content-container");
   containers.forEach((el) => linkifyElement(el));
 }
-
- 
