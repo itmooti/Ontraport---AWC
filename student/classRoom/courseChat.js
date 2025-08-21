@@ -417,18 +417,82 @@ var myHelpers = {
 $.views.helpers(myHelpers);
 
 const ForumAPI = (function () {
+  // Lightweight toast helper
+  function showToast(message, type = "error") {
+    try {
+      const id = "awc-toast-container";
+      let container = document.getElementById(id);
+      if (!container) {
+        container = document.createElement("div");
+        container.id = id;
+        container.style.position = "fixed";
+        container.style.right = "12px";
+        container.style.top = "12px";
+        container.style.zIndex = "999999";
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+        container.style.gap = "8px";
+        document.body.appendChild(container);
+      }
+      const el = document.createElement("div");
+      el.style.padding = "10px 12px";
+      el.style.borderRadius = "8px";
+      el.style.boxShadow = "0 6px 18px rgba(0,0,0,0.12)";
+      el.style.maxWidth = "360px";
+      el.style.fontSize = "14px";
+      el.style.color = "#0b0b0b";
+      el.style.background =
+        type === "success"
+          ? "#ecfdf5"
+          : type === "info"
+          ? "#eff6ff"
+          : "#fef2f2";
+      el.style.border =
+        type === "success"
+          ? "1px solid #a7f3d0"
+          : type === "info"
+          ? "1px solid #bfdbfe"
+          : "1px solid #fecaca";
+      el.textContent = String(message || "");
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.transition = "opacity 200ms ease";
+        el.style.opacity = "0";
+        setTimeout(() => el.remove(), 220);
+      }, 3000);
+    } catch (_) {}
+  }
+  try {
+    window.__awcShowToast = showToast;
+  } catch (_) {}
+
   function apiCall(query, variables = {}) {
     return fetch(graphqlApiEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
       body: JSON.stringify({ query, variables }),
     })
-      .then((response) => {
-        if (!response.ok) throw new Error("Network response was not ok");
+      .then(async (response) => {
+        if (!response.ok) {
+          let detail = "";
+          try {
+            detail = await response.text();
+          } catch (_) {}
+          const err = new Error(
+            `Request failed: ${response.status} ${response.statusText}`
+          );
+          err.status = response.status;
+          err.detail = detail;
+          throw err;
+        }
         return response.json();
       })
       .catch((error) => {
         console.error("API call error:", error);
+        // Show a friendly toast on 5xx errors
+        if (Number(error?.status) >= 500) {
+          showToast("We couldn’t reach the server. Please try again.", "error");
+        }
         throw error;
       });
   }
@@ -780,6 +844,7 @@ mutation deleteMemberCommentUpvotesForumCommentUpvotes($id: AwcMemberCommentUpvo
     deleteCommentVote,
     fetchMyPosts,
     updateContact,
+    showToast,
   };
 })();
 
@@ -1183,9 +1248,11 @@ $(document).ready(async function () {
                 const enrols = Array.isArray(cls?.Enrolments)
                   ? cls.Enrolments
                   : [];
-                if (classUid == null && cls?.unique_id) classUid = cls.unique_id;
+                if (classUid == null && cls?.unique_id)
+                  classUid = cls.unique_id;
                 if (!className && cls?.class_name) className = cls.class_name;
-                if (courseUid == null && cls?.Course?.unique_id) courseUid = cls.Course.unique_id;
+                if (courseUid == null && cls?.Course?.unique_id)
+                  courseUid = cls.Course.unique_id;
                 for (const enr of enrols) {
                   const sid = enr?.Student?.id;
                   if (sid != null) idsFromClasses.push(sid);
@@ -1311,49 +1378,90 @@ $(document).ready(async function () {
                   const cache = (window.__awcEidCache ||= new Map());
                   const k = String(clsId);
                   let byClass = cache.get(k);
-                  if (!byClass) { byClass = new Map(); cache.set(k, byClass); }
+                  if (!byClass) {
+                    byClass = new Map();
+                    cache.set(k, byClass);
+                  }
                   const sid = Number(studentId);
                   if (byClass.has(sid)) return byClass.get(sid);
                   const q = `query getEnrolment($id: AwcContactID, $class_id: AwcClassID) { getEnrolment(query: [{ where: { student_id: $id } }, { andWhere: { class_id: $class_id } }]) { ID: id } }`;
-                  const rs = await fetch(graphqlApiEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiAccessKey }, body: JSON.stringify({ query: q, variables: { id: Number(studentId), class_id: Number(clsId) } }) }).then(r => r.ok ? r.json() : null);
+                  const rs = await fetch(graphqlApiEndpoint, {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Api-Key": apiAccessKey,
+                    },
+                    body: JSON.stringify({
+                      query: q,
+                      variables: {
+                        id: Number(studentId),
+                        class_id: Number(clsId),
+                      },
+                    }),
+                  }).then((r) => (r.ok ? r.json() : null));
                   const eid = Number(rs?.data?.getEnrolment?.ID || 0);
-                  if (Number.isFinite(eid) && eid > 0) { byClass.set(sid, eid); return eid; }
+                  if (Number.isFinite(eid) && eid > 0) {
+                    byClass.set(sid, eid);
+                    return eid;
+                  }
                   return undefined;
-                } catch (_) { return undefined; }
+                } catch (_) {
+                  return undefined;
+                }
               }
-              const parentClassId = Number(classIdForForumChat || window.classID) || undefined;
-              const alerts = await Promise.all(audience.map(async (contactId) => {
-                const isMentioned = mentionIds.includes(Number(contactId));
-                const isTeacher = teacherSet.has(Number(contactId));
-                const isAdmin = adminSet.has(Number(contactId));
-                const role = isAdmin ? 'admin' : (isTeacher ? 'teachers' : 'students');
-                let eid = undefined;
-                if (role === 'students') eid = await resolveStudentEid(contactId, parentClassId);
-                const params = { classId: parentClassId, classUid, className, courseUid, eid, postId };
-                const originUrlCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function')
-                  ? window.AWC.buildAlertUrl(role, 'post', params)
-                  : originUrl;
-                const teacherUrlCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function')
-                  ? window.AWC.buildAlertUrl('teachers', 'post', params)
-                  : originUrl;
-                const adminUrlCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function')
-                  ? window.AWC.buildAlertUrl('admin', 'post', params)
-                  : originUrl;
-                return {
-                  alert_type: isMentioned ? 'Post Mention' : 'Post',
-                  title: isMentioned ? 'You are mentioned in a post' : 'A post has been created',
-                  content,
-                  created_at: createdAt,
-                  is_mentioned: !!isMentioned,
-                  is_read: false,
-                  notified_contact_id: Number(contactId),
-                  origin_url: originUrlCanonical,
-                  origin_url_teacher: teacherUrlCanonical,
-                  origin_url_admin: adminUrlCanonical,
-                  parent_class_id: parentClassId,
-                  parent_post_id: postId,
-                };
-              }));
+              const parentClassId =
+                Number(classIdForForumChat || window.classID) || undefined;
+              const alerts = await Promise.all(
+                audience.map(async (contactId) => {
+                  const isMentioned = mentionIds.includes(Number(contactId));
+                  const isTeacher = teacherSet.has(Number(contactId));
+                  const isAdmin = adminSet.has(Number(contactId));
+                  const role = isAdmin
+                    ? "admin"
+                    : isTeacher
+                    ? "teachers"
+                    : "students";
+                  let eid = undefined;
+                  if (role === "students")
+                    eid = await resolveStudentEid(contactId, parentClassId);
+                  const params = {
+                    classId: parentClassId,
+                    classUid,
+                    className,
+                    courseUid,
+                    eid,
+                    postId,
+                  };
+                  const originUrlCanonical =
+                    window.AWC && typeof window.AWC.buildAlertUrl === "function"
+                      ? window.AWC.buildAlertUrl(role, "post", params)
+                      : originUrl;
+                  const teacherUrlCanonical =
+                    window.AWC && typeof window.AWC.buildAlertUrl === "function"
+                      ? window.AWC.buildAlertUrl("teachers", "post", params)
+                      : originUrl;
+                  const adminUrlCanonical =
+                    window.AWC && typeof window.AWC.buildAlertUrl === "function"
+                      ? window.AWC.buildAlertUrl("admin", "post", params)
+                      : originUrl;
+                  return {
+                    alert_type: isMentioned ? "Post Mention" : "Post",
+                    title: isMentioned
+                      ? "You are mentioned in a post"
+                      : "A post has been created",
+                    content,
+                    created_at: createdAt,
+                    is_mentioned: !!isMentioned,
+                    is_read: false,
+                    notified_contact_id: Number(contactId),
+                    origin_url: originUrlCanonical,
+                    origin_url_teacher: teacherUrlCanonical,
+                    origin_url_admin: adminUrlCanonical,
+                    parent_class_id: parentClassId,
+                    parent_post_id: postId,
+                  };
+                })
+              );
               try {
                 console.log("[ForumAlerts] Alerts prepared", {
                   count: alerts.length,
@@ -1434,7 +1542,13 @@ $(document).ready(async function () {
         })
         .catch((error) => {
           console.error("Error creating post:", error);
-          responseMessage.text("Error creating post.");
+          responseMessage.text(
+            "We couldn’t create your post. Please try again."
+          );
+          try {
+            window.__awcShowToast &&
+              window.__awcShowToast("Please try again.", "error");
+          } catch (_) {}
         })
         .finally(() => {
           submitButton.prop("disabled", false);
@@ -1460,9 +1574,20 @@ $(document).ready(async function () {
         .then((updatedPayload) => submitNewPost(updatedPayload))
         .catch((error) => {
           console.error("File processing error:", error);
-          responseMessage.text("Error processing file.");
+          responseMessage.text(
+            "We couldn’t process the file. Please try again."
+          );
+          try {
+            window.__awcShowToast &&
+              window.__awcShowToast(
+                "We couldn’t process the file. Please try again.",
+                "error"
+              );
+          } catch (_) {}
           submitButton.prop("disabled", false);
+          postOuterWrapper.classList.remove("state-disabled");
           $("#post-editor").attr("contenteditable", true);
+          setTimeout(() => responseMessage.addClass("hidden"), 1500);
         });
     } else {
       try {
@@ -1486,13 +1611,21 @@ function handleDelete(button) {
     .then(() => {
       responseMessage.text("Post deleted successfully");
       postCard.slideUp(() => postCard.remove());
-      setTimeout(() => responseMessage.addClass("hidden"), 500); // Hide message after 2 seconds
+      setTimeout(() => responseMessage.addClass("hidden"), 500);
     })
     .catch((error) => {
       console.error("Error deleting post:", error);
       postCard.css("opacity", "1");
       $(button).prop("disabled", false);
-      alert("Error deleting post.");
+      responseMessage.text("We couldn’t delete this post. Please try again.");
+      try {
+        window.__awcShowToast &&
+          window.__awcShowToast(
+            "We couldn’t delete this post. Please try again.",
+            "error"
+          );
+      } catch (_) {}
+      setTimeout(() => responseMessage.addClass("hidden"), 1500);
     });
 }
 
@@ -1509,12 +1642,23 @@ function handleDeleteComment(button) {
     .then(() => {
       responseMessage.text("Comment deleted successfully");
       commentContainer.slideUp(() => commentContainer.remove());
-      setTimeout(() => responseMessage.addClass("hidden"), 2000); // Hide message after 2 seconds
+      setTimeout(() => responseMessage.addClass("hidden"), 500);
     })
     .catch((error) => {
       console.error("Error deleting comment:", error);
+      commentContainer.css("opacity", "1");
       $(button).prop("disabled", false);
-      alert("Error deleting comment.");
+      responseMessage.text(
+        "We couldn’t delete this comment. Please try again."
+      );
+      try {
+        window.__awcShowToast &&
+          window.__awcShowToast(
+            "We couldn’t delete this comment. Please try again.",
+            "error"
+          );
+      } catch (_) {}
+      setTimeout(() => responseMessage.addClass("hidden"), 1500);
     });
 }
 
@@ -1576,6 +1720,11 @@ $(document).on("submit", ".commentForm", function (event) {
         // Fire-and-forget: create alerts for class roster with special handling for mentions and parent owners
         try {
           (async function createCommentAlerts() {
+            console.groupCollapsed &&
+              console.groupCollapsed(
+                "[ForumAlerts] Begin alert creation for comment",
+                created?.id
+              );
             const clsId = String(classIdForForumChat || window.classID || "");
             if (!clsId) return;
 
@@ -1804,84 +1953,155 @@ $(document).on("submit", ".commentForm", function (event) {
             let classUid, className, courseUid;
             try {
               const qMeta = `query getClassMeta($id: AwcClassID) { getClasses(query: [{ where: { id: $id } }]) { id unique_id class_name Course { unique_id } } }`;
-              const rs = await fetch(graphqlApiEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiAccessKey }, body: JSON.stringify({ query: qMeta, variables: { id: Number(classIdForForumChat || window.classID) } }) }).then(r => r.ok ? r.json() : null);
-              const m = Array.isArray(rs?.data?.getClasses) ? rs.data.getClasses[0] : rs?.data?.getClasses;
-              classUid = m?.unique_id; className = m?.class_name; courseUid = m?.Course?.unique_id;
+              const rs = await fetch(graphqlApiEndpoint, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Api-Key": apiAccessKey,
+                },
+                body: JSON.stringify({
+                  query: qMeta,
+                  variables: {
+                    id: Number(classIdForForumChat || window.classID),
+                  },
+                }),
+              }).then((r) => (r.ok ? r.json() : null));
+              const m = Array.isArray(rs?.data?.getClasses)
+                ? rs.data.getClasses[0]
+                : rs?.data?.getClasses;
+              classUid = m?.unique_id;
+              className = m?.class_name;
+              courseUid = m?.Course?.unique_id;
             } catch (_) {}
             async function resolveStudentEid2(studentId, clsId) {
               try {
                 const cache = (window.__awcEidCache ||= new Map());
                 const k = String(clsId);
                 let byClass = cache.get(k);
-                if (!byClass) { byClass = new Map(); cache.set(k, byClass); }
+                if (!byClass) {
+                  byClass = new Map();
+                  cache.set(k, byClass);
+                }
                 const sid = Number(studentId);
                 if (byClass.has(sid)) return byClass.get(sid);
                 const q = `query getEnrolment($id: AwcContactID, $class_id: AwcClassID) { getEnrolment(query: [{ where: { student_id: $id } }, { andWhere: { class_id: $class_id } }]) { ID: id } }`;
-                const rs = await fetch(graphqlApiEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiAccessKey }, body: JSON.stringify({ query: q, variables: { id: Number(studentId), class_id: Number(clsId) } }) }).then(r => r.ok ? r.json() : null);
+                const rs = await fetch(graphqlApiEndpoint, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Api-Key": apiAccessKey,
+                  },
+                  body: JSON.stringify({
+                    query: q,
+                    variables: {
+                      id: Number(studentId),
+                      class_id: Number(clsId),
+                    },
+                  }),
+                }).then((r) => (r.ok ? r.json() : null));
                 const eid = Number(rs?.data?.getEnrolment?.ID || 0);
-                if (Number.isFinite(eid) && eid > 0) { byClass.set(sid, eid); return eid; }
+                if (Number.isFinite(eid) && eid > 0) {
+                  byClass.set(sid, eid);
+                  return eid;
+                }
                 return undefined;
-              } catch (_) { return undefined; }
+              } catch (_) {
+                return undefined;
+              }
             }
             // Build alerts
-            const alerts = await Promise.all(audience.map(async (contactId) => {
-              const isMentioned = mentionIds.includes(Number(contactId));
-              const isTeacher = teacherSet.has(Number(contactId));
-              const isAdmin = adminSet.has(Number(contactId));
-              const parentClassId =
-                Number(classIdForForumChat || window.classID) || undefined;
-              const alertType = isMentioned
-                ? "Post Comment Mention"
-                : "Post Comment";
+            const alerts = await Promise.all(
+              audience.map(async (contactId) => {
+                const isMentioned = mentionIds.includes(Number(contactId));
+                const isTeacher = teacherSet.has(Number(contactId));
+                const isAdmin = adminSet.has(Number(contactId));
+                const parentClassId =
+                  Number(classIdForForumChat || window.classID) || undefined;
+                const alertType = isMentioned
+                  ? "Post Comment Mention"
+                  : "Post Comment";
 
-              let title;
-              if (isMentioned) {
-                title = "You are mentioned in a comment";
-              } else if (
-                parentAuthorId &&
-                Number(contactId) === Number(parentAuthorId)
-              ) {
-                title =
-                  parentType === "post"
-                    ? `${actorName} commented on your post`
-                    : `${actorName} replied to your comment`;
-              } else {
-                title =
-                  parentType === "post"
-                    ? "A comment has been added to a post"
-                    : "A reply has been added to a comment";
-              }
+                let title;
+                if (isMentioned) {
+                  title = "You are mentioned in a comment";
+                } else if (
+                  parentAuthorId &&
+                  Number(contactId) === Number(parentAuthorId)
+                ) {
+                  title =
+                    parentType === "post"
+                      ? `${actorName} commented on your post`
+                      : `${actorName} replied to your comment`;
+                } else {
+                  title =
+                    parentType === "post"
+                      ? "A comment has been added to a post"
+                      : "A reply has been added to a comment";
+                }
 
-              const role = isAdmin ? 'admin' : (isTeacher ? 'teachers' : 'students');
-              let eid; if (role === 'students') eid = await resolveStudentEid2(contactId, parentClassId);
-              const params = { classId: parentClassId, classUid, className, courseUid, eid, postId: Number(forumPostId), commentId: Number(created.id) };
-              const originCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl(role, 'post', params) : originUrl;
-              const teacherCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teachers', 'post', params) : originUrl;
-              const adminCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'post', params) : originUrl;
-              return {
-                alert_type: alertType,
-                title,
-                content,
-                created_at: createdAt,
-                is_mentioned: !!isMentioned,
-                is_read: false,
-                notified_contact_id: Number(contactId),
-                origin_url: originCanonical,
-                origin_url_teacher: teacherCanonical,
-                origin_url_admin: adminCanonical,
-                parent_class_id: parentClassId,
-                parent_post_id: Number(forumPostId),
-                parent_comment_id: Number(created.id),
-              };
-            }));
+                const role = isAdmin
+                  ? "admin"
+                  : isTeacher
+                  ? "teachers"
+                  : "students";
+                let eid;
+                if (role === "students")
+                  eid = await resolveStudentEid2(contactId, parentClassId);
+                const params = {
+                  classId: parentClassId,
+                  classUid,
+                  className,
+                  courseUid,
+                  eid,
+                  postId: Number(forumPostId),
+                  commentId: Number(created.id),
+                };
+                const originCanonical =
+                  window.AWC && typeof window.AWC.buildAlertUrl === "function"
+                    ? window.AWC.buildAlertUrl(role, "post", params)
+                    : originUrl;
+                const teacherCanonical =
+                  window.AWC && typeof window.AWC.buildAlertUrl === "function"
+                    ? window.AWC.buildAlertUrl("teachers", "post", params)
+                    : originUrl;
+                const adminCanonical =
+                  window.AWC && typeof window.AWC.buildAlertUrl === "function"
+                    ? window.AWC.buildAlertUrl("admin", "post", params)
+                    : originUrl;
+                return {
+                  alert_type: alertType,
+                  title,
+                  content,
+                  created_at: createdAt,
+                  is_mentioned: !!isMentioned,
+                  is_read: false,
+                  notified_contact_id: Number(contactId),
+                  origin_url: originCanonical,
+                  origin_url_teacher: teacherCanonical,
+                  origin_url_admin: adminCanonical,
+                  parent_class_id: parentClassId,
+                  parent_post_id: Number(forumPostId),
+                  parent_comment_id: Number(created.id),
+                };
+              })
+            );
 
             if (window.AWC && typeof window.AWC.createAlerts === "function") {
               try {
-                await window.AWC.createAlerts(alerts, { concurrency: 4 });
+                const result = await window.AWC.createAlerts(alerts, {
+                  concurrency: 4,
+                });
+                try {
+                  console.log(
+                    "[ForumAlerts] Alerts creation result (comment)",
+                    result
+                  );
+                } catch (_) {}
               } catch (e) {
                 console.error("Failed to create alerts (comment)", e);
               }
             }
+            console.groupEnd && console.groupEnd();
           })();
         } catch (e) {
           console.error("Alert creation error (comment)", e);
@@ -1941,10 +2161,17 @@ $(document).on("submit", ".commentForm", function (event) {
       })
       .catch((error) => {
         console.error("Error creating comment:", error);
-        alert("Error creating comment.");
+        responseMessage.text(
+          "We couldn’t create your comment. Please try again."
+        );
+        try {
+          window.__awcShowToast &&
+            window.__awcShowToast("Please try again.", "error");
+        } catch (_) {}
       })
       .finally(() => {
         submitButton.prop("disabled", false);
+        form.removeClass("state-disabled");
         editor.setAttribute("contenteditable", true);
         editor.innerHTML = "";
         $(fileInput).val("");
@@ -1964,9 +2191,18 @@ $(document).on("submit", ".commentForm", function (event) {
       .then((updatedPayload) => submitComment(updatedPayload))
       .catch((error) => {
         console.error("File processing error:", error);
-        alert("Error processing file.");
+        responseMessage.text("We couldn’t process the file. Please try again.");
+        try {
+          window.__awcShowToast &&
+            window.__awcShowToast(
+              "We couldn’t process the file. Please try again.",
+              "error"
+            );
+        } catch (_) {}
         submitButton.prop("disabled", false);
+        form.removeClass("state-disabled");
         editor.setAttribute("contenteditable", true);
+        setTimeout(() => responseMessage.addClass("hidden"), 1500);
       });
   } else {
     submitComment(payload);
@@ -1997,7 +2233,13 @@ function handleVote(button) {
         .catch((error) => {
           console.error("Error removing post vote:", error);
           $btn.removeClass("state-disabled");
-          alert("Error removing vote.");
+          try {
+            window.__awcShowToast &&
+              window.__awcShowToast(
+                "We couldn’t remove your vote. Please try again.",
+                "error"
+              );
+          } catch (_) {}
         });
     } else {
       // Vote addition: create a vote and update the UI.
@@ -2016,7 +2258,13 @@ function handleVote(button) {
         .catch((error) => {
           console.error("Error creating post vote:", error);
           $btn.removeClass("state-disabled");
-          alert("Error casting vote.");
+          try {
+            window.__awcShowToast &&
+              window.__awcShowToast(
+                "We couldn’t cast your vote. Please try again.",
+                "error"
+              );
+          } catch (_) {}
         });
     }
   } else if (type === "comment") {
@@ -2034,7 +2282,13 @@ function handleVote(button) {
         .catch((error) => {
           console.error("Error removing comment vote:", error);
           $btn.removeClass("state-disabled");
-          alert("Error removing vote.");
+          try {
+            window.__awcShowToast &&
+              window.__awcShowToast(
+                "We couldn’t remove your vote. Please try again.",
+                "error"
+              );
+          } catch (_) {}
         });
     } else {
       // Creating comment vote
@@ -2053,7 +2307,13 @@ function handleVote(button) {
         .catch((error) => {
           console.error("Error creating comment vote:", error);
           $btn.removeClass("state-disabled");
-          alert("Error casting vote.");
+          try {
+            window.__awcShowToast &&
+              window.__awcShowToast(
+                "We couldn’t cast your vote. Please try again.",
+                "error"
+              );
+          } catch (_) {}
         });
     }
   }
