@@ -462,9 +462,7 @@ const ForumAPI = (function () {
       }, 3000);
     } catch (_) {}
   }
-  try {
-    window.__awcShowToast = showToast;
-  } catch (_) {}
+  try { window.__awcShowToast = showToast; } catch (_) {}
 
   function apiCall(query, variables = {}) {
     return fetch(graphqlApiEndpoint, {
@@ -473,26 +471,28 @@ const ForumAPI = (function () {
       body: JSON.stringify({ query, variables }),
     })
       .then(async (response) => {
+        let json;
         if (!response.ok) {
           let detail = "";
-          try {
-            detail = await response.text();
-          } catch (_) {}
-          const err = new Error(
-            `Request failed: ${response.status} ${response.statusText}`
-          );
+          try { detail = await response.text(); } catch (_) {}
+          const err = new Error(`Request failed: ${response.status} ${response.statusText}`);
           err.status = response.status;
           err.detail = detail;
           throw err;
         }
-        return response.json();
+        try { json = await response.json(); } catch (e) { throw e; }
+        if (json && Array.isArray(json.errors) && json.errors.length) {
+          const err = new Error(json.errors.map(e => e.message).join(" | "));
+          err.status = 200;
+          err.errors = json.errors;
+          throw err;
+        }
+        return json;
       })
       .catch((error) => {
         console.error("API call error:", error);
-        // Show a friendly toast on 5xx errors
-        if (Number(error?.status) >= 500) {
-          showToast("We couldn’t reach the server. Please try again.", "error");
-        }
+        // Single toast for any failed operation
+        showToast("Please try again.", "error");
         throw error;
       });
   }
@@ -1542,13 +1542,7 @@ $(document).ready(async function () {
         })
         .catch((error) => {
           console.error("Error creating post:", error);
-          responseMessage.text(
-            "We couldn’t create your post. Please try again."
-          );
-          try {
-            window.__awcShowToast &&
-              window.__awcShowToast("Please try again.", "error");
-          } catch (_) {}
+          responseMessage.text("We couldn’t create your post. Please try again.");
         })
         .finally(() => {
           submitButton.prop("disabled", false);
@@ -1574,16 +1568,7 @@ $(document).ready(async function () {
         .then((updatedPayload) => submitNewPost(updatedPayload))
         .catch((error) => {
           console.error("File processing error:", error);
-          responseMessage.text(
-            "We couldn’t process the file. Please try again."
-          );
-          try {
-            window.__awcShowToast &&
-              window.__awcShowToast(
-                "We couldn’t process the file. Please try again.",
-                "error"
-              );
-          } catch (_) {}
+          responseMessage.text("We couldn’t process the file. Please try again.");
           submitButton.prop("disabled", false);
           postOuterWrapper.classList.remove("state-disabled");
           $("#post-editor").attr("contenteditable", true);
@@ -1618,13 +1603,6 @@ function handleDelete(button) {
       postCard.css("opacity", "1");
       $(button).prop("disabled", false);
       responseMessage.text("We couldn’t delete this post. Please try again.");
-      try {
-        window.__awcShowToast &&
-          window.__awcShowToast(
-            "We couldn’t delete this post. Please try again.",
-            "error"
-          );
-      } catch (_) {}
       setTimeout(() => responseMessage.addClass("hidden"), 1500);
     });
 }
@@ -1648,16 +1626,7 @@ function handleDeleteComment(button) {
       console.error("Error deleting comment:", error);
       commentContainer.css("opacity", "1");
       $(button).prop("disabled", false);
-      responseMessage.text(
-        "We couldn’t delete this comment. Please try again."
-      );
-      try {
-        window.__awcShowToast &&
-          window.__awcShowToast(
-            "We couldn’t delete this comment. Please try again.",
-            "error"
-          );
-      } catch (_) {}
+      responseMessage.text("We couldn’t delete this comment. Please try again.");
       setTimeout(() => responseMessage.addClass("hidden"), 1500);
     });
 }
@@ -2161,13 +2130,7 @@ $(document).on("submit", ".commentForm", function (event) {
       })
       .catch((error) => {
         console.error("Error creating comment:", error);
-        responseMessage.text(
-          "We couldn’t create your comment. Please try again."
-        );
-        try {
-          window.__awcShowToast &&
-            window.__awcShowToast("Please try again.", "error");
-        } catch (_) {}
+        responseMessage.text("We couldn’t create your comment. Please try again.");
       })
       .finally(() => {
         submitButton.prop("disabled", false);
@@ -2192,13 +2155,6 @@ $(document).on("submit", ".commentForm", function (event) {
       .catch((error) => {
         console.error("File processing error:", error);
         responseMessage.text("We couldn’t process the file. Please try again.");
-        try {
-          window.__awcShowToast &&
-            window.__awcShowToast(
-              "We couldn’t process the file. Please try again.",
-              "error"
-            );
-        } catch (_) {}
         submitButton.prop("disabled", false);
         form.removeClass("state-disabled");
         editor.setAttribute("contenteditable", true);
@@ -2233,13 +2189,6 @@ function handleVote(button) {
         .catch((error) => {
           console.error("Error removing post vote:", error);
           $btn.removeClass("state-disabled");
-          try {
-            window.__awcShowToast &&
-              window.__awcShowToast(
-                "We couldn’t remove your vote. Please try again.",
-                "error"
-              );
-          } catch (_) {}
         });
     } else {
       // Vote addition: create a vote and update the UI.
@@ -2258,13 +2207,6 @@ function handleVote(button) {
         .catch((error) => {
           console.error("Error creating post vote:", error);
           $btn.removeClass("state-disabled");
-          try {
-            window.__awcShowToast &&
-              window.__awcShowToast(
-                "We couldn’t cast your vote. Please try again.",
-                "error"
-              );
-          } catch (_) {}
         });
     }
   } else if (type === "comment") {
@@ -2282,13 +2224,6 @@ function handleVote(button) {
         .catch((error) => {
           console.error("Error removing comment vote:", error);
           $btn.removeClass("state-disabled");
-          try {
-            window.__awcShowToast &&
-              window.__awcShowToast(
-                "We couldn’t remove your vote. Please try again.",
-                "error"
-              );
-          } catch (_) {}
         });
     } else {
       // Creating comment vote
@@ -2307,13 +2242,6 @@ function handleVote(button) {
         .catch((error) => {
           console.error("Error creating comment vote:", error);
           $btn.removeClass("state-disabled");
-          try {
-            window.__awcShowToast &&
-              window.__awcShowToast(
-                "We couldn’t cast your vote. Please try again.",
-                "error"
-              );
-          } catch (_) {}
         });
     }
   }
