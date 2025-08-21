@@ -452,8 +452,41 @@ const ForumAPI = (function () {
   }
   try { window.__awcShowToast = window.__awcShowToast || showToast; } catch (_) {}
 
+  // Retry helpers
+  function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+  function isFatalError(err){
+    try {
+      const status = err?.status || err?.response?.status || err?.code;
+      if (status && [400,401,403,404,409,422].includes(Number(status))) return true;
+      const msg = String(err?.message||'').toLowerCase();
+      const fatalHints = ['validation','invalid','unauthorized','forbidden','not found','schema','payload','required','missing'];
+      if (fatalHints.some(h=>msg.includes(h))) return true;
+      const gqlErrors = err?.errors || err?.graphQLErrors;
+      if (Array.isArray(gqlErrors) && gqlErrors.length){
+        const combined = gqlErrors.map(e=>String(e?.message||'').toLowerCase()).join(' | ');
+        if (fatalHints.some(h=>combined.includes(h))) return true;
+      }
+    } catch(_){}
+    return false;
+  }
+  async function retryUntilSuccess(fn,{initialDelayMs=500,maxDelayMs=30000,factor=2,jitter=0.2}={}){
+    let delay = initialDelayMs; let attempt=0;
+    // eslint-disable-next-line no-constant-condition
+    while(true){
+      try { return await fn(attempt); }
+      catch(err){
+        attempt++;
+        if (isFatalError(err)) throw err;
+        let sleepMs = delay;
+        if (jitter>0){ const d=sleepMs*jitter; sleepMs = Math.max(0, Math.round(sleepMs - d + Math.random()*(2*d))); }
+        if (sleepMs>0) await sleep(sleepMs);
+        delay = Math.min(maxDelayMs, Math.max(delay*factor, 500));
+      }
+    }
+  }
+
   function apiCall(query, variables = {}) {
-    return fetch(graphqlApiEndpoint, {
+    return retryUntilSuccess(async () => fetch(graphqlApiEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
       body: JSON.stringify({ query, variables }),
@@ -476,10 +509,9 @@ const ForumAPI = (function () {
           throw err;
         }
         return json;
-      })
+      }))
       .catch((error) => {
-        console.error("API call error:", error);
-        // Single toast per failed operation
+        console.error("API call fatal error:", error);
         showToast("Please try again.", "error");
         throw error;
       });
@@ -1066,8 +1098,13 @@ $(document).ready(function () {
       uploadedFileInfo = { name: file.name, type: file.type };
     }
     function submitNewPost(finalPayload) {
+      // Track creation stage to avoid showing premature errors
+      let postCreated = false;
       ForumAPI.createPost(finalPayload)
         .then((created) => {
+          // Mark as created and show success message early
+          postCreated = true;
+          responseMessage.text("Post created successfully!");
           const mentionIds = finalPayload.Mentions.map((m) => Number(m.id));
 
           // Fire-and-forget: create alerts for all class members + teacher + admin
@@ -1373,7 +1410,15 @@ $(document).ready(function () {
         })
         .catch((error) => {
           console.error("Error creating post:", error);
-          responseMessage.text("We couldn’t create your post. Please try again.");
+          if (postCreated) {
+            responseMessage.text(
+              "Post created, but we couldn't refresh. Please reload."
+            );
+          } else {
+            responseMessage.text(
+              "We couldn’t create your post. Please try again."
+            );
+          }
         })
         .finally(() => {
           submitButton.prop("disabled", false);
@@ -1499,8 +1544,13 @@ $(document).on("submit", ".commentForm", function (event) {
   let createdCommentId = null;
 
   function submitComment(finalPayload) {
+    // Track creation stage to avoid showing premature errors
+    let commentCreated = false;
     ForumAPI.createComment(finalPayload)
       .then((created) => {
+        // Mark as created and show success early
+        commentCreated = true;
+        responseMessage.text("Comment created successfully!");
         const mentionIds = (finalPayload.Mentions || []).map((m) =>
           Number(m.id)
         );
@@ -1941,7 +1991,15 @@ $(document).on("submit", ".commentForm", function (event) {
       })
       .catch((error) => {
         console.error("Error creating comment:", error);
-        responseMessage.text("We couldn’t create your comment. Please try again.");
+        if (commentCreated) {
+          responseMessage.text(
+            "Comment created, but we couldn't refresh. Please reload."
+          );
+        } else {
+          responseMessage.text(
+            "We couldn’t create your comment. Please try again."
+          );
+        }
       })
       .finally(() => {
         submitButton.prop("disabled", false);
