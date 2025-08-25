@@ -1403,7 +1403,7 @@ $(document).ready(function () {
             });
           }
           const template = $.templates("#forumTemplate");
-          const htmlOutput = template.render(post);
+          const htmlOutput = template.render([post]);
           $("#forumContainer").prepend(htmlOutput);
           postEditor.innerHTML = "";
           $(fileInput).val("");
@@ -1551,6 +1551,7 @@ $(document).on("submit", ".commentForm", function (event) {
         // Mark as created and show success early
         commentCreated = true;
         responseMessage.text("Comment created successfully!");
+        createdCommentId = created && created.id ? created.id : null;
         const mentionIds = (finalPayload.Mentions || []).map((m) =>
           Number(m.id)
         );
@@ -1944,18 +1945,13 @@ $(document).on("submit", ".commentForm", function (event) {
           )
         ).then(() => created);
       })
-      .then((created) => ForumAPI.fetchPostById(forumPostId))
-
-      .then((data) => {
-        responseMessage.text("Comment created successfully!");
+      .then(() => {
         form.removeClass("state-disabled");
-        createdCommentId = data.id;
-        // Fetch only the updated post data for the specific forum post
         return ForumAPI.fetchPostById(forumPostId);
       })
       .then((post) => {
         // Update file info for the new comment if applicable
-        if (uploadedFileInfo) {
+        if (uploadedFileInfo && createdCommentId) {
           function findComment(comments) {
             for (let comment of comments) {
               if (comment.id == createdCommentId) return comment;
