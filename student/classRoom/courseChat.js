@@ -462,72 +462,111 @@ const ForumAPI = (function () {
       }, 3000);
     } catch (_) {}
   }
-  try { window.__awcShowToast = showToast; } catch (_) {}
+  try {
+    window.__awcShowToast = showToast;
+  } catch (_) {}
 
   // Retry helpers
-  function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
-  function isFatalError(err){
+  function sleep(ms) {
+    return new Promise((r) => setTimeout(r, ms));
+  }
+  function isFatalError(err) {
     try {
       const status = err?.status || err?.response?.status || err?.code;
-      if (status && [400,401,403,404,409,422].includes(Number(status))) return true;
-      const msg = String(err?.message||'').toLowerCase();
-      const fatalHints = ['validation','invalid','unauthorized','forbidden','not found','schema','payload','required','missing'];
-      if (fatalHints.some(h=>msg.includes(h))) return true;
+      if (status && [400, 401, 403, 404, 409, 422].includes(Number(status)))
+        return true;
+      const msg = String(err?.message || "").toLowerCase();
+      const fatalHints = [
+        "validation",
+        "invalid",
+        "unauthorized",
+        "forbidden",
+        "not found",
+        "schema",
+        "payload",
+        "required",
+        "missing",
+      ];
+      if (fatalHints.some((h) => msg.includes(h))) return true;
       const gqlErrors = err?.errors || err?.graphQLErrors;
-      if (Array.isArray(gqlErrors) && gqlErrors.length){
-        const combined = gqlErrors.map(e=>String(e?.message||'').toLowerCase()).join(' | ');
-        if (fatalHints.some(h=>combined.includes(h))) return true;
+      if (Array.isArray(gqlErrors) && gqlErrors.length) {
+        const combined = gqlErrors
+          .map((e) => String(e?.message || "").toLowerCase())
+          .join(" | ");
+        if (fatalHints.some((h) => combined.includes(h))) return true;
       }
-    } catch(_){}
+    } catch (_) {}
     return false;
   }
-  async function retryUntilSuccess(fn,{initialDelayMs=500,maxDelayMs=30000,factor=2,jitter=0.2}={}){
-    let delay = initialDelayMs; let attempt=0;
+  async function retryUntilSuccess(
+    fn,
+    { initialDelayMs = 500, maxDelayMs = 30000, factor = 2, jitter = 0.2 } = {}
+  ) {
+    let delay = initialDelayMs;
+    let attempt = 0;
     // eslint-disable-next-line no-constant-condition
-    while(true){
-      try { return await fn(attempt); }
-      catch(err){
+    while (true) {
+      try {
+        return await fn(attempt);
+      } catch (err) {
         attempt++;
         if (isFatalError(err)) throw err;
         let sleepMs = delay;
-        if (jitter>0){ const d=sleepMs*jitter; sleepMs = Math.max(0, Math.round(sleepMs - d + Math.random()*(2*d))); }
-        if (sleepMs>0) await sleep(sleepMs);
-        delay = Math.min(maxDelayMs, Math.max(delay*factor, 500));
+        if (jitter > 0) {
+          const d = sleepMs * jitter;
+          sleepMs = Math.max(
+            0,
+            Math.round(sleepMs - d + Math.random() * (2 * d))
+          );
+        }
+        if (sleepMs > 0) await sleep(sleepMs);
+        delay = Math.min(maxDelayMs, Math.max(delay * factor, 500));
       }
     }
   }
 
   function apiCall(query, variables = {}) {
-    return retryUntilSuccess(async () => fetch(graphqlApiEndpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Api-Key": apiAccessKey },
-      body: JSON.stringify({ query, variables }),
-    })
-      .then(async (response) => {
+    return retryUntilSuccess(async () =>
+      fetch(graphqlApiEndpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Api-Key": apiAccessKey,
+        },
+        body: JSON.stringify({ query, variables }),
+      }).then(async (response) => {
         let json;
         if (!response.ok) {
           let detail = "";
-          try { detail = await response.text(); } catch (_) {}
-          const err = new Error(`Request failed: ${response.status} ${response.statusText}`);
+          try {
+            detail = await response.text();
+          } catch (_) {}
+          const err = new Error(
+            `Request failed: ${response.status} ${response.statusText}`
+          );
           err.status = response.status;
           err.detail = detail;
           throw err;
         }
-        try { json = await response.json(); } catch (e) { throw e; }
+        try {
+          json = await response.json();
+        } catch (e) {
+          throw e;
+        }
         if (json && Array.isArray(json.errors) && json.errors.length) {
-          const err = new Error(json.errors.map(e => e.message).join(" | "));
+          const err = new Error(json.errors.map((e) => e.message).join(" | "));
           err.status = 200;
           err.errors = json.errors;
           throw err;
         }
         return json;
-      }))
-      .catch((error) => {
-        // Only fatal errors surface here (non-retriable)
-        console.error("API call fatal error:", error);
-        showToast && showToast("Please try again.", "error");
-        throw error;
-      });
+      })
+    ).catch((error) => {
+      // Only fatal errors surface here (non-retriable)
+      console.error("API call fatal error:", error);
+      showToast && showToast("Please try again.", "error");
+      throw error;
+    });
   }
 
   const updateContactMutation = `
@@ -1567,7 +1606,9 @@ $(document).ready(async function () {
             });
           }
           const template = $.templates("#forumTemplate");
-          const htmlOutput = template.render(post);
+          // Wrap single post in an array so the template renders a post card,
+          // matching how we render lists elsewhere (avoids comment-card markup).
+          const htmlOutput = template.render([post]);
           $("#forumContainer").prepend(htmlOutput);
           postEditor.innerHTML = "";
           $(fileInput).val("");
@@ -1614,7 +1655,9 @@ $(document).ready(async function () {
         .then((updatedPayload) => submitNewPost(updatedPayload))
         .catch((error) => {
           console.error("File processing error:", error);
-          responseMessage.text("We couldn’t process the file. Please try again.");
+          responseMessage.text(
+            "We couldn’t process the file. Please try again."
+          );
           submitButton.prop("disabled", false);
           postOuterWrapper.classList.remove("state-disabled");
           $("#post-editor").attr("contenteditable", true);
@@ -1672,7 +1715,9 @@ function handleDeleteComment(button) {
       console.error("Error deleting comment:", error);
       commentContainer.css("opacity", "1");
       $(button).prop("disabled", false);
-      responseMessage.text("We couldn’t delete this comment. Please try again.");
+      responseMessage.text(
+        "We couldn’t delete this comment. Please try again."
+      );
       setTimeout(() => responseMessage.addClass("hidden"), 1500);
     });
 }
