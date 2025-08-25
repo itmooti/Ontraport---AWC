@@ -2179,17 +2179,16 @@ $(document).on("submit", ".commentForm", function (event) {
           )
         ).then(() => created);
       })
-      .then((created) => ForumAPI.fetchPostById(forumPostId))
-
-      .then((data) => {
+      .then((created) => {
+        // Preserve the actual created comment id for later lookup
+        createdCommentId = created && created.id ? created.id : null;
+        // Fetch the latest post (with comments) once
         form.removeClass("state-disabled");
-        createdCommentId = data.id;
-        // Fetch only the updated post data for the specific forum post
         return ForumAPI.fetchPostById(forumPostId);
       })
       .then((post) => {
         // Update file info for the new comment if applicable
-        if (uploadedFileInfo) {
+        if (uploadedFileInfo && createdCommentId) {
           function findComment(comments) {
             for (let comment of comments) {
               if (comment.id == createdCommentId) return comment;
