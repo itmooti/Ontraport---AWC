@@ -359,9 +359,33 @@ document.addEventListener("submit", async function (e) {
               }
             });
           } catch(_) {}
-          const originCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl(role, 'submission', params) : window.location.href;
-          const teacherCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teacher', 'submission', params) : window.location.href;
-          const adminCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'submission', params) : window.location.href;
+          function buildSubmissionAlertUrl(role, p) {
+            const BASE = 'https://courses.writerscentre.com.au';
+            const r = String(role || '').toLowerCase();
+            const lessonUid = String(p.lessonUid || '');
+            const base = `${BASE}/course-details/content/${encodeURIComponent(lessonUid)}`;
+            const qs = new URLSearchParams();
+            const idForSubmission = p.isComment ? (p.commentId || '') : (p.submissionId || p.commentId || '');
+            if (r === 'students' || r === 'student') {
+              if (p.eid != null) qs.set('eid', String(p.eid));
+            }
+            if (p.classId != null) qs.set('classIdFromUrl', String(p.classId));
+            if (p.className) qs.set('className', String(p.className));
+            if (p.classUid) qs.set('classUid', String(p.classUid));
+            if (p.classId != null) qs.set('currentClassID', String(p.classId));
+            if (p.className) qs.set('currentClassName', String(p.className));
+            if (r === 'students' || r === 'student') {
+              if (p.classUid) qs.set('currentClassUniqueID', String(p.classUid));
+            }
+            qs.set('submissionPostIs', String(idForSubmission || ''));
+            qs.set('subUID', String(p.subUID));
+            qs.set('commentScrollId', String(p.commentScrollID));
+            if (p.notType) qs.set('notType', String(p.notType));
+            return `${base}?${qs.toString()}`;
+          }
+          const originCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl(role, 'submission', params) : buildSubmissionAlertUrl(role, params);
+          const teacherCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teacher', 'submission', params) : buildSubmissionAlertUrl('teacher', params);
+          const adminCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'submission', params) : buildSubmissionAlertUrl('admin', params);
           const isReplyNow = Number(created?.reply_to_comment_id || 0) > 0;
           const alertType = isMentioned ? 'Submission Comment Mention' : 'Submission Comment';
           let title = 'A comment has been added to a submission';
