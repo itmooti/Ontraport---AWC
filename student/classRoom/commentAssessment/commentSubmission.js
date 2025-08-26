@@ -233,6 +233,9 @@ document.addEventListener("submit", async function (e) {
 
         // Ensure we have a valid submission id for alerts
         async function resolveSubmissionIdForAlert() {
+          // 0) Prefer value provided by the form (multi-submission pages)
+          const fromForm = Number(submissionId || 0);
+          if (Number.isFinite(fromForm) && fromForm > 0) return fromForm;
           // 1) Prefer value returned in mutation
           const direct = Number(created?.submissions_id || 0);
           if (Number.isFinite(direct) && direct > 0) return direct;
