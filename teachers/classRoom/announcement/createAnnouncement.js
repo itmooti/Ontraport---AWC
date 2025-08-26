@@ -68,6 +68,38 @@ function formatUnixTimestamp(unixTimestamp) {
 }
 
 //===== CREATE ANNOUNCEMENT FUNCTION ===================//
+// Retry helpers
+function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+function isFatalError(err){
+  try {
+    const status = err?.status || err?.response?.status || err?.code;
+    if (status && [400,401,403,404,409,422].includes(Number(status))) return true;
+    const msg = String(err?.message||'').toLowerCase();
+    const fatalHints = ['validation','invalid','unauthorized','forbidden','not found','schema','payload','required','missing'];
+    if (fatalHints.some(h=>msg.includes(h))) return true;
+    const gqlErrors = err?.errors || err?.graphQLErrors;
+    if (Array.isArray(gqlErrors) && gqlErrors.length){
+      const combined = gqlErrors.map(e=>String(e?.message||'').toLowerCase()).join(' | ');
+      if (fatalHints.some(h=>combined.includes(h))) return true;
+    }
+  } catch(_){}
+  return false;
+}
+async function retryUntilSuccess(fn,{initialDelayMs=500,maxDelayMs=30000,factor=2,jitter=0.2}={}){
+  let delay=initialDelayMs, attempt=0;
+  // eslint-disable-next-line no-constant-condition
+  while(true){
+    try { return await fn(attempt); }
+    catch(err){
+      attempt++;
+      if (isFatalError(err)) throw err;
+      let sleepMs = delay; if (jitter>0){ const d=sleepMs*jitter; sleepMs = Math.max(0, Math.round(sleepMs - d + Math.random()*(2*d))); }
+      if (sleepMs>0) await sleep(sleepMs);
+      delay = Math.min(maxDelayMs, Math.max(delay*factor, 500));
+    }
+  }
+}
+
 async function createAnnouncement(payload) {
     const query = `
             mutation createAnnouncement($payload: AnnouncementCreateInput = null) {
@@ -98,13 +130,14 @@ async function createAnnouncement(payload) {
             }
           `;
     try {
-        const response = await fetch(apiUrl, {
+        const response = await retryUntilSuccess(() => fetch(apiUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json", "Api-Key": apiKey },
             body: JSON.stringify({ query, variables: { payload } }),
-        });
-        if (!response.ok) throw new Error("Failed to create announcement.");
+        }));
+        if (!response.ok) { const txt = await response.text().catch(()=>""); const err = new Error("Failed to create announcement."); err.status=response.status; err.detail=txt; throw err; }
         const data = await response.json();
+        if (data && Array.isArray(data.errors) && data.errors.length){ const e = new Error(data.errors.map(x=>x.message).join(' | ')); e.errors = data.errors; throw e; }
         return data?.data?.createAnnouncement || null;
     } catch (error) {
         return null;
@@ -296,14 +329,14 @@ document
                     const isMentioned = mentionSet.has(Number(contactId));
                     const isTeacher = teacherIds.includes(Number(contactId));
                     const isAdmin = adminIds.includes(Number(contactId));
-                    const role = isAdmin ? 'admin' : (isTeacher ? 'teachers' : 'students');
+                    const role = isAdmin ? 'admin' : (isTeacher ? 'teacher' : 'students');
                     let eid; if (role === 'students') eid = await resolveStudentEid(contactId, clsId);
                     const params = { classId: clsId, classUid, className, courseUid, eid, announcementId: Number(createdAnnouncement?.ID || createdAnnouncement?.id) };
                     const originCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl(role, 'announcement', params) : undefined;
-                    const teacherCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teachers', 'announcement', params) : undefined;
+                    const teacherCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teacher', 'announcement', params) : undefined;
                     const adminCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'announcement', params) : undefined;
                     return {
-                        alert_type: isMentioned ? 'Announcement Mention' : 'Announcement',
+                        alert_type: isMentioned ? 'Announcement  Mention' : 'Announcement',
                         title: isMentioned ? 'You are mentioned in an announcement' : 'An announcement has been posted',
                         content: contentText,
                         created_at: createdAt,
@@ -317,8 +350,16 @@ document
                         parent_announcement_id: Number(createdAnnouncement?.ID || createdAnnouncement?.id),
                     };
                 }));
-                if (window.AWC && typeof window.AWC.createAlerts === 'function') {
-                    try { await window.AWC.createAlerts(alerts, { concurrency: 4 }); } catch (e) { console.error('Failed to create announcement alerts', e); }
+                // Create alerts via GraphQL batch mutation (no SDK)
+                try {
+                    const createAlertsMutation = `mutation createAlerts($payload: [AlertCreateInput] = null) { createAlerts(payload: $payload) { is_mentioned } }`;
+                    await retryUntilSuccess(() => fetch(apiUrlForAnouncement, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Api-Key': apiKeyForAnouncement },
+                        body: JSON.stringify({ query: createAlertsMutation, variables: { payload: alerts } }),
+                    }).then(r => { if(!r.ok){ const e=new Error('createAlerts failed'); e.status=r.status; throw e;} return r.json(); }));
+                } catch (e) {
+                    console.error('Failed to create announcement alerts (batch)', e);
                 }
             })();
         } catch (e) { console.error('Announcement alert error', e); }
