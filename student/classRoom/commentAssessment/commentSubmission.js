@@ -428,7 +428,16 @@ document.addEventListener("submit", async function (e) {
           // Personalize titles for comments vs replies
           let title;
           try {
-            const actorName = (window.currentUserDisplayName || `${window.currentUserFirstName || ''} ${window.currentUserLastName || ''}`.trim() || 'Someone');
+            // Prefer the author returned by the mutation for accurate display name
+            const author = created && created.Author ? created.Author : null;
+            let actorName = '';
+            if (author) {
+              actorName = author.display_name || `${author.first_name || ''} ${author.last_name || ''}`.trim();
+            }
+            if (!actorName) {
+              actorName = (window.currentUserDisplayName || `${window.currentUserFirstName || ''} ${window.currentUserLastName || ''}`.trim());
+            }
+            if (!actorName) actorName = 'Someone';
 
             if (isMentioned) {
               title = isReplyNow ? 'You have been mentioned in the reply' : 'You have been mentioned in the comment';
