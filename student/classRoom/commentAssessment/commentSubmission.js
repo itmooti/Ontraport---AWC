@@ -388,9 +388,27 @@ document.addEventListener("submit", async function (e) {
           const adminCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'submission', params) : buildSubmissionAlertUrl('admin', params);
           const isReplyNow = Number(created?.reply_to_comment_id || 0) > 0;
           const alertType = isMentioned ? 'Submission Comment Mention' : 'Submission Comment';
-          let title = 'A comment has been added to a submission';
-          if (isReplyNow) title = 'A reply has been added to a comment';
-          if (isMentioned) title = 'You are mentioned in a comment';
+          // Personalize titles like course chat
+          let title;
+          try {
+            // Resolve submission owner contact id for personalized title
+            let parentOwnerId;
+            try {
+              const qOwner = `query getSubmissionOwner($id: AwcSubmissionID) { getSubmission(query: [{ where: { id: $id } }]) { Student { id } } }`;
+              const rsOwner = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: qOwner, variables: { id: Number(submissionIdForAlert) } }) }).then(r => r.ok ? r.json() : null);
+              parentOwnerId = Number(rsOwner?.data?.getSubmission?.Student?.id || 0) || undefined;
+            } catch(_) {}
+            const actorName = (window.currentUserDisplayName || `${window.currentUserFirstName || ''} ${window.currentUserLastName || ''}`.trim() || 'Someone');
+            if (isMentioned) {
+              title = 'You have been mentioned in the submission';
+            } else if (parentOwnerId && Number(contactId) === Number(parentOwnerId)) {
+              title = isReplyNow ? `${actorName} replied to your comment` : `${actorName} commented on your submission`;
+            } else {
+              title = isReplyNow ? 'A reply has been added to a comment' : 'A comment has been added to a submission';
+            }
+          } catch(_) {
+            title = isReplyNow ? 'A reply has been added to a comment' : 'A comment has been added to a submission';
+          }
           alerts.push({
             alert_type: alertType,
             title,
