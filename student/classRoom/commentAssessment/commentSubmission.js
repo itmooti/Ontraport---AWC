@@ -388,26 +388,50 @@ document.addEventListener("submit", async function (e) {
           const adminCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'submission', params) : buildSubmissionAlertUrl('admin', params);
           const isReplyNow = Number(created?.reply_to_comment_id || 0) > 0;
           const alertType = isMentioned ? 'Submission Comment Mention' : 'Submission Comment';
-          // Personalize titles like course chat
+          // Personalize titles for comments vs replies
           let title;
           try {
-            // Resolve submission owner contact id for personalized title
-            let parentOwnerId;
-            try {
-              const qOwner = `query getSubmissionOwner($id: AwcSubmissionID) { getSubmission(query: [{ where: { id: $id } }]) { Student { id } } }`;
-              const rsOwner = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: qOwner, variables: { id: Number(submissionIdForAlert) } }) }).then(r => r.ok ? r.json() : null);
-              parentOwnerId = Number(rsOwner?.data?.getSubmission?.Student?.id || 0) || undefined;
-            } catch(_) {}
             const actorName = (window.currentUserDisplayName || `${window.currentUserFirstName || ''} ${window.currentUserLastName || ''}`.trim() || 'Someone');
+
             if (isMentioned) {
-              title = `You have been mentioned in the ${isReplyNow ? 'reply' : 'comment'}`;
-            } else if (parentOwnerId && Number(contactId) === Number(parentOwnerId)) {
-              title = isReplyNow ? `${actorName} replied to your comment` : `${actorName} commented on your submission`;
+              title = isReplyNow ? 'You have been mentioned in the reply' : 'You have been mentioned in the comment';
+            } else if (isReplyNow) {
+              // Reply: personalize to parent comment author
+              let parentCommentAuthorId;
+              try {
+                const parentLocal = (Array.isArray(window.comments) ? window.comments : []).find(c => Number(c?.ID) === Number(created?.reply_to_comment_id));
+                if (parentLocal && parentLocal.Author_ID != null) parentCommentAuthorId = Number(parentLocal.Author_ID);
+              } catch(_) {}
+              if (!parentCommentAuthorId) {
+                try {
+                  const qParent = `query parentAuthor($id: AwcForumCommentID) { calcForumComments(query: [{ where: { id: $id } }]) { Author_ID: field(arg: ["author_id"]) } }`;
+                  const rsParent = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: qParent, variables: { id: Number(created.reply_to_comment_id) } }) }).then(r => r.ok ? r.json() : null);
+                  const row = Array.isArray(rsParent?.data?.calcForumComments) ? rsParent.data.calcForumComments[0] : null;
+                  const aid = Number(row?.Author_ID || 0);
+                  if (Number.isFinite(aid) && aid > 0) parentCommentAuthorId = aid;
+                } catch(_) {}
+              }
+              if (parentCommentAuthorId && Number(contactId) === Number(parentCommentAuthorId)) {
+                title = `${actorName} replied on your comment`;
+              } else {
+                title = 'A reply has been added to a comment';
+              }
             } else {
-              title = isReplyNow ? 'A reply has been added to a comment' : 'A comment has been added to a submission';
+              // Comment: personalize to submission owner
+              let submissionOwnerId;
+              try {
+                const qOwner = `query getSubmissionOwner($id: AwcSubmissionID) { getSubmission(query: [{ where: { id: $id } }]) { Student { Student { id } } } }`;
+                const rsOwner = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: qOwner, variables: { id: Number(submissionIdForAlert) } }) }).then(r => r.ok ? r.json() : null);
+                submissionOwnerId = Number(rsOwner?.data?.getSubmission?.Student?.Student?.id || 0) || undefined;
+              } catch(_) {}
+              if (submissionOwnerId && Number(contactId) === Number(submissionOwnerId)) {
+                title = `${actorName} commented on your submission`;
+              } else {
+                title = 'A comment has been added to the submission';
+              }
             }
           } catch(_) {
-            title = isReplyNow ? 'A reply has been added to a comment' : 'A comment has been added to a submission';
+            title = isReplyNow ? 'A reply has been added to a comment' : 'A comment has been added to the submission';
           }
           alerts.push({
             alert_type: alertType,
