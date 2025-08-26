@@ -160,7 +160,7 @@ document.addEventListener("submit", async function (e) {
         }
       }
     }
-    const result = await createForumCommentRequest(
+  const result = await createForumCommentRequest(
       fileData,
       submissionNote,
       replyToCommentId,
@@ -208,6 +208,151 @@ document.addEventListener("submit", async function (e) {
         container.insertAdjacentHTML("beforeend", htmlOutput);
       }
     }
+
+    // Create alerts for the new comment (submission comments)
+    ;(async () => {
+      try {
+        const created = result?.data?.createForumComment;
+        if (!created || !created.id) return;
+
+        // Content (text only) for alert body
+        const tmp = document.createElement('div');
+        tmp.innerHTML = String(created.comment || '');
+        const contentText = (tmp.textContent || '').trim();
+        const createdAt = new Date().toISOString();
+
+        // Resolve classId from context (classID, or via eid)
+        let classId = Number(window.classID || 0) || null;
+        const url = new URL(window.location.href);
+        const eidParam = url.searchParams.get('eid');
+        const endpoint = (typeof endpointForComment !== 'undefined' && endpointForComment) ? endpointForComment : (window.graphqlApiEndpoint || window.GRAPHQL_ENDPOINT);
+        const apiKey = (typeof apiKeyForComment !== 'undefined' && apiKeyForComment) ? apiKeyForComment : (window.apiAccessKey || window.API_KEY);
+        if (!classId && eidParam && endpoint && apiKey) {
+          try {
+            const q = `query eidToClass($id: AwcEnrolmentID) { calcEnrolments(query: [{ where: { id: $id } }]) { Class_ID: field(arg: ["class_id"]) } }`;
+            const rs = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: q, variables: { id: Number(eidParam) } }) }).then(r => r.ok ? r.json() : null);
+            classId = Number(rs?.data?.calcEnrolments?.[0]?.Class_ID || 0) || null;
+          } catch (_) {}
+        }
+        if (!endpoint || !apiKey || !classId) return;
+
+        // Gather teacher/student roster + class info
+        const qTeacher = `query teacherByClass($id: AwcClassID) { calcClasses(query: [{ where: { id: $id } }]) { Teacher_Contact_ID: field(arg: ["Teacher","id"]) } }`;
+        const qClasses = `query getClass($id: AwcClassID) { getClasses(query: [{ where: { id: $id } }]) { id unique_id class_name Course { unique_id } Enrolments { Student { id } } } }`;
+        const qEnrol = `query enrolStudents($id: AwcClassID) { calcEnrolments(query: [{ where: { class_id: $id } }]) { Student_ID: field(arg: ["Student","id"]) } }`;
+        const [resTeacher, resClasses, resEnrol] = await Promise.all([
+          fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: qTeacher, variables: { id: classId } }) }).then(r => r.ok ? r.json() : null),
+          fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: qClasses, variables: { id: classId } }) }).then(r => r.ok ? r.json() : null),
+          fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: qEnrol, variables: { id: classId } }) }).then(r => r.ok ? r.json() : null),
+        ]);
+        const norm = (list) => (Array.isArray(list) ? list : [list]).map(v => Number(v)).filter(n => Number.isFinite(n) && n > 0);
+        let teacherIds = []; const tRaw = resTeacher?.data?.calcClasses?.[0]?.Teacher_Contact_ID; if (tRaw != null) teacherIds = norm(tRaw);
+        const classes = Array.isArray(resClasses?.data?.getClasses) ? resClasses.data.getClasses : [];
+        let classUid, className, courseUid;
+        const idsFromClasses = classes.flatMap(c => { if (!classUid && c?.unique_id) classUid = c.unique_id; if (!className && c?.class_name) className = c.class_name; if (!courseUid && c?.Course?.unique_id) courseUid = c.Course.unique_id; return (Array.isArray(c?.Enrolments) ? c.Enrolments : []).map(e => e?.Student?.id).filter(Boolean); });
+        const enrolRows = Array.isArray(resEnrol?.data?.calcEnrolments) ? resEnrol.data.calcEnrolments : [];
+        const idsFromEnrol = enrolRows.flatMap(row => norm(row?.Student_ID));
+        const adminIds = [10435];
+
+        const authorId = Number(currentUserId || 0);
+        const seen = new Set();
+        let audience = norm([...idsFromClasses, ...idsFromEnrol, ...teacherIds, ...adminIds])
+          .filter(id => (seen.has(id) ? false : (seen.add(id), true)))
+          .filter(id => id !== authorId);
+        if (!audience.length) return;
+
+        // Resolve mentions (unique_id -> id)
+        const mentionUIDs = Array.isArray(mentionIds) ? mentionIds.map(String).filter(Boolean) : [];
+        let mentionContactIds = [];
+        if (mentionUIDs.length) {
+          try {
+            const perUidFetch = async (uid) => {
+              const q = `query getContactByUid($uid: StringScalar_0_8) { getContact(query: [{ where: { unique_id: $uid } }]) { id } }`;
+              const rs = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: q, variables: { uid } }) }).then(r => r.ok ? r.json() : null);
+              const id = Number(rs?.data?.getContact?.id || 0);
+              return Number.isFinite(id) && id > 0 ? id : null;
+            };
+            const resolved = await Promise.all(mentionUIDs.map(perUidFetch));
+            mentionContactIds = resolved.filter(n => Number.isFinite(n));
+          } catch (_) {}
+        }
+        const mentionSet = new Set(mentionContactIds);
+
+        // Resolve student enrolment id when role is students (for canonical URLs)
+        async function resolveStudentEid(studentId, clsId) {
+          try {
+            const cache = (window.__awcEidCache ||= new Map());
+            const k = String(clsId);
+            let byClass = cache.get(k);
+            if (!byClass) { byClass = new Map(); cache.set(k, byClass); }
+            if (byClass.has(Number(studentId))) return byClass.get(Number(studentId));
+            const q = `query getEnrolment($id: AwcContactID, $class_id: AwcClassID) { getEnrolment(query: [{ where: { student_id: $id } }, { andWhere: { class_id: $class_id } }]) { ID: id } }`;
+            const rs = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: q, variables: { id: Number(studentId), class_id: Number(clsId) } }) }).then(r => r.ok ? r.json() : null);
+            const eid = Number(rs?.data?.getEnrolment?.ID || 0);
+            if (Number.isFinite(eid) && eid > 0) { byClass.set(Number(studentId), eid); return eid; }
+          } catch (_) {}
+          return undefined;
+        }
+
+        // Build alerts for audience
+        const alerts = [];
+        for (const contactId of audience) {
+          const isMentioned = mentionSet.has(Number(contactId));
+          const isTeacher = teacherIds.includes(Number(contactId));
+          const isAdmin = adminIds.includes(Number(contactId));
+          const role = isAdmin ? 'admin' : (isTeacher ? 'teacher' : 'students');
+          let eid; if (role === 'students') eid = await resolveStudentEid(contactId, classId);
+          const params = {
+            classId: Number(classId), classUid, className, courseUid,
+            eid,
+            submissionId: Number(submissionId),
+            commentId: Number(created.id),
+          };
+          const originCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl(role, 'submission', params) : window.location.href;
+          const teacherCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teacher', 'submission', params) : window.location.href;
+          const adminCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'submission', params) : window.location.href;
+          const alertType = isMentioned ? 'Submission Comment Mention' : 'Submission Comment';
+          let title = isMentioned ? 'You are mentioned in a comment' : 'A comment has been added to a submission';
+          alerts.push({
+            alert_type: alertType,
+            title,
+            content: contentText,
+            created_at: createdAt,
+            is_mentioned: !!isMentioned,
+            is_read: false,
+            notified_contact_id: Number(contactId),
+            origin_url: originCanonical,
+            origin_url_teacher: teacherCanonical,
+            origin_url_admin: adminCanonical,
+            parent_class_id: Number(classId),
+            parent_submission_id: Number(submissionId),
+            parent_comment_id: Number(created.id),
+          });
+        }
+
+        if (!alerts.length) return;
+
+        // Prefer global helper; otherwise fallback to direct GraphQL
+        if (window.AWC && typeof window.AWC.createAlerts === 'function') {
+          try { await window.AWC.createAlerts(alerts, { concurrency: 4 }); } catch (e) { console.error('Failed to create alerts (submission comment)', e); }
+        } else {
+          try {
+            const createAlertsMutation = `mutation createAlerts($payload: [AlertCreateInput] = null) { createAlerts(payload: $payload) { is_mentioned } }`;
+            await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: createAlertsMutation, variables: { payload: alerts } }) });
+          } catch (e) { console.error('createAlerts GraphQL failed (submission comment)', e); }
+        }
+
+        // Mark mentioned contacts as having new notifications
+        if (mentionContactIds.length) {
+          const updateMutation = `mutation updateContact($id: AwcContactID!, $payload: ContactUpdateInput!) { updateContact(query: [{ where: { id: $id } }], payload: $payload) { has__new__notification } }`;
+          for (const mid of mentionContactIds) {
+            try { await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: updateMutation, variables: { id: Number(mid), payload: { has__new__notification: true } } }) }); } catch(_) {}
+          }
+        }
+      } catch (e) {
+        console.error('Submission comment alert creation error', e);
+      }
+    })();
 
     // 3. Reset content and placeholder
     mentionableDiv.innerHTML = "";
