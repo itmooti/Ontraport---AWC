@@ -342,9 +342,23 @@ document.addEventListener("submit", async function (e) {
             isComment: true,
             lessonUid: (window.lessonUIDFromPage || window.lessonUid || ''),
             assessmentType: (window.assessmentTypeFromPage || window.assessmentType || ''),
-            // subUID intentionally omitted here (not available in comment context)
+            subUID: (window.subUIDFromPage || ''),
+            commentScrollID: (window.commentScrollIDFromPage || ''),
             notType: 'Submission Comments',
           };
+          try {
+            console.log('[SubmissionAlerts:Comment/Reply] Recipient params', {
+              contactId,
+              role,
+              eid,
+              params,
+              urls: {
+                origin: (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl(role, 'submission', params) : '(AWC missing)',
+                teacher: (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teacher', 'submission', params) : '(AWC missing)',
+                admin: (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'submission', params) : '(AWC missing)'
+              }
+            });
+          } catch(_) {}
           const originCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl(role, 'submission', params) : window.location.href;
           const teacherCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teacher', 'submission', params) : window.location.href;
           const adminCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'submission', params) : window.location.href;
