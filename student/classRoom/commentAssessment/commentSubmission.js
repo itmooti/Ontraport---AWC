@@ -221,6 +221,10 @@ document.addEventListener("submit", async function (e) {
         const contentText = (tmp.textContent || '').trim();
         const createdAt = new Date().toISOString();
 
+        // Ensure we have a valid submission id for alerts
+        const submissionIdForAlert = Number(created?.submissions_id || submissionId) || 0;
+        if (!Number.isFinite(submissionIdForAlert) || submissionIdForAlert <= 0) return;
+
         // Resolve classId from context (classID, or via eid)
         let classId = Number(window.classID || 0) || null;
         const url = new URL(window.location.href);
@@ -305,7 +309,7 @@ document.addEventListener("submit", async function (e) {
           const params = {
             classId: Number(classId), classUid, className, courseUid,
             eid,
-            submissionId: Number(submissionId),
+            submissionId: Number(submissionIdForAlert),
             commentId: Number(created.id),
           };
           const originCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl(role, 'submission', params) : window.location.href;
@@ -325,7 +329,7 @@ document.addEventListener("submit", async function (e) {
             origin_url_teacher: teacherCanonical,
             origin_url_admin: adminCanonical,
             parent_class_id: Number(classId),
-            parent_submission_id: Number(submissionId),
+            parent_submission_id: Number(submissionIdForAlert),
             parent_comment_id: Number(created.id),
           });
         }
