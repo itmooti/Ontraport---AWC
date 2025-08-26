@@ -343,7 +343,7 @@ document.addEventListener("submit", async function (e) {
             lessonUid: (window.lessonUIDFromPage || window.lessonUid || ''),
             assessmentType: (window.assessmentTypeFromPage || window.assessmentType || ''),
             subUID: (window.subUIDFromPage || ''),
-            commentScrollID: (window.commentScrollIDFromPage || ''),
+            commentScrollID: Number(created.id),
             notType: 'Submission Comments',
           };
           try {
@@ -400,7 +400,7 @@ document.addEventListener("submit", async function (e) {
             } catch(_) {}
             const actorName = (window.currentUserDisplayName || `${window.currentUserFirstName || ''} ${window.currentUserLastName || ''}`.trim() || 'Someone');
             if (isMentioned) {
-              title = 'You have been mentioned in the submission';
+              title = `You have been mentioned in the ${isReplyNow ? 'reply' : 'comment'}`;
             } else if (parentOwnerId && Number(contactId) === Number(parentOwnerId)) {
               title = isReplyNow ? `${actorName} replied to your comment` : `${actorName} commented on your submission`;
             } else {
