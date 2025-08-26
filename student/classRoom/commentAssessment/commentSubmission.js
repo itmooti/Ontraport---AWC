@@ -222,7 +222,30 @@ document.addEventListener("submit", async function (e) {
         const createdAt = new Date().toISOString();
 
         // Ensure we have a valid submission id for alerts
-        const submissionIdForAlert = Number(created?.submissions_id || submissionId) || 0;
+        async function resolveSubmissionIdForAlert() {
+          // 1) Prefer value returned in mutation
+          const direct = Number(created?.submissions_id || 0);
+          if (Number.isFinite(direct) && direct > 0) return direct;
+          // 2) If this is a reply, fetch parent comment -> submissions_id
+          const parentCid = Number(created?.reply_to_comment_id || 0);
+          if (!endpoint || !apiKey || !Number.isFinite(parentCid) || parentCid <= 0) return 0;
+          // Try getForumComment first
+          try {
+            const q1 = `query getForumCommentById($id: AwcForumCommentID) { getForumComment(query: [{ where: { id: $id } }]) { submissions_id } }`;
+            const rs1 = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: q1, variables: { id: parentCid } }) }).then(r => r.ok ? r.json() : null);
+            const v1 = Number(rs1?.data?.getForumComment?.submissions_id || 0);
+            if (Number.isFinite(v1) && v1 > 0) return v1;
+          } catch (_) {}
+          // Fallback: calcForumComments
+          try {
+            const q2 = `query getParentComment($id: AwcForumCommentID) { calcForumComments(query: [{ where: { id: $id } }]) { Submissions_ID: field(arg: ["submissions_id"]) } }`;
+            const rs2 = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: q2, variables: { id: parentCid } }) }).then(r => r.ok ? r.json() : null);
+            const v2 = Number(rs2?.data?.calcForumComments?.[0]?.Submissions_ID || 0);
+            if (Number.isFinite(v2) && v2 > 0) return v2;
+          } catch (_) {}
+          return 0;
+        }
+        const submissionIdForAlert = await resolveSubmissionIdForAlert();
         if (!Number.isFinite(submissionIdForAlert) || submissionIdForAlert <= 0) return;
 
         // Resolve classId from context (classID, or via eid)
@@ -315,8 +338,11 @@ document.addEventListener("submit", async function (e) {
           const originCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl(role, 'submission', params) : window.location.href;
           const teacherCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teacher', 'submission', params) : window.location.href;
           const adminCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'submission', params) : window.location.href;
+          const isReplyNow = Number(created?.reply_to_comment_id || 0) > 0;
           const alertType = isMentioned ? 'Submission Comment Mention' : 'Submission Comment';
-          let title = isMentioned ? 'You are mentioned in a comment' : 'A comment has been added to a submission';
+          let title = 'A comment has been added to a submission';
+          if (isReplyNow) title = 'A reply has been added to a comment';
+          if (isMentioned) title = 'You are mentioned in a comment';
           alerts.push({
             alert_type: alertType,
             title,
