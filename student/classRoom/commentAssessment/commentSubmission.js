@@ -220,6 +220,13 @@ document.addEventListener("submit", async function (e) {
         tmp.innerHTML = String(created.comment || '');
         const contentText = (tmp.textContent || '').trim();
         const createdAt = new Date().toISOString();
+        // Configure endpoint/apiKey early for use in helpers
+        const endpoint = (typeof endpointForComment !== 'undefined' && endpointForComment)
+          ? endpointForComment
+          : (window.graphqlApiEndpoint || window.GRAPHQL_ENDPOINT);
+        const apiKey = (typeof apiKeyForComment !== 'undefined' && apiKeyForComment)
+          ? apiKeyForComment
+          : (window.apiAccessKey || window.API_KEY);
 
         // Ensure we have a valid submission id for alerts
         async function resolveSubmissionIdForAlert() {
@@ -252,8 +259,6 @@ document.addEventListener("submit", async function (e) {
         let classId = Number(window.classID || 0) || null;
         const url = new URL(window.location.href);
         const eidParam = url.searchParams.get('eid');
-        const endpoint = (typeof endpointForComment !== 'undefined' && endpointForComment) ? endpointForComment : (window.graphqlApiEndpoint || window.GRAPHQL_ENDPOINT);
-        const apiKey = (typeof apiKeyForComment !== 'undefined' && apiKeyForComment) ? apiKeyForComment : (window.apiAccessKey || window.API_KEY);
         if (!classId && eidParam && endpoint && apiKey) {
           try {
             const q = `query eidToClass($id: AwcEnrolmentID) { calcEnrolments(query: [{ where: { id: $id } }]) { Class_ID: field(arg: ["class_id"]) } }`;
