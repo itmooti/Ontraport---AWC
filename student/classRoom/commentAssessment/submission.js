@@ -528,7 +528,7 @@ const handleComments = {
                                 lessonUid: (window.lessonUIDFromPage || window.lessonUid || ''),
                                 assessmentType: (window.assessmentTypeFromPage || window.assessmentType || ''),
                                 subUID: (window.subUIDFromPage || ''),
-                                commentScrollID: (window.commentScrollIDFromPage || ''),
+                                commentScrollID: Number(created.id),
                                 notType: 'Submission Comments',
                             };
                             try {
@@ -546,7 +546,7 @@ const handleComments = {
                                 const lessonUid = String(p.lessonUid || '');
                                 const base = `${BASE}/course-details/content/${encodeURIComponent(lessonUid)}`;
                                 const qs = new URLSearchParams();
-                                const idForSubmission = p.isComment ? (p.commentId || '') : (p.submissionId || p.commentId || '');
+                            const idForSubmission = (p.submissionId || '');
                                 if (r === 'students' || r === 'student') {
                                     if (p.eid != null) qs.set('eid', String(p.eid));
                                 }
