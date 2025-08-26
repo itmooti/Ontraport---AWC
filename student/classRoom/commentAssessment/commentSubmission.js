@@ -339,6 +339,11 @@ document.addEventListener("submit", async function (e) {
             eid,
             submissionId: Number(submissionIdForAlert),
             commentId: Number(created.id),
+            isComment: true,
+            lessonUid: (window.lessonUIDFromPage || window.lessonUid || ''),
+            assessmentType: (window.assessmentTypeFromPage || window.assessmentType || ''),
+            // subUID intentionally omitted here (not available in comment context)
+            notType: 'Submission Comments',
           };
           const originCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl(role, 'submission', params) : window.location.href;
           const teacherCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teacher', 'submission', params) : window.location.href;
