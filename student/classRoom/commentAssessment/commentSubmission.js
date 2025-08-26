@@ -271,15 +271,36 @@ document.addEventListener("submit", async function (e) {
         } catch (_) {}
         if (!Number.isFinite(submissionIdForAlert) || submissionIdForAlert <= 0) return;
 
-        // Resolve classId from context (classID, or via eid)
+        // Resolve classId from context (supports single- and multi-submission pages)
         let classId = Number(window.classID || 0) || null;
         const url = new URL(window.location.href);
         const eidParam = url.searchParams.get('eid');
+        // 1) From form dataset
+        if (!classId && form) {
+          const fromForm = Number(form.getAttribute('data-classid') || 0) ||
+                           Number(form.getAttribute('data-currentClassID') || 0);
+          if (Number.isFinite(fromForm) && fromForm > 0) classId = fromForm;
+        }
+        // 2) From URL params (currentClassID or classIdFromUrl)
+        if (!classId) {
+          const fromUrl = Number(url.searchParams.get('currentClassID') || 0) ||
+                          Number(url.searchParams.get('classIdFromUrl') || 0);
+          if (Number.isFinite(fromUrl) && fromUrl > 0) classId = fromUrl;
+        }
+        // 3) From enrolment id if available (eid)
         if (!classId && eidParam && endpoint && apiKey) {
           try {
             const q = `query eidToClass($id: AwcEnrolmentID) { calcEnrolments(query: [{ where: { id: $id } }]) { Class_ID: field(arg: ["class_id"]) } }`;
             const rs = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: q, variables: { id: Number(eidParam) } }) }).then(r => r.ok ? r.json() : null);
             classId = Number(rs?.data?.calcEnrolments?.[0]?.Class_ID || 0) || null;
+          } catch (_) {}
+        }
+        // 4) From helper (teacher/admin pages) classIdFromUrl/classUIDAdmin
+        if (!classId && typeof getClassIdForTeacherUrl === 'function') {
+          try {
+            const cid = await getClassIdForTeacherUrl();
+            const asNum = Number(cid);
+            if (Number.isFinite(asNum) && asNum > 0) classId = asNum;
           } catch (_) {}
         }
         if (!endpoint || !apiKey || !classId) return;
