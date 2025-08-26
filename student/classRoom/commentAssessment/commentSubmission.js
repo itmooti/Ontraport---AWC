@@ -215,6 +215,9 @@ document.addEventListener("submit", async function (e) {
         const created = result?.data?.createForumComment;
         if (!created || !created.id) return;
 
+        // Is this a reply (has parent comment)?
+        const isReplyNow = Number(created?.reply_to_comment_id || 0) > 0;
+
         // Content (text only) for alert body
         const tmp = document.createElement('div');
         tmp.innerHTML = String(created.comment || '');
@@ -253,6 +256,16 @@ document.addEventListener("submit", async function (e) {
           return 0;
         }
         const submissionIdForAlert = await resolveSubmissionIdForAlert();
+        // Log the submission id context for the newly created comment/reply
+        try {
+          console.log('[SubmissionAlerts] Created under submission', {
+            kind: isReplyNow ? 'reply' : 'comment',
+            submissionId: Number(submissionIdForAlert),
+            newCommentId: Number(created.id),
+            parentCommentId: isReplyNow ? Number(created.reply_to_comment_id) : null,
+            directSubmissionsId: Number(created?.submissions_id || 0),
+          });
+        } catch (_) {}
         if (!Number.isFinite(submissionIdForAlert) || submissionIdForAlert <= 0) return;
 
         // Resolve classId from context (classID, or via eid)
@@ -386,7 +399,7 @@ document.addEventListener("submit", async function (e) {
           const originCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl(role, 'submission', params) : buildSubmissionAlertUrl(role, params);
           const teacherCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teacher', 'submission', params) : buildSubmissionAlertUrl('teacher', params);
           const adminCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'submission', params) : buildSubmissionAlertUrl('admin', params);
-          const isReplyNow = Number(created?.reply_to_comment_id || 0) > 0;
+          // isReplyNow computed earlier
           const alertType = isMentioned ? 'Submission Comment Mention' : 'Submission Comment';
           // Personalize titles for comments vs replies
           let title;
