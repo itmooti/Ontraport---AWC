@@ -365,7 +365,7 @@ document.addEventListener("submit", async function (e) {
             const lessonUid = String(p.lessonUid || '');
             const base = `${BASE}/course-details/content/${encodeURIComponent(lessonUid)}`;
             const qs = new URLSearchParams();
-            const idForSubmission = p.isComment ? (p.commentId || '') : (p.submissionId || p.commentId || '');
+            const idForSubmission = (p.submissionId || '');
             if (r === 'students' || r === 'student') {
               if (p.eid != null) qs.set('eid', String(p.eid));
             }
