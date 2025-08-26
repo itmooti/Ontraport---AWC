@@ -568,7 +568,25 @@ const handleComments = {
                             const teacherCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teacher', 'submission', params) : buildSubmissionAlertUrl('teacher', params);
                             const adminCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'submission', params) : buildSubmissionAlertUrl('admin', params);
                             const alertType = isMentioned ? 'Submission Comment Mention' : 'Submission Comment';
-                            let title = isMentioned ? 'You are mentioned in a comment' : 'A comment has been added to a submission';
+                            let title;
+                            try {
+                                let parentOwnerId;
+                                try {
+                                    const qOwner = `query getSubmissionOwner($id: AwcSubmissionID) { getSubmission(query: [{ where: { id: $id } }]) { Student { id } } }`;
+                                    const rsOwner = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: qOwner, variables: { id: Number(submissionID) } }) }).then(r => r.ok ? r.json() : null);
+                                    parentOwnerId = Number(rsOwner?.data?.getSubmission?.Student?.id || 0) || undefined;
+                                } catch(_) {}
+                                const actorName = (displayName || `${firstName || ''} ${lastName || ''}`.trim() || 'Someone');
+                                if (isMentioned) {
+                                    title = 'You have been mentioned in the submission';
+                                } else if (parentOwnerId && Number(contactId) === Number(parentOwnerId)) {
+                                    title = `${actorName} commented on your submission`;
+                                } else {
+                                    title = 'A comment has been added to a submission';
+                                }
+                            } catch(_) {
+                                title = 'A comment has been added to a submission';
+                            }
                             alerts.push({
                                 alert_type: alertType,
                                 title,
@@ -794,7 +812,25 @@ const handleComments = {
                             const teacherCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teacher', 'submission', params) : buildSubmissionAlertUrl('teacher', params);
                             const adminCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'submission', params) : buildSubmissionAlertUrl('admin', params);
                             const alertType = isMentioned ? 'Submission Comment Mention' : 'Submission Comment';
-                            let title = isMentioned ? 'You are mentioned in a comment' : 'A reply has been added to a comment';
+                            let title;
+                            try {
+                                let parentOwnerId;
+                                try {
+                                    const qOwner = `query getSubmissionOwner($id: AwcSubmissionID) { getSubmission(query: [{ where: { id: $id } }]) { Student { id } } }`;
+                                    const rsOwner = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: qOwner, variables: { id: Number(submissionID) } }) }).then(r => r.ok ? r.json() : null);
+                                    parentOwnerId = Number(rsOwner?.data?.getSubmission?.Student?.id || 0) || undefined;
+                                } catch(_) {}
+                                const actorName = (displayName || `${firstName || ''} ${lastName || ''}`.trim() || 'Someone');
+                                if (isMentioned) {
+                                    title = 'You have been mentioned in the submission';
+                                } else if (parentOwnerId && Number(contactId) === Number(parentOwnerId)) {
+                                    title = `${actorName} replied to your comment`;
+                                } else {
+                                    title = 'A reply has been added to a comment';
+                                }
+                            } catch(_) {
+                                title = 'A reply has been added to a comment';
+                            }
                             alerts.push({
                                 alert_type: alertType,
                                 title,
