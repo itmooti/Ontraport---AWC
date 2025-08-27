@@ -552,7 +552,7 @@ mutation createForumComment($payload: ForumCommentCreateInput) {
       const actor = resMe?.data?.getContact || {};
       const actorName = actor?.display_name || [actor?.first_name, actor?.last_name].filter(Boolean).join(' ') || 'Someone';
       const studentUrl = buildRoleUrl(originUrl, 'students');
-      const teacherUrl = buildRoleUrl(originUrl, 'teachers');
+      const teacherUrl = buildRoleUrl(originUrl, 'teacher');
       const adminUrl = buildRoleUrl(originUrl, 'admin');
       const mentionSet = new Set((mentionedIds || []).map(Number));
 
@@ -585,7 +585,7 @@ mutation createForumComment($payload: ForumCommentCreateInput) {
         else title = parentCommentID ? 'A reply has been added to a comment' : 'A comment has been added to an announcement';
         const isTeacher = teacherIds.includes(Number(contactId));
         const isAdmin = adminIds.includes(Number(contactId));
-        const role = isAdmin ? 'admin' : (isTeacher ? 'teachers' : 'students');
+        const role = isAdmin ? 'admin' : (isTeacher ? 'teacher' : 'students');
         let eid; if (role === 'students') eid = await resolveStudentEid(contactId, clsId);
         const urlParams = { classId: Number(clsId), classUid, className, courseUid, eid, announcementId: Number(effectiveAnnouncementId || 0), commentId: Number(newCommentId || 0) };
         const originForRecipient = (window.AWC && typeof window.AWC.buildAlertUrl === 'function')
@@ -600,7 +600,7 @@ mutation createForumComment($payload: ForumCommentCreateInput) {
           is_read: false,
           notified_contact_id: Number(contactId),
           origin_url: originForRecipient,
-          origin_url_teacher: (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teachers', 'announcement', urlParams) : teacherUrl,
+          origin_url_teacher: (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teacher', 'announcement', urlParams) : teacherUrl,
           origin_url_admin: (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'announcement', urlParams) : adminUrl,
           parent_class_id: Number(clsId),
         };
