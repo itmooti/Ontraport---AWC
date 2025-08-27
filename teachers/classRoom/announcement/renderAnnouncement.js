@@ -304,7 +304,7 @@ async function fetchCommentById(commentId) {
       }
     }
   `;
-    const response = await fetch(apiUrlForAnouncement, {
+    const response = await retryUntilSuccess(() => fetch(apiUrlForAnouncement, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -314,9 +314,41 @@ async function fetchCommentById(commentId) {
             query: getCommentQuery,
             variables: { id: commentId },
         }),
-    });
+    }));
     const jsonData = await response.json();
     return jsonData.data.getForumComments[0];
+}
+
+// Retry helpers
+function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+function isFatalError(err){
+  try {
+    const status = err?.status || err?.response?.status || err?.code;
+    if (status && [400,401,403,404,409,422].includes(Number(status))) return true;
+    const msg = String(err?.message||'').toLowerCase();
+    const fatalHints = ['validation','invalid','unauthorized','forbidden','not found','schema','payload','required','missing'];
+    if (fatalHints.some(h=>msg.includes(h))) return true;
+    const gqlErrors = err?.errors || err?.graphQLErrors;
+    if (Array.isArray(gqlErrors) && gqlErrors.length){
+      const combined = gqlErrors.map(e=>String(e?.message||'').toLowerCase()).join(' | ');
+      if (fatalHints.some(h=>combined.includes(h))) return true;
+    }
+  } catch(_){}
+  return false;
+}
+async function retryUntilSuccess(fn,{initialDelayMs=500,maxDelayMs=30000,factor=2,jitter=0.2}={}){
+  let delay=initialDelayMs, attempt=0;
+  // eslint-disable-next-line no-constant-condition
+  while(true){
+    try { return await fn(attempt); }
+    catch(err){
+      attempt++;
+      if (isFatalError(err)) throw err;
+      let sleepMs = delay; if (jitter>0){ const d=sleepMs*jitter; sleepMs = Math.max(0, Math.round(sleepMs - d + Math.random()*(2*d))); }
+      if (sleepMs>0) await sleep(sleepMs);
+      delay = Math.min(maxDelayMs, Math.max(delay*factor, 500));
+    }
+  }
 }
 
 async function createForumComment(
@@ -359,15 +391,16 @@ async function createForumComment(
       }
     }
   `;
-    const response = await fetch(apiUrlForAnouncement, {
+    const response = await retryUntilSuccess(() => fetch(apiUrlForAnouncement, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             "Api-Key": apiKeyForAnouncement,
         },
         body: JSON.stringify({ query: mutation, variables: { payload } }),
-    });
+    }));
     const result = await response.json();
+    if (result && Array.isArray(result.errors) && result.errors.length){ const e = new Error(result.errors.map(x=>x.message).join(' | ')); e.errors = result.errors; throw e; }
     const newCommentId = result.data.createForumComment.id;
     await updateMentionedContacts(mentionedIds);
 
@@ -447,7 +480,7 @@ async function createForumComment(
             const actor = resMe?.data?.getContact || {};
             const actorName = actor?.display_name || [actor?.first_name, actor?.last_name].filter(Boolean).join(' ') || 'Someone';
             const studentUrl = buildRoleUrl(originUrl, 'students');
-            const teacherUrl = buildRoleUrl(originUrl, 'teachers');
+            const teacherUrl = buildRoleUrl(originUrl, 'teacher');
             const adminUrl = buildRoleUrl(originUrl, 'admin');
             const mentionSet = new Set((mentionedIds || []).map(Number));
 
@@ -482,7 +515,7 @@ async function createForumComment(
                 else if (Number(contactId) === announcementAuthorId) title = `${actorName} commented on your announcement`;
                 else if (parentCommentAuthorId && Number(contactId) === parentCommentAuthorId) title = `${actorName} replied to your comment`;
                 else title = parentCommentID ? 'A reply has been added to a comment' : 'A comment has been added to an announcement';
-                const role = adminIds.includes(Number(contactId)) ? 'admin' : (teacherIds.includes(Number(contactId)) ? 'teachers' : 'students');
+                const role = adminIds.includes(Number(contactId)) ? 'admin' : (teacherIds.includes(Number(contactId)) ? 'teacher' : 'students');
                 let eid; if (role === 'students') eid = await resolveStudentEid(contactId, Number(currentPageClassID));
                 const urlParams = { classId: Number(currentPageClassID), classUid, className, courseUid, eid, announcementId: Number(effectiveAnnouncementId || 0), commentId: Number(newCommentId || 0) };
                 const originForRecipient = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl(role, 'announcement', urlParams) : originUrl;
@@ -495,7 +528,7 @@ async function createForumComment(
                     is_read: false,
                     notified_contact_id: Number(contactId),
                     origin_url: originForRecipient,
-                    origin_url_teacher: (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teachers', 'announcement', urlParams) : teacherUrl,
+                    origin_url_teacher: (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teacher', 'announcement', urlParams) : teacherUrl,
                     origin_url_admin: (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'announcement', urlParams) : adminUrl,
                     parent_class_id: Number(currentPageClassID),
                 };
@@ -503,17 +536,15 @@ async function createForumComment(
                 if (Number.isFinite(Number(newCommentId)) && Number(newCommentId) > 0) base.parent_comment_id = Number(newCommentId);
                 return base;
             }));
-            // Create alerts directly via GraphQL to avoid SDK mutation cancellations
-            const createAlertMutation = `mutation createAlert($payload: AlertCreateInput) { createAlert(payload: $payload) { id } }`;
-            for (const payload of alerts) {
-                try {
-                    await fetch(apiUrlForAnouncement, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Api-Key': apiKeyForAnouncement },
-                        body: JSON.stringify({ query: createAlertMutation, variables: { payload } }),
-                    });
-                } catch (e) { console.error('createAlert GraphQL failed', e); }
-            }
+            // Create alerts via batch GraphQL mutation (no SDK)
+            try {
+                const createAlertsMutation = `mutation createAlerts($payload: [AlertCreateInput] = null) { createAlerts(payload: $payload) { is_mentioned } }`;
+                await retryUntilSuccess(() => fetch(apiUrlForAnouncement, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Api-Key': apiKeyForAnouncement },
+                    body: JSON.stringify({ query: createAlertsMutation, variables: { payload: alerts } }),
+                }).then(r => { if(!r.ok){ const e=new Error('createAlerts failed'); e.status=r.status; throw e;} return r.json(); }));
+            } catch (e) { console.error('createAlerts GraphQL failed', e); }
         })();
     } catch (e) { console.error('Announcement comment alert error', e); }
 
@@ -575,14 +606,14 @@ async function deleteAnnouncement(id) {
     );
     if (announcementEl) announcementEl.style.opacity = "0.6";
     try {
-        const response = await fetch(apiUrlForAnouncement, {
+        const response = await retryUntilSuccess(() => fetch(apiUrlForAnouncement, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "Api-Key": apiKeyForAnouncement,
             },
             body: JSON.stringify({ query, variables: { id } }),
-        });
+        }));
         const result = await response.json();
         if (result.data?.deleteAnnouncement) {
             if (announcementEl) announcementEl.remove();
@@ -608,14 +639,14 @@ async function deleteComment(replyID) {
     if (replyEl) replyEl.style.opacity = "0.6";
 
     try {
-        const response = await fetch(apiUrlForAnouncement, {
+        const response = await retryUntilSuccess(() => fetch(apiUrlForAnouncement, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "Api-Key": apiKeyForAnouncement,
             },
             body: JSON.stringify({ query, variables: { id: replyID } }),
-        });
+        }));
         const result = await response.json();
         if (result.data?.deleteForumComment) {
             replyEl.remove();
@@ -646,14 +677,14 @@ async function createContactVotedAnnouncement(announcementId) {
             {where: {contact_who_up_voted_this_announcement_id: ${currentPageUserID}}},{andWhere: {announcement_that_this_contact_has_up_voted_id: ${announcementId}}}]) {id}}
     `;
         try {
-            const response = await fetch(apiUrlForAnouncement, {
+            const response = await retryUntilSuccess(() => fetch(apiUrlForAnouncement, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "Api-Key": apiKeyForAnouncement,
                 },
                 body: JSON.stringify({ query: deleteQuery }),
-            });
+            }));
             const result = await response.json();
             if (result.data && result.data.deleteContactVotedAnnouncement && el) {
                 el.classList.remove("voted");
@@ -682,14 +713,14 @@ async function createContactVotedAnnouncement(announcementId) {
   `;
 
     try {
-        const response = await fetch(apiUrlForAnouncement, {
+        const response = await retryUntilSuccess(() => fetch(apiUrlForAnouncement, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "Api-Key": apiKeyForAnouncement,
             },
             body: JSON.stringify({ query: createQuery, variables: { payload } }),
-        });
+        }));
         const result = await response.json();
         if (result.data && result.data.createContactVotedAnnouncement && el) {
             el.classList.add("voted");
@@ -727,14 +758,14 @@ async function createMemberCommentUpvotesForumCommentUpvotes(commentId) {
       }
     `;
         try {
-            const response = await fetch(apiUrlForAnouncement, {
+            const response = await retryUntilSuccess(() => fetch(apiUrlForAnouncement, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "Api-Key": apiKeyForAnouncement,
                 },
                 body: JSON.stringify({ query: deleteQuery }),
-            });
+            }));
             const result = await response.json();
             if (
                 result.data &&
@@ -767,14 +798,14 @@ async function createMemberCommentUpvotesForumCommentUpvotes(commentId) {
   `;
 
     try {
-        const response = await fetch(apiUrlForAnouncement, {
+        const response = await retryUntilSuccess(() => fetch(apiUrlForAnouncement, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "Api-Key": apiKeyForAnouncement,
             },
             body: JSON.stringify({ query: createQuery, variables: { payload } }),
-        });
+        }));
         const result = await response.json();
         if (
             result.data &&
