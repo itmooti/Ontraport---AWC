@@ -1,8 +1,10 @@
 async function getClassIdForTeacherUrl() {
-    const params = new URL(window.location.href).searchParams;
-    return params.get("classIdFromUrl")?.replace(/'/g, "") || 
-           params.get("classUIDAdmin")?.replace(/'/g, "") || 
-           null;
+  const params = new URL(window.location.href).searchParams;
+  return (
+    params.get("classIdFromUrl")?.replace(/'/g, "") ||
+    params.get("classUIDAdmin")?.replace(/'/g, "") ||
+    null
+  );
 }
 
 async function createForumCommentRequest(
@@ -15,29 +17,29 @@ async function createForumCommentRequest(
   fileName
 ) {
   const CREATE_COMMENT_MUTATION_QUERY = `
-    mutation createForumComment($payload: ForumCommentCreateInput) {
-      createForumComment(payload: $payload) {
-        id
-        comment 
-        author_id
-        reply_to_comment_id 
-        submissions_id  
-        file  
-        comment_file_type
-        comment_file_name
-        Mentions {
-          unique_id 
-          has__new__notification 
-        }
-        Author {
-          display_name
-          first_name
-          last_name
-          profile_image
-        }
+  mutation createForumComment($payload: ForumCommentCreateInput) {
+    createForumComment(payload: $payload) {
+      id
+      comment 
+      author_id
+      reply_to_comment_id 
+      submissions_id  
+      file  
+      comment_file_type
+      comment_file_name
+      Mentions {
+        unique_id 
+        has__new__notification 
+      }
+      Author {
+        display_name
+        first_name
+        last_name
+        profile_image
       }
     }
-  `;
+  }
+`;
 
   const payload = {
     payload: {
@@ -61,7 +63,6 @@ async function createForumCommentRequest(
     },
   };
 
-    console.log(payload);
   try {
     const response = await fetch(endpointForComment, {
       method: "POST",
@@ -86,7 +87,6 @@ async function createForumCommentRequest(
 
     return result;
   } catch (error) {
-      console.log("Error is", error);
     return null;
   }
 }
@@ -95,11 +95,11 @@ document.addEventListener("submit", async function (e) {
   if (e.target.closest("form")) {
     e.preventDefault();
     const form = e.target;
-    console.log("Form", form);
     const mentionableDiv = form.querySelector(".mentionable");
-    // const mentionIds = mentionableDiv?._mentionIds || [];
     const mentionSpans = mentionableDiv?.querySelectorAll("span.mention") || [];
-    const mentionIds = Array.from(mentionSpans).map(span => span.getAttribute("data-mention-id"));
+    const mentionIds = Array.from(mentionSpans).map((span) =>
+      span.getAttribute("data-mention-id")
+    );
 
     const mentionablePlaceholder = form.querySelector(".mention-placeholder");
     if (mentionablePlaceholder) {
@@ -118,15 +118,12 @@ document.addEventListener("submit", async function (e) {
     let fileCategory = "File";
     let fileName = "file.txt";
     const fileInputForComment = form.querySelector(".formFileInput");
-      console.log("fileInputForComment", fileInputForComment);
     const awsParam = "ee037b98f52d6f86c4d3a4cc4522de1e";
     const awsParamUrl = "https://courses.writerscentre.com.au/s/aws";
 
     form.classList.add("opacity-50", "cursor-not-allowed");
     if (fileInputForComment) {
       const file = fileInputForComment.files[0];
-        console.log("File", file);
-
       if (file) {
         const fileFields = [{ fieldName: "attachment", file: file }];
         const toSubmitFields = {};
@@ -139,7 +136,6 @@ document.addEventListener("submit", async function (e) {
           );
           fileData = toSubmitFields.attachment || "";
         } catch (err) {
-            console.log("File Error is", err);
           return;
         }
       }
@@ -154,13 +150,10 @@ document.addEventListener("submit", async function (e) {
           } else if (fileData.type.startsWith("audio/")) {
             fileCategory = "Audio";
           }
-        } catch (err) {
-            
-            console.log("File Error is", err);
-        }
+        } catch (err) {}
       }
     }
-  const result = await createForumCommentRequest(
+    const result = await createForumCommentRequest(
       fileData,
       submissionNote,
       replyToCommentId,
@@ -210,7 +203,7 @@ document.addEventListener("submit", async function (e) {
     }
 
     // Create alerts for the new comment (submission comments)
-    ;(async () => {
+    (async () => {
       try {
         const created = result?.data?.createForumComment;
         if (!created || !created.id) return;
@@ -219,17 +212,19 @@ document.addEventListener("submit", async function (e) {
         const isReplyNow = Number(created?.reply_to_comment_id || 0) > 0;
 
         // Content (text only) for alert body
-        const tmp = document.createElement('div');
-        tmp.innerHTML = String(created.comment || '');
-        const contentText = (tmp.textContent || '').trim();
+        const tmp = document.createElement("div");
+        tmp.innerHTML = String(created.comment || "");
+        const contentText = (tmp.textContent || "").trim();
         const createdAt = new Date().toISOString();
         // Configure endpoint/apiKey early for use in helpers
-        const endpoint = (typeof endpointForComment !== 'undefined' && endpointForComment)
-          ? endpointForComment
-          : (window.graphqlApiEndpoint || window.GRAPHQL_ENDPOINT);
-        const apiKey = (typeof apiKeyForComment !== 'undefined' && apiKeyForComment)
-          ? apiKeyForComment
-          : (window.apiAccessKey || window.API_KEY);
+        const endpoint =
+          typeof endpointForComment !== "undefined" && endpointForComment
+            ? endpointForComment
+            : window.graphqlApiEndpoint || window.GRAPHQL_ENDPOINT;
+        const apiKey =
+          typeof apiKeyForComment !== "undefined" && apiKeyForComment
+            ? apiKeyForComment
+            : window.apiAccessKey || window.API_KEY;
 
         // Ensure we have a valid submission id for alerts
         async function resolveSubmissionIdForAlert() {
@@ -241,19 +236,41 @@ document.addEventListener("submit", async function (e) {
           if (Number.isFinite(direct) && direct > 0) return direct;
           // 2) If this is a reply, fetch parent comment -> submissions_id
           const parentCid = Number(created?.reply_to_comment_id || 0);
-          if (!endpoint || !apiKey || !Number.isFinite(parentCid) || parentCid <= 0) return 0;
+          if (
+            !endpoint ||
+            !apiKey ||
+            !Number.isFinite(parentCid) ||
+            parentCid <= 0
+          )
+            return 0;
           // Try getForumComment first
           try {
             const q1 = `query getForumCommentById($id: AwcForumCommentID) { getForumComment(query: [{ where: { id: $id } }]) { submissions_id } }`;
-            const rs1 = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: q1, variables: { id: parentCid } }) }).then(r => r.ok ? r.json() : null);
+            const rs1 = await fetch(endpoint, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Api-Key": apiKey,
+              },
+              body: JSON.stringify({ query: q1, variables: { id: parentCid } }),
+            }).then((r) => (r.ok ? r.json() : null));
             const v1 = Number(rs1?.data?.getForumComment?.submissions_id || 0);
             if (Number.isFinite(v1) && v1 > 0) return v1;
           } catch (_) {}
           // Fallback: calcForumComments
           try {
             const q2 = `query getParentComment($id: AwcForumCommentID) { calcForumComments(query: [{ where: { id: $id } }]) { Submissions_ID: field(arg: ["submissions_id"]) } }`;
-            const rs2 = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: q2, variables: { id: parentCid } }) }).then(r => r.ok ? r.json() : null);
-            const v2 = Number(rs2?.data?.calcForumComments?.[0]?.Submissions_ID || 0);
+            const rs2 = await fetch(endpoint, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Api-Key": apiKey,
+              },
+              body: JSON.stringify({ query: q2, variables: { id: parentCid } }),
+            }).then((r) => (r.ok ? r.json() : null));
+            const v2 = Number(
+              rs2?.data?.calcForumComments?.[0]?.Submissions_ID || 0
+            );
             if (Number.isFinite(v2) && v2 > 0) return v2;
           } catch (_) {}
           return 0;
@@ -261,42 +278,49 @@ document.addEventListener("submit", async function (e) {
         const submissionIdForAlert = await resolveSubmissionIdForAlert();
         // Log the submission id context for the newly created comment/reply
         try {
-          console.log('[SubmissionAlerts] Created under submission', {
-            kind: isReplyNow ? 'reply' : 'comment',
-            submissionId: Number(submissionIdForAlert),
-            newCommentId: Number(created.id),
-            parentCommentId: isReplyNow ? Number(created.reply_to_comment_id) : null,
-            directSubmissionsId: Number(created?.submissions_id || 0),
-          });
         } catch (_) {}
-        if (!Number.isFinite(submissionIdForAlert) || submissionIdForAlert <= 0) return;
+        if (!Number.isFinite(submissionIdForAlert) || submissionIdForAlert <= 0)
+          return;
 
         // Resolve classId from context (supports single- and multi-submission pages)
         let classId = Number(window.classID || 0) || null;
         const url = new URL(window.location.href);
-        const eidParam = url.searchParams.get('eid');
+        const eidParam = url.searchParams.get("eid");
         // 1) From form dataset
         if (!classId && form) {
-          const fromForm = Number(form.getAttribute('data-classid') || 0) ||
-                           Number(form.getAttribute('data-currentClassID') || 0);
+          const fromForm =
+            Number(form.getAttribute("data-classid") || 0) ||
+            Number(form.getAttribute("data-currentClassID") || 0);
           if (Number.isFinite(fromForm) && fromForm > 0) classId = fromForm;
         }
         // 2) From URL params (currentClassID or classIdFromUrl)
         if (!classId) {
-          const fromUrl = Number(url.searchParams.get('currentClassID') || 0) ||
-                          Number(url.searchParams.get('classIdFromUrl') || 0);
+          const fromUrl =
+            Number(url.searchParams.get("currentClassID") || 0) ||
+            Number(url.searchParams.get("classIdFromUrl") || 0);
           if (Number.isFinite(fromUrl) && fromUrl > 0) classId = fromUrl;
         }
         // 3) From enrolment id if available (eid)
         if (!classId && eidParam && endpoint && apiKey) {
           try {
             const q = `query eidToClass($id: AwcEnrolmentID) { calcEnrolments(query: [{ where: { id: $id } }]) { Class_ID: field(arg: ["class_id"]) } }`;
-            const rs = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: q, variables: { id: Number(eidParam) } }) }).then(r => r.ok ? r.json() : null);
-            classId = Number(rs?.data?.calcEnrolments?.[0]?.Class_ID || 0) || null;
+            const rs = await fetch(endpoint, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Api-Key": apiKey,
+              },
+              body: JSON.stringify({
+                query: q,
+                variables: { id: Number(eidParam) },
+              }),
+            }).then((r) => (r.ok ? r.json() : null));
+            classId =
+              Number(rs?.data?.calcEnrolments?.[0]?.Class_ID || 0) || null;
           } catch (_) {}
         }
         // 4) From helper (teacher/admin pages) classIdFromUrl/classUIDAdmin
-        if (!classId && typeof getClassIdForTeacherUrl === 'function') {
+        if (!classId && typeof getClassIdForTeacherUrl === "function") {
           try {
             const cid = await getClassIdForTeacherUrl();
             const asNum = Number(cid);
@@ -310,39 +334,88 @@ document.addEventListener("submit", async function (e) {
         const qClasses = `query getClass($id: AwcClassID) { getClasses(query: [{ where: { id: $id } }]) { id unique_id class_name Course { unique_id } Enrolments { Student { id } } } }`;
         const qEnrol = `query enrolStudents($id: AwcClassID) { calcEnrolments(query: [{ where: { class_id: $id } }]) { Student_ID: field(arg: ["Student","id"]) } }`;
         const [resTeacher, resClasses, resEnrol] = await Promise.all([
-          fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: qTeacher, variables: { id: classId } }) }).then(r => r.ok ? r.json() : null),
-          fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: qClasses, variables: { id: classId } }) }).then(r => r.ok ? r.json() : null),
-          fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: qEnrol, variables: { id: classId } }) }).then(r => r.ok ? r.json() : null),
+          fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Api-Key": apiKey },
+            body: JSON.stringify({
+              query: qTeacher,
+              variables: { id: classId },
+            }),
+          }).then((r) => (r.ok ? r.json() : null)),
+          fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Api-Key": apiKey },
+            body: JSON.stringify({
+              query: qClasses,
+              variables: { id: classId },
+            }),
+          }).then((r) => (r.ok ? r.json() : null)),
+          fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Api-Key": apiKey },
+            body: JSON.stringify({ query: qEnrol, variables: { id: classId } }),
+          }).then((r) => (r.ok ? r.json() : null)),
         ]);
-        const norm = (list) => (Array.isArray(list) ? list : [list]).map(v => Number(v)).filter(n => Number.isFinite(n) && n > 0);
-        let teacherIds = []; const tRaw = resTeacher?.data?.calcClasses?.[0]?.Teacher_Contact_ID; if (tRaw != null) teacherIds = norm(tRaw);
-        const classes = Array.isArray(resClasses?.data?.getClasses) ? resClasses.data.getClasses : [];
+        const norm = (list) =>
+          (Array.isArray(list) ? list : [list])
+            .map((v) => Number(v))
+            .filter((n) => Number.isFinite(n) && n > 0);
+        let teacherIds = [];
+        const tRaw = resTeacher?.data?.calcClasses?.[0]?.Teacher_Contact_ID;
+        if (tRaw != null) teacherIds = norm(tRaw);
+        const classes = Array.isArray(resClasses?.data?.getClasses)
+          ? resClasses.data.getClasses
+          : [];
         let classUid, className, courseUid;
-        const idsFromClasses = classes.flatMap(c => { if (!classUid && c?.unique_id) classUid = c.unique_id; if (!className && c?.class_name) className = c.class_name; if (!courseUid && c?.Course?.unique_id) courseUid = c.Course.unique_id; return (Array.isArray(c?.Enrolments) ? c.Enrolments : []).map(e => e?.Student?.id).filter(Boolean); });
-        const enrolRows = Array.isArray(resEnrol?.data?.calcEnrolments) ? resEnrol.data.calcEnrolments : [];
-        const idsFromEnrol = enrolRows.flatMap(row => norm(row?.Student_ID));
+        const idsFromClasses = classes.flatMap((c) => {
+          if (!classUid && c?.unique_id) classUid = c.unique_id;
+          if (!className && c?.class_name) className = c.class_name;
+          if (!courseUid && c?.Course?.unique_id)
+            courseUid = c.Course.unique_id;
+          return (Array.isArray(c?.Enrolments) ? c.Enrolments : [])
+            .map((e) => e?.Student?.id)
+            .filter(Boolean);
+        });
+        const enrolRows = Array.isArray(resEnrol?.data?.calcEnrolments)
+          ? resEnrol.data.calcEnrolments
+          : [];
+        const idsFromEnrol = enrolRows.flatMap((row) => norm(row?.Student_ID));
         const adminIds = [10435];
 
         const authorId = Number(currentUserId || 0);
         const seen = new Set();
-        let audience = norm([...idsFromClasses, ...idsFromEnrol, ...teacherIds, ...adminIds])
-          .filter(id => (seen.has(id) ? false : (seen.add(id), true)))
-          .filter(id => id !== authorId);
+        let audience = norm([
+          ...idsFromClasses,
+          ...idsFromEnrol,
+          ...teacherIds,
+          ...adminIds,
+        ])
+          .filter((id) => (seen.has(id) ? false : (seen.add(id), true)))
+          .filter((id) => id !== authorId);
         if (!audience.length) return;
 
         // Resolve mentions (unique_id -> id)
-        const mentionUIDs = Array.isArray(mentionIds) ? mentionIds.map(String).filter(Boolean) : [];
+        const mentionUIDs = Array.isArray(mentionIds)
+          ? mentionIds.map(String).filter(Boolean)
+          : [];
         let mentionContactIds = [];
         if (mentionUIDs.length) {
           try {
             const perUidFetch = async (uid) => {
               const q = `query getContactByUid($uid: StringScalar_0_8) { getContact(query: [{ where: { unique_id: $uid } }]) { id } }`;
-              const rs = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: q, variables: { uid } }) }).then(r => r.ok ? r.json() : null);
+              const rs = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Api-Key": apiKey,
+                },
+                body: JSON.stringify({ query: q, variables: { uid } }),
+              }).then((r) => (r.ok ? r.json() : null));
               const id = Number(rs?.data?.getContact?.id || 0);
               return Number.isFinite(id) && id > 0 ? id : null;
             };
             const resolved = await Promise.all(mentionUIDs.map(perUidFetch));
-            mentionContactIds = resolved.filter(n => Number.isFinite(n));
+            mentionContactIds = resolved.filter((n) => Number.isFinite(n));
           } catch (_) {}
         }
         const mentionSet = new Set(mentionContactIds);
@@ -353,12 +426,29 @@ document.addEventListener("submit", async function (e) {
             const cache = (window.__awcEidCache ||= new Map());
             const k = String(clsId);
             let byClass = cache.get(k);
-            if (!byClass) { byClass = new Map(); cache.set(k, byClass); }
-            if (byClass.has(Number(studentId))) return byClass.get(Number(studentId));
+            if (!byClass) {
+              byClass = new Map();
+              cache.set(k, byClass);
+            }
+            if (byClass.has(Number(studentId)))
+              return byClass.get(Number(studentId));
             const q = `query getEnrolment($id: AwcContactID, $class_id: AwcClassID) { getEnrolment(query: [{ where: { student_id: $id } }, { andWhere: { class_id: $class_id } }]) { ID: id } }`;
-            const rs = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: q, variables: { id: Number(studentId), class_id: Number(clsId) } }) }).then(r => r.ok ? r.json() : null);
+            const rs = await fetch(endpoint, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Api-Key": apiKey,
+              },
+              body: JSON.stringify({
+                query: q,
+                variables: { id: Number(studentId), class_id: Number(clsId) },
+              }),
+            }).then((r) => (r.ok ? r.json() : null));
             const eid = Number(rs?.data?.getEnrolment?.ID || 0);
-            if (Number.isFinite(eid) && eid > 0) { byClass.set(Number(studentId), eid); return eid; }
+            if (Number.isFinite(eid) && eid > 0) {
+              byClass.set(Number(studentId), eid);
+              return eid;
+            }
           } catch (_) {}
           return undefined;
         }
@@ -369,115 +459,171 @@ document.addEventListener("submit", async function (e) {
           const isMentioned = mentionSet.has(Number(contactId));
           const isTeacher = teacherIds.includes(Number(contactId));
           const isAdmin = adminIds.includes(Number(contactId));
-          const role = isAdmin ? 'admin' : (isTeacher ? 'teacher' : 'students');
-          let eid; if (role === 'students') eid = await resolveStudentEid(contactId, classId);
+          const role = isAdmin ? "admin" : isTeacher ? "teacher" : "students";
+          let eid;
+          if (role === "students")
+            eid = await resolveStudentEid(contactId, classId);
           const params = {
-            classId: Number(classId), classUid, className, courseUid,
+            classId: Number(classId),
+            classUid,
+            className,
+            courseUid,
             eid,
             submissionId: Number(submissionIdForAlert),
             commentId: Number(created.id),
             isComment: true,
-            lessonUid: (window.lessonUIDFromPage || window.lessonUid || ''),
-            assessmentType: (window.assessmentTypeFromPage || window.assessmentType || ''),
-            subUID: (window.subUIDFromPage || ''),
+            lessonUid: window.lessonUIDFromPage || window.lessonUid || "",
+            assessmentType:
+              window.assessmentTypeFromPage || window.assessmentType || "",
+            subUID: window.subUIDFromPage || "",
             commentScrollID: Number(created.id),
-            notType: 'Submission Comments',
+            notType: "Submission Comments",
           };
           try {
-            console.log('[SubmissionAlerts:Comment/Reply] Recipient params', {
-              contactId,
-              role,
-              eid,
-              params,
-              urls: {
-                origin: (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl(role, 'submission', params) : '(AWC missing)',
-                teacher: (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teacher', 'submission', params) : '(AWC missing)',
-                admin: (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'submission', params) : '(AWC missing)'
-              }
-            });
-          } catch(_) {}
+          } catch (_) {}
           function buildSubmissionAlertUrl(role, p) {
-            const BASE = 'https://courses.writerscentre.com.au';
-            const r = String(role || '').toLowerCase();
-            const lessonUid = String(p.lessonUid || '');
-            const base = `${BASE}/course-details/content/${encodeURIComponent(lessonUid)}`;
+            const BASE = "https://courses.writerscentre.com.au";
+            const r = String(role || "").toLowerCase();
+            const lessonUid = String(p.lessonUid || "");
+            const base = `${BASE}/course-details/content/${encodeURIComponent(
+              lessonUid
+            )}`;
             const qs = new URLSearchParams();
-            const idForSubmission = (p.submissionId || '');
-            if (r === 'students' || r === 'student') {
-              if (p.eid != null) qs.set('eid', String(p.eid));
+            const idForSubmission = p.submissionId || "";
+            if (r === "students" || r === "student") {
+              if (p.eid != null) qs.set("eid", String(p.eid));
             }
-            if (p.classId != null) qs.set('classIdFromUrl', String(p.classId));
-            if (p.className) qs.set('className', String(p.className));
-            if (p.classUid) qs.set('classUid', String(p.classUid));
-            if (p.classId != null) qs.set('currentClassID', String(p.classId));
-            if (p.className) qs.set('currentClassName', String(p.className));
-            if (r === 'students' || r === 'student') {
-              if (p.classUid) qs.set('currentClassUniqueID', String(p.classUid));
+            if (p.classId != null) qs.set("classIdFromUrl", String(p.classId));
+            if (p.className) qs.set("className", String(p.className));
+            if (p.classUid) qs.set("classUid", String(p.classUid));
+            if (p.classId != null) qs.set("currentClassID", String(p.classId));
+            if (p.className) qs.set("currentClassName", String(p.className));
+            if (r === "students" || r === "student") {
+              if (p.classUid)
+                qs.set("currentClassUniqueID", String(p.classUid));
             }
-            qs.set('submissionPostIs', String(idForSubmission || ''));
-            qs.set('subUID', String(p.subUID));
-            qs.set('commentScrollId', String(p.commentScrollID));
-            if (p.notType) qs.set('notType', String(p.notType));
+            qs.set("submissionPostIs", String(idForSubmission || ""));
+            qs.set("subUID", String(p.subUID));
+            qs.set("commentScrollId", String(p.commentScrollID));
+            if (p.notType) qs.set("notType", String(p.notType));
             return `${base}?${qs.toString()}`;
           }
-          const originCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl(role, 'submission', params) : buildSubmissionAlertUrl(role, params);
-          const teacherCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teacher', 'submission', params) : buildSubmissionAlertUrl('teacher', params);
-          const adminCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'submission', params) : buildSubmissionAlertUrl('admin', params);
+          const originCanonical =
+            window.AWC && typeof window.AWC.buildAlertUrl === "function"
+              ? window.AWC.buildAlertUrl(role, "submission", params)
+              : buildSubmissionAlertUrl(role, params);
+          const teacherCanonical =
+            window.AWC && typeof window.AWC.buildAlertUrl === "function"
+              ? window.AWC.buildAlertUrl("teacher", "submission", params)
+              : buildSubmissionAlertUrl("teacher", params);
+          const adminCanonical =
+            window.AWC && typeof window.AWC.buildAlertUrl === "function"
+              ? window.AWC.buildAlertUrl("admin", "submission", params)
+              : buildSubmissionAlertUrl("admin", params);
           // isReplyNow computed earlier
-          const alertType = isMentioned ? 'Submission Comment Mention' : 'Submission Comment';
+          const alertType = isMentioned
+            ? "Submission Comment Mention"
+            : "Submission Comment";
           // Personalize titles for comments vs replies
           let title;
           try {
             // Prefer the author returned by the mutation for accurate display name
             const author = created && created.Author ? created.Author : null;
-            let actorName = '';
+            let actorName = "";
             if (author) {
-              actorName = author.display_name || `${author.first_name || ''} ${author.last_name || ''}`.trim();
+              actorName =
+                author.display_name ||
+                `${author.first_name || ""} ${author.last_name || ""}`.trim();
             }
             if (!actorName) {
-              actorName = (window.currentUserDisplayName || `${window.currentUserFirstName || ''} ${window.currentUserLastName || ''}`.trim());
+              actorName =
+                window.currentUserDisplayName ||
+                `${window.currentUserFirstName || ""} ${
+                  window.currentUserLastName || ""
+                }`.trim();
             }
-            if (!actorName) actorName = 'Someone';
+            if (!actorName) actorName = "Someone";
 
             if (isMentioned) {
-              title = isReplyNow ? 'You have been mentioned in the reply' : 'You have been mentioned in the comment';
+              title = isReplyNow
+                ? "You have been mentioned in the reply"
+                : "You have been mentioned in the comment";
             } else if (isReplyNow) {
               // Reply: personalize to parent comment author
               let parentCommentAuthorId;
               try {
-                const parentLocal = (Array.isArray(window.comments) ? window.comments : []).find(c => Number(c?.ID) === Number(created?.reply_to_comment_id));
-                if (parentLocal && parentLocal.Author_ID != null) parentCommentAuthorId = Number(parentLocal.Author_ID);
-              } catch(_) {}
+                const parentLocal = (
+                  Array.isArray(window.comments) ? window.comments : []
+                ).find(
+                  (c) => Number(c?.ID) === Number(created?.reply_to_comment_id)
+                );
+                if (parentLocal && parentLocal.Author_ID != null)
+                  parentCommentAuthorId = Number(parentLocal.Author_ID);
+              } catch (_) {}
               if (!parentCommentAuthorId) {
                 try {
                   const qParent = `query parentAuthor($id: AwcForumCommentID) { calcForumComments(query: [{ where: { id: $id } }]) { Author_ID: field(arg: ["author_id"]) } }`;
-                  const rsParent = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: qParent, variables: { id: Number(created.reply_to_comment_id) } }) }).then(r => r.ok ? r.json() : null);
-                  const row = Array.isArray(rsParent?.data?.calcForumComments) ? rsParent.data.calcForumComments[0] : null;
+                  const rsParent = await fetch(endpoint, {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Api-Key": apiKey,
+                    },
+                    body: JSON.stringify({
+                      query: qParent,
+                      variables: { id: Number(created.reply_to_comment_id) },
+                    }),
+                  }).then((r) => (r.ok ? r.json() : null));
+                  const row = Array.isArray(rsParent?.data?.calcForumComments)
+                    ? rsParent.data.calcForumComments[0]
+                    : null;
                   const aid = Number(row?.Author_ID || 0);
-                  if (Number.isFinite(aid) && aid > 0) parentCommentAuthorId = aid;
-                } catch(_) {}
+                  if (Number.isFinite(aid) && aid > 0)
+                    parentCommentAuthorId = aid;
+                } catch (_) {}
               }
-              if (parentCommentAuthorId && Number(contactId) === Number(parentCommentAuthorId)) {
+              if (
+                parentCommentAuthorId &&
+                Number(contactId) === Number(parentCommentAuthorId)
+              ) {
                 title = `${actorName} replied on your comment`;
               } else {
-                title = 'A reply has been added to a comment';
+                title = "A reply has been added to a comment";
               }
             } else {
               // Comment: personalize to submission owner
               let submissionOwnerId;
               try {
                 const qOwner = `query getSubmissionOwner($id: AwcSubmissionID) { getSubmission(query: [{ where: { id: $id } }]) { Student { Student { id } } } }`;
-                const rsOwner = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: qOwner, variables: { id: Number(submissionIdForAlert) } }) }).then(r => r.ok ? r.json() : null);
-                submissionOwnerId = Number(rsOwner?.data?.getSubmission?.Student?.Student?.id || 0) || undefined;
-              } catch(_) {}
-              if (submissionOwnerId && Number(contactId) === Number(submissionOwnerId)) {
+                const rsOwner = await fetch(endpoint, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Api-Key": apiKey,
+                  },
+                  body: JSON.stringify({
+                    query: qOwner,
+                    variables: { id: Number(submissionIdForAlert) },
+                  }),
+                }).then((r) => (r.ok ? r.json() : null));
+                submissionOwnerId =
+                  Number(
+                    rsOwner?.data?.getSubmission?.Student?.Student?.id || 0
+                  ) || undefined;
+              } catch (_) {}
+              if (
+                submissionOwnerId &&
+                Number(contactId) === Number(submissionOwnerId)
+              ) {
                 title = `${actorName} commented on your submission`;
               } else {
-                title = 'A comment has been added to the submission';
+                title = "A comment has been added to the submission";
               }
             }
-          } catch(_) {
-            title = isReplyNow ? 'A reply has been added to a comment' : 'A comment has been added to the submission';
+          } catch (_) {
+            title = isReplyNow
+              ? "A reply has been added to a comment"
+              : "A comment has been added to the submission";
           }
           alerts.push({
             alert_type: alertType,
@@ -499,25 +645,50 @@ document.addEventListener("submit", async function (e) {
         if (!alerts.length) return;
 
         // Prefer global helper; otherwise fallback to direct GraphQL
-        if (window.AWC && typeof window.AWC.createAlerts === 'function') {
-          try { await window.AWC.createAlerts(alerts, { concurrency: 4 }); } catch (e) { console.error('Failed to create alerts (submission comment)', e); }
+        if (window.AWC && typeof window.AWC.createAlerts === "function") {
+          try {
+            await window.AWC.createAlerts(alerts, { concurrency: 4 });
+          } catch (e) {}
         } else {
           try {
             const createAlertsMutation = `mutation createAlerts($payload: [AlertCreateInput] = null) { createAlerts(payload: $payload) { is_mentioned } }`;
-            await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: createAlertsMutation, variables: { payload: alerts } }) });
-          } catch (e) { console.error('createAlerts GraphQL failed (submission comment)', e); }
+            await fetch(endpoint, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Api-Key": apiKey,
+              },
+              body: JSON.stringify({
+                query: createAlertsMutation,
+                variables: { payload: alerts },
+              }),
+            });
+          } catch (e) {}
         }
 
         // Mark mentioned contacts as having new notifications
         if (mentionContactIds.length) {
           const updateMutation = `mutation updateContact($id: AwcContactID!, $payload: ContactUpdateInput!) { updateContact(query: [{ where: { id: $id } }], payload: $payload) { has__new__notification } }`;
           for (const mid of mentionContactIds) {
-            try { await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: updateMutation, variables: { id: Number(mid), payload: { has__new__notification: true } } }) }); } catch(_) {}
+            try {
+              await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Api-Key": apiKey,
+                },
+                body: JSON.stringify({
+                  query: updateMutation,
+                  variables: {
+                    id: Number(mid),
+                    payload: { has__new__notification: true },
+                  },
+                }),
+              });
+            } catch (_) {}
           }
         }
-      } catch (e) {
-        console.error('Submission comment alert creation error', e);
-      }
+      } catch (e) {}
     })();
 
     // 3. Reset content and placeholder
@@ -684,7 +855,6 @@ $.views.helpers({
   },
 });
 
-
 async function buildSubmissionsQueryClass() {
   const match = window.location.href.match(/[?&]eid=(\d+)/);
   const eid = match ? match[1] : null;
@@ -693,26 +863,26 @@ async function buildSubmissionsQueryClass() {
 
   if (eid) {
     const query = `
-      query calcClasses {
-        calcClasses(
-          query: [
-            {
-              where: {
-                Enrolments: [
-                  { where: { status: "Active" } }
-                  { orWhere: { status: "New" } }
-                ]
-              }
+    query calcClasses {
+      calcClasses(
+        query: [
+          {
+            where: {
+              Enrolments: [
+                { where: { status: "Active" } }
+                { orWhere: { status: "New" } }
+              ]
             }
-            {
-              andWhere: { Enrolments: [{ where: { id: ${eid} } }] }
-            }
-          ]
-        ) {
-          ID: field(arg: ["id"])
-        }
+          }
+          {
+            andWhere: { Enrolments: [{ where: { id: ${eid} } }] }
+          }
+        ]
+      ) {
+        ID: field(arg: ["id"])
       }
-    `;
+    }
+  `;
 
     try {
       const response = await fetch(endpointForComment, {
@@ -737,65 +907,88 @@ async function buildSubmissionsQueryClass() {
   }
 
   const finalQuery = `
-    query getSubmissions {
-  getSubmissions(
-   query: [
-      { where: { submission_hidden: false } }
-      {
-        andWhere: {
-          Assessment: [
-            { where: { type: "Comment Submission" } }
-            ${isPrivate}
-            {
-              andWhere: {
-                Lesson: [
-                  { where: { unique_id: "${currentUsersLessonId}" } }
-                ]
-              }
+  query getSubmissions {
+getSubmissions(
+ query: [
+    { where: { submission_hidden: false } }
+    {
+      andWhere: {
+        Assessment: [
+          { where: { type: "Comment Submission" } }
+          ${isPrivate}
+          {
+            andWhere: {
+              Lesson: [
+                { where: { unique_id: "${currentUsersLessonId}" } }
+              ]
             }
-          ]
-        }
-      }
-      {
-        andWhere: {
-          Student: [
-            { where: { Class: [{ where: { id: "${resolvedClassId}" } }] } }
-          ]
-        }
-      }
-    ]
-    limit: 50000
-    offset: 0
-    orderBy: [{ path: ["created_at"], type: desc }]
-  ) {
-    Submission_Date_Time: submission_date_time
-    submission_Id: id 
-    File_Upload: file_upload
-    file_upload_name
-    file_upload_type
-    submission_note
-    Student {
-      Student {
-        profile_image 
-        display_name
-        first_name
-        last_name
-        is_admin
-        is_instructor
-        id
+          }
+        ]
       }
     }
+    {
+      andWhere: {
+        Student: [
+          { where: { Class: [{ where: { id: "${resolvedClassId}" } }] } }
+        ]
+      }
+    }
+  ]
+  limit: 50000
+  offset: 0
+  orderBy: [{ path: ["created_at"], type: desc }]
+) {
+  Submission_Date_Time: submission_date_time
+  submission_Id: id 
+  File_Upload: file_upload
+  file_upload_name
+  file_upload_type
+  submission_note
+  Student {
+    Student {
+      profile_image 
+      display_name
+      first_name
+      last_name
+      is_admin
+      is_instructor
+      id
+    }
+  }
+  ForumComments(
+  limit: 50000
+  offset: 0
+  orderBy: [{ path: ["created_at"], type: asc }]
+  ) {
+    id
+    comment
+    created_at
+    file
+    comment_file_name
+    comment_file_type
+    Author {
+      id
+      display_name
+      first_name
+      last_name
+      profile_image
+    }
+    Member_Comment_Upvotes_Data {
+      id
+      voter_id:member_comment_upvote_id
+    }
     ForumComments(
-    limit: 50000
-    offset: 0
-    orderBy: [{ path: ["created_at"], type: asc }]
+      limit: 50000
+      offset: 0
+      orderBy: [{ path: ["created_at"], type: asc }]
     ) {
+    reply_to_comment_id 
       id
       comment
       created_at
       file
-      comment_file_name
-      comment_file_type
+    comment_file_name
+    comment_file_type
       Author {
         id
         display_name
@@ -807,44 +1000,19 @@ async function buildSubmissionsQueryClass() {
         id
         voter_id:member_comment_upvote_id
       }
-      ForumComments(
-        limit: 50000
-        offset: 0
-        orderBy: [{ path: ["created_at"], type: asc }]
-      ) {
-      reply_to_comment_id 
-        id
-        comment
-        created_at
-        file
-      comment_file_name
-      comment_file_type
-        Author {
-          id
-          display_name
-          first_name
-          last_name
-          profile_image
-        }
-        Member_Comment_Upvotes_Data {
-          id
-          voter_id:member_comment_upvote_id
-        }
-      }
-    }
-    Voters_Data {
-      id
-      voter_id
     }
   }
+  Voters_Data {
+    id
+    voter_id
+  }
 }
-  `;
+}
+`;
 
   return finalQuery;
 }
 
-//     const query = `
-// `;
 function highlightAndScrollSubmission() {
   const match = window.location.href.match(/[?&]submissionPostIs=(\d+)/);
   if (match) {
@@ -877,10 +1045,12 @@ async function fetchSubmissions() {
   //return data.getSubmissions;
   const submissions = data.getSubmissions || [];
   window.totalSubmissionCount = submissions.length;
-    let globalSubmissionCounter =  document.getElementById("globalSubmissionCounter");
-    if(globalSubmissionCounter){
-     globalSubmissionCounter.textContent = window.totalSubmissionCount;
-    }
+  let globalSubmissionCounter = document.getElementById(
+    "globalSubmissionCounter"
+  );
+  if (globalSubmissionCounter) {
+    globalSubmissionCounter.textContent = window.totalSubmissionCount;
+  }
   return submissions;
 }
 
@@ -903,7 +1073,6 @@ $(async function () {
   }
 
   $("#submissionList").html(html);
-  // initializeTribute();
   requestAnimationFrame(() => {
     highlightAndScrollSubmission();
   });
@@ -923,14 +1092,14 @@ async function voteOnSubmission(voted_submission_id, element) {
     voteCountEl.textContent = currentCount + 1;
   }
   const mutation = `
-    mutation createOVoterVotedSubmission($payload: OVoterVotedSubmissionCreateInput) {
-      createOVoterVotedSubmission(payload: $payload) {
-        id
-        voter_id 
-        voted_submission_id 
-      }
+  mutation createOVoterVotedSubmission($payload: OVoterVotedSubmissionCreateInput) {
+    createOVoterVotedSubmission(payload: $payload) {
+      id
+      voter_id 
+      voted_submission_id 
     }
-  `;
+  }
+`;
 
   const variables = {
     payload: {
@@ -975,16 +1144,16 @@ async function voteOnComment(forum_comment_upvote_id, element) {
     voteCountEl.textContent = currentCount + 1;
   }
   const mutation = `
-    mutation createMemberCommentUpvotesForumCommentUpvotes(
-      $payload: MemberCommentUpvotesForumCommentUpvotesCreateInput = null
-    ) {
-      createMemberCommentUpvotesForumCommentUpvotes(payload: $payload) {
-        id
-        member_comment_upvote_id  
-        forum_comment_upvote_id  
-      }
+  mutation createMemberCommentUpvotesForumCommentUpvotes(
+    $payload: MemberCommentUpvotesForumCommentUpvotesCreateInput = null
+  ) {
+    createMemberCommentUpvotesForumCommentUpvotes(payload: $payload) {
+      id
+      member_comment_upvote_id  
+      forum_comment_upvote_id  
     }
-  `;
+  }
+`;
 
   const variables = {
     payload: {
@@ -1029,14 +1198,14 @@ async function unvoteOnSubmission(votersVoteId, element, submissionId) {
     voteCountEl.textContent = currentCount - 1;
   }
   const mutation = `
-    mutation deleteOVoterVotedSubmission($id: AwcOVoterVotedSubmissionID) {
-      deleteOVoterVotedSubmission(
-        query: [{ where: { id: $id } }]
-      ) {
-        id
-      }
+  mutation deleteOVoterVotedSubmission($id: AwcOVoterVotedSubmissionID) {
+    deleteOVoterVotedSubmission(
+      query: [{ where: { id: $id } }]
+    ) {
+      id
     }
-  `;
+  }
+`;
 
   const variables = {
     id: votersVoteId,
@@ -1074,14 +1243,14 @@ async function unvoteOnComment(voteRecordId, element, commentID) {
     voteCountEl.textContent = currentCount - 1;
   }
   const mutation = `
-    mutation deleteMemberCommentUpvotesForumCommentUpvotes {
-      deleteMemberCommentUpvotesForumCommentUpvotes(
-        query: [{ where: { id: ${voteRecordId} } }]
-      ) {
-        id
-      }
+  mutation deleteMemberCommentUpvotesForumCommentUpvotes {
+    deleteMemberCommentUpvotesForumCommentUpvotes(
+      query: [{ where: { id: ${voteRecordId} } }]
+    ) {
+      id
     }
-  `;
+  }
+`;
 
   const variables = {
     id: voteRecordId,
@@ -1120,12 +1289,12 @@ async function deleteSubmissionCreated(id) {
       },
       body: JSON.stringify({
         query: `mutation updateSubmission($payload: SubmissionUpdateInput = null) {
-  updateSubmission(
-    query: [{ where: { id: ${id} } }]
-    payload: $payload
-  ) {
-    submission_hidden
-  }
+updateSubmission(
+  query: [{ where: { id: ${id} } }]
+  payload: $payload
+) {
+  submission_hidden
+}
 }`,
         variables: {
           payload: {
@@ -1166,12 +1335,12 @@ async function deleteForumCommentCreated(id) {
       body: JSON.stringify({
         query: `
 mutation deleteForumComment($id: AwcForumCommentID) {
-  deleteForumComment(query: [{ where: { id: $id } }]) {
-    id 
-    submissions_id 
-  }
+deleteForumComment(query: [{ where: { id: $id } }]) {
+  id 
+  submissions_id 
 }
-        `,
+}
+      `,
         variables: {
           id,
         },
