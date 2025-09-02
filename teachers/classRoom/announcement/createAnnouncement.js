@@ -455,6 +455,42 @@ document
                 mentionedIds.push(Number(id));
         });
 
+        // Handle attachment (mirror "Post Now" flow)
+        let fileData = "";
+        const fileInput = document.getElementById("attachment-file-input");
+        const file = fileInput?.files?.[0];
+        let fileObject = null;
+
+        // Tidy up the UI while scheduling, same as submit flow
+        try {
+            document.querySelector(".attachBtn").style.display = "flex";
+            document.querySelector(".refreshBtn").classList.add("hidden");
+            document.querySelector(".deleteBtn").classList.add("hidden");
+            document.querySelector(".filePreviewWrapper").classList.add("hidden");
+        } catch (_) {}
+
+        if (file) {
+            const fileFields = [{ fieldName: "attachment", file }];
+            const toSubmitFields = {};
+            try {
+                await processFileFields(
+                    toSubmitFields,
+                    fileFields,
+                    awsParam,
+                    awsParamUrl
+                );
+                fileData = toSubmitFields.attachment || "";
+                fileObject = {
+                    link: JSON.parse(fileData).link || "",
+                    name: file.name,
+                    type: file.type,
+                    s3_id: JSON.parse(fileData).s3_id || "",
+                };
+            } catch (err) {
+                console.error("File upload failed:", err);
+            }
+        }
+
         const payload = {
             title,
             content,
@@ -466,6 +502,7 @@ document
             when_to_post: "Post Later",
             status: "Draft",
             post_later_date_time: scheduledTimestamp,
+            attachment: fileData,
             Mentions: mentionedIds.map((id) => ({
                 id: id,
             })),
