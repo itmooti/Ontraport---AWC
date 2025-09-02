@@ -546,7 +546,7 @@ const handleComments = {
                                 const lessonUid = String(p.lessonUid || '');
                                 const base = `${BASE}/course-details/content/${encodeURIComponent(lessonUid)}`;
                                 const qs = new URLSearchParams();
-                            const idForSubmission = (p.submissionId || '');
+                                const idForSubmission = p.isComment ? (p.commentId || '') : (p.submissionId || p.commentId || '');
                                 if (r === 'students' || r === 'student') {
                                     if (p.eid != null) qs.set('eid', String(p.eid));
                                 }
