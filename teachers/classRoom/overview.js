@@ -101,7 +101,7 @@ async function scrollToPostDiv(postId) {
             }, 100);
             targetPostDiv.classList.add('highlightTheSelected');
         }
-    }, 2000);
+    }, 3000);
 }
 document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".submissionsWrapper").forEach(function (wrapper) {
