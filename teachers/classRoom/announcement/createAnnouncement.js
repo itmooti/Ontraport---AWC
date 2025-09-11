@@ -254,11 +254,10 @@ document
             return;
         }
 
-        // Fire-and-forget: create alerts for a new announcement (skip scheduled/drafts)
+        // Fire-and-forget: create alerts for a new announcement
         try {
             (async function createAnnouncementAlerts() {
                 const status = String(createdAnnouncement?.status || '').toLowerCase();
-                if (status && status !== 'published') return;
                 const clsId = Number(createdAnnouncement?.class_id || classID);
                 if (!Number.isFinite(clsId)) return;
                 const authorId = Number(createdAnnouncement?.instructor_id || LOGGED_IN_USER_ID);
@@ -342,6 +341,7 @@ document
                         created_at: createdAt,
                         is_mentioned: isMentioned,
                         is_read: false,
+                        alert_status: (status === 'published') ? 'Published' : 'Not Published',
                         notified_contact_id: Number(contactId),
                         origin_url: originCanonical || window.location.href,
                         origin_url_teacher: teacherCanonical || window.location.href,
@@ -602,6 +602,19 @@ async function postScheduledAnnouncementNow(id) {
                 "pointer-events-none",
                 "cursor-not-allowed"
             );
+            // After publishing the scheduled announcement, publish its alerts
+            try {
+                const qFind = `query calcAlerts($parent_announcement_id: AwcAnnouncementID) { calcAlerts(query: [{ where: { parent_announcement_id: $parent_announcement_id } }]) { ID: field(arg: ["id"]) } }`;
+                const resFind = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: qFind, variables: { parent_announcement_id: id } }) });
+                const jsFind = await resFind.json();
+                const alertIds = Array.isArray(jsFind?.data?.calcAlerts) ? jsFind.data.calcAlerts.map(r => Number(r?.ID)).filter(n => Number.isFinite(n)) : [];
+                const mut = `mutation updateAlerts($id: AwcAlertID, $payload: AlertUpdateInput = null) { updateAlerts(query: [{ where: { id: $id } }], payload: $payload) { alert_status } }`;
+                for (const aid of alertIds) {
+                    try {
+                        await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: mut, variables: { id: aid, payload: { alert_status: 'Published' } } }) });
+                    } catch(_) {}
+                }
+            } catch(_) {}
         } else {
             announcementEl.style.opacity = 1;
         }

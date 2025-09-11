@@ -598,6 +598,7 @@ mutation createForumComment($payload: ForumCommentCreateInput) {
           created_at: createdAt,
           is_mentioned: !!isMentioned,
           is_read: false,
+          alert_status: 'Published',
           notified_contact_id: Number(contactId),
           origin_url: originForRecipient,
           origin_url_teacher: (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teacher', 'announcement', urlParams) : teacherUrl,
@@ -891,3 +892,5 @@ mutation createMemberCommentUpvotesForumCommentUpvotes($payload: MemberCommentUp
     console.error("Error creating member comment upvote:", error);
   }
 }
+
+

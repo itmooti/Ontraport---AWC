@@ -1495,7 +1495,7 @@ $(document).ready(async function () {
                   const role = isAdmin
                     ? "admin"
                     : isTeacher
-                    ? "teachers"
+                    ? "teacher"
                     : "students";
                   let eid = undefined;
                   if (role === "students")
@@ -1514,7 +1514,7 @@ $(document).ready(async function () {
                       : originUrl;
                   const teacherUrlCanonical =
                     window.AWC && typeof window.AWC.buildAlertUrl === "function"
-                      ? window.AWC.buildAlertUrl("teachers", "post", params)
+                      ? window.AWC.buildAlertUrl("teacher", "post", params)
                       : originUrl;
                   const adminUrlCanonical =
                     window.AWC && typeof window.AWC.buildAlertUrl === "function"
@@ -1529,6 +1529,7 @@ $(document).ready(async function () {
                     created_at: createdAt,
                     is_mentioned: !!isMentioned,
                     is_read: false,
+                    alert_status: 'Published',
                     notified_contact_id: Number(contactId),
                     origin_url: originUrlCanonical,
                     origin_url_teacher: teacherUrlCanonical,
@@ -2107,8 +2108,8 @@ $(document).on("submit", ".commentForm", function (event) {
                 const role = isAdmin
                   ? "admin"
                   : isTeacher
-                  ? "teachers"
-                  : "students";
+                    ? "teacher"
+                    : "students";
                 let eid;
                 if (role === "students")
                   eid = await resolveStudentEid2(contactId, parentClassId);
@@ -2125,9 +2126,9 @@ $(document).on("submit", ".commentForm", function (event) {
                   window.AWC && typeof window.AWC.buildAlertUrl === "function"
                     ? window.AWC.buildAlertUrl(role, "post", params)
                     : originUrl;
-                const teacherCanonical =
-                  window.AWC && typeof window.AWC.buildAlertUrl === "function"
-                    ? window.AWC.buildAlertUrl("teachers", "post", params)
+                  const teacherCanonical =
+                    window.AWC && typeof window.AWC.buildAlertUrl === "function"
+                    ? window.AWC.buildAlertUrl("teacher", "post", params)
                     : originUrl;
                 const adminCanonical =
                   window.AWC && typeof window.AWC.buildAlertUrl === "function"
@@ -2140,6 +2141,7 @@ $(document).on("submit", ".commentForm", function (event) {
                   created_at: createdAt,
                   is_mentioned: !!isMentioned,
                   is_read: false,
+                  alert_status: 'Published',
                   notified_contact_id: Number(contactId),
                   origin_url: originCanonical,
                   origin_url_teacher: teacherCanonical,
