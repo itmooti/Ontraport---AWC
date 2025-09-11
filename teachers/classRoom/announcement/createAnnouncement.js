@@ -511,6 +511,104 @@ document
         document.getElementById("scheduleOptions").classList.add("hidden");
         const createdAnnouncementss = await createAnnouncement(payload);
         const createdAnnouncementId = createdAnnouncementss.ID;
+
+        // Create alerts for scheduled announcement with alert_status = Not Published
+        try {
+            (async function createScheduledAnnouncementAlerts() {
+                const clsId = Number(createdAnnouncementss?.class_id || classID);
+                if (!Number.isFinite(clsId)) return;
+                const authorId = Number(createdAnnouncementss?.instructor_id || LOGGED_IN_USER_ID);
+
+                // Build roster (students + teacher + admin) and class metadata
+                const qClasses = `
+                  query getClassStudents($id: AwcClassID) {
+                    getClasses(query: [{ where: { id: $id } }]) {
+                      id
+                      unique_id
+                      class_name
+                      Course { unique_id course_name }
+                      Enrolments { Student { id } }
+                    }
+                  }
+                `;
+                const qEnrol = `
+                  query getClassEnrolmentStudents($id: AwcClassID) { calcEnrolments(query: [{ where: { class_id: $id } }]) { Student_ID: field(arg: ["Student","id"]) } }
+                `;
+                const qTeacher = `
+                  query calcClasses($id: AwcClassID) { calcClasses(query: [{ where: { id: $id } }]) { Teacher_Contact_ID: field(arg: ["Teacher","id"]) } }
+                `;
+                const [resClasses, resEnrol, resTeacher] = await Promise.all([
+                    fetch(apiUrlForAnouncement, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKeyForAnouncement }, body: JSON.stringify({ query: qClasses, variables: { id: clsId } }) }).then(r => r.ok ? r.json() : Promise.reject('getClasses failed')),
+                    fetch(apiUrlForAnouncement, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKeyForAnouncement }, body: JSON.stringify({ query: qEnrol, variables: { id: clsId } }) }).then(r => r.ok ? r.json() : Promise.reject('calcEnrolments failed')),
+                    fetch(apiUrlForAnouncement, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKeyForAnouncement }, body: JSON.stringify({ query: qTeacher, variables: { id: clsId } }) }).then(r => r.ok ? r.json() : Promise.reject('calcClasses failed')),
+                ]);
+                const norm = (list) => (Array.isArray(list) ? list : [list]).map(v => Number(v)).filter(n => Number.isFinite(n) && n > 0);
+                let teacherIds = []; const tRaw = resTeacher?.data?.calcClasses?.[0]?.Teacher_Contact_ID; if (tRaw != null) teacherIds = norm(tRaw);
+                const classes = Array.isArray(resClasses?.data?.getClasses) ? resClasses.data.getClasses : [];
+                let classUid, className, courseUid;
+                const idsFromClasses = classes.flatMap(c => { if (!classUid && c?.unique_id) classUid = c.unique_id; if (!className && c?.class_name) className = c.class_name; if (!courseUid && c?.Course?.unique_id) courseUid = c.Course.unique_id; return (Array.isArray(c?.Enrolments) ? c.Enrolments : []).map(e => e?.Student?.id).filter(Boolean); });
+                const enrolRows = Array.isArray(resEnrol?.data?.calcEnrolments) ? resEnrol.data.calcEnrolments : [];
+                const idsFromEnrol = enrolRows.flatMap(row => norm(row?.Student_ID));
+                const adminIds = [10435];
+                const seen = new Set();
+                let audience = norm([...idsFromClasses, ...idsFromEnrol, ...teacherIds, ...adminIds])
+                    .filter(n => (seen.has(n) ? false : (seen.add(n), true)))
+                    .filter(id => id !== authorId);
+                if (!audience.length) return;
+
+                // Build alerts with Not Published status
+                const tmp = document.createElement('div'); tmp.innerHTML = String(content || createdAnnouncementss?.Content || '');
+                const contentText = (tmp.textContent || '').trim();
+                const createdAt = new Date().toISOString();
+                const mentionSet = new Set((mentionedIds || []).map(Number));
+                const alerts = await Promise.all(audience.map(async contactId => {
+                    const isMentioned = mentionSet.has(Number(contactId));
+                    const isTeacher = teacherIds.includes(Number(contactId));
+                    const isAdmin = adminIds.includes(Number(contactId));
+                    const role = isAdmin ? 'admin' : (isTeacher ? 'teacher' : 'students');
+                    let eid; if (role === 'students') {
+                        try {
+                            const cache = (window.__awcEidCache ||= new Map());
+                            const k = String(clsId);
+                            let byClass = cache.get(k);
+                            if (!byClass) { byClass = new Map(); cache.set(k, byClass); }
+                            const sid = Number(contactId);
+                            if (byClass.has(sid)) eid = byClass.get(sid);
+                            else {
+                                const q = `query getEnrolment($id: AwcContactID, $class_id: AwcClassID) { getEnrolment(query: [{ where: { student_id: $id } }, { andWhere: { class_id: $class_id } }]) { ID: id } }`;
+                                const rs = await fetch(apiUrlForAnouncement, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKeyForAnouncement }, body: JSON.stringify({ query: q, variables: { id: Number(contactId), class_id: Number(clsId) } }) }).then(r => r.ok ? r.json() : null);
+                                const val = Number(rs?.data?.getEnrolment?.ID || 0);
+                                if (Number.isFinite(val) && val > 0) { byClass.set(sid, val); eid = val; }
+                            }
+                        } catch(_) {}
+                    }
+                    const params = { classId: clsId, classUid, className, courseUid, eid, announcementId: Number(createdAnnouncementss?.ID || createdAnnouncementss?.id) };
+                    const originCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl(role, 'announcement', params) : undefined;
+                    const teacherCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('teacher', 'announcement', params) : undefined;
+                    const adminCanonical = (window.AWC && typeof window.AWC.buildAlertUrl === 'function') ? window.AWC.buildAlertUrl('admin', 'announcement', params) : undefined;
+                    return {
+                        alert_type: isMentioned ? 'Announcement  Mention' : 'Announcement',
+                        title: isMentioned ? 'You are mentioned in an announcement' : 'An announcement has been posted',
+                        content: contentText,
+                        created_at: createdAt,
+                        is_mentioned: isMentioned,
+                        is_read: false,
+                        alert_status: 'Not Published',
+                        notified_contact_id: Number(contactId),
+                        origin_url: originCanonical || window.location.href,
+                        origin_url_teacher: teacherCanonical || window.location.href,
+                        origin_url_admin: adminCanonical || window.location.href,
+                        parent_class_id: clsId,
+                        parent_announcement_id: Number(createdAnnouncementss?.ID || createdAnnouncementss?.id),
+                    };
+                }));
+                try {
+                    const createAlertsMutation = `mutation createAlerts($payload: [AlertCreateInput] = null) { createAlerts(payload: $payload) { is_mentioned } }`;
+                    await fetch(apiUrlForAnouncement, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKeyForAnouncement }, body: JSON.stringify({ query: createAlertsMutation, variables: { payload: alerts } }) });
+                } catch(e) { console.error('Failed to create scheduled announcement alerts (batch)', e); }
+            })();
+        } catch (e) { console.error('Scheduled announcement alert error', e); }
+
         await updateMentionedContacts(mentionedIds);
         loadAnnouncements(createdAnnouncementId);
         document.getElementById("announcementContent").innerHTML = "";
