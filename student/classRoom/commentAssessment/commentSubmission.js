@@ -479,6 +479,9 @@ document.addEventListener("submit", async function (e) {
             commentScrollID: Number(created.id),
             notType: "Submission Comments",
           };
+          const readyParams = (window.AWC && typeof window.AWC.waitForAlertParams === 'function')
+            ? await window.AWC.waitForAlertParams('submission', params)
+            : params;
           try {
           } catch (_) {}
           function buildSubmissionAlertUrl(role, p) {
@@ -512,16 +515,16 @@ document.addEventListener("submit", async function (e) {
           }
           const originCanonical =
             window.AWC && typeof window.AWC.buildAlertUrl === "function"
-              ? window.AWC.buildAlertUrl(role, "submission", params)
-              : buildSubmissionAlertUrl(role, params);
+              ? window.AWC.buildAlertUrl(role, "submission", readyParams)
+              : buildSubmissionAlertUrl(role, readyParams);
           const teacherCanonical =
             window.AWC && typeof window.AWC.buildAlertUrl === "function"
-              ? window.AWC.buildAlertUrl("teacher", "submission", params)
-              : buildSubmissionAlertUrl("teacher", params);
+              ? window.AWC.buildAlertUrl("teacher", "submission", readyParams)
+              : buildSubmissionAlertUrl("teacher", readyParams);
           const adminCanonical =
             window.AWC && typeof window.AWC.buildAlertUrl === "function"
-              ? window.AWC.buildAlertUrl("admin", "submission", params)
-              : buildSubmissionAlertUrl("admin", params);
+              ? window.AWC.buildAlertUrl("admin", "submission", readyParams)
+              : buildSubmissionAlertUrl("admin", readyParams);
           // isReplyNow computed earlier
           const alertType = isMentioned
             ? "Submission Comment Mention"
