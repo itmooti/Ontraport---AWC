@@ -487,7 +487,7 @@ document.addEventListener("submit", async function (e) {
           function buildSubmissionAlertUrl(role, p) {
             const BASE = "https://courses.writerscentre.com.au";
             const r = String(role || "").toLowerCase();
-            const lessonUid = String(p.lessonUid || "");
+            const lessonUid = String(p.lessonUid || window.lessonUIDFromPage || window.lessonUid || "");
             const base = `${BASE}/course-details/content/${encodeURIComponent(
               lessonUid
             )}`;
