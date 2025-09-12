@@ -637,6 +637,7 @@ document.addEventListener("submit", async function (e) {
             created_at: createdAt,
             is_mentioned: !!isMentioned,
             is_read: false,
+            alert_status: 'Published',
             notified_contact_id: Number(contactId),
             origin_url: originCanonical,
             origin_url_teacher: teacherCanonical,
