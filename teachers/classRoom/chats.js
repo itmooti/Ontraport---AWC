@@ -1359,7 +1359,6 @@ $(document).ready(function () {
                     created_at: createdAt,
                     is_mentioned: !!isMentioned,
                     is_read: false,
-                    alert_status: 'Published',
                     notified_contact_id: Number(contactId),
                     origin_url: originUrlCanonical,
                     origin_url_teacher: teacherUrlCanonical,
@@ -1917,7 +1916,6 @@ $(document).on("submit", ".commentForm", function (event) {
                   created_at: createdAt,
                   is_mentioned: !!isMentioned,
                   is_read: false,
-                  alert_status: 'Published',
                   notified_contact_id: Number(contactId),
                   origin_url: originUrlCanonical,
                   origin_url_teacher: teacherUrlCanonical,
@@ -2250,14 +2248,22 @@ $(document).on("click", ".deleteFileContainerComment", function () {
 });
 
 // Helper to reset the file upload UI for a comment form
-function resetCommentFileUploadUI(form) {
-  var container = $(form).find(".commentForm");
-  container.find(".formFileInputForComment").val("");
-  container
+function resetCommentFileUploadUI(formOrContainer) {
+  let $root = $(formOrContainer);
+  let $container = $root.hasClass("commentForm")
+    ? $root
+    : $root.closest(".commentForm");
+  if (!$container || !$container.length) {
+    $container = $root.find(".commentForm").first();
+  }
+  if (!$container || !$container.length) return;
+
+  $container.find(".formFileInputForComment").val("");
+  $container
     .find(".replaceFileContainerComment, .deleteFileContainerComment")
     .hide();
-  container.find(".attachAFileForComment").show();
-  container.find(".commentFilePreviewContainer").html("");
+  $container.find(".attachAFileForComment").show();
+  $container.find(".commentFilePreviewContainer").empty();
 }
 
 function getFilePreviewHTML(file) {
