@@ -182,8 +182,8 @@ $(".comment-editor").each(function () {
   NewMentionManager.initEditor(this);
 });
 
-if ($(".mentionable").length > 0) {
-  $(".mentionable").each(function () {
+if ($(".newMentionable").length > 0) {
+  $(".newMentionable").each(function () {
     NewMentionManager.initEditor(this);
   });
 }
