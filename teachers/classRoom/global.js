@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", function () {
             targetElement.classList.add("highlightTheSelected");
             setTimeout(() => {
                 targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
-            }, 1000);
+            }, 3000);
             return true;
         }
         return false;
