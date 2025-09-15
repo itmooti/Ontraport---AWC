@@ -182,6 +182,12 @@ $(".comment-editor").each(function () {
   NewMentionManager.initEditor(this);
 });
 
+if ($(".mentionable").length > 0) {
+  $(".mentionable").each(function () {
+    NewMentionManager.initEditor(this);
+  });
+}
+
 if ($("#announcementContent").length > 0) {
   $("#announcementContent").each(function () {
     NewMentionManager.initEditor(this);
