@@ -332,7 +332,9 @@ var myHelpers = {
       if (mime.startsWith("audio/")) return "audio";
       if (mime.startsWith("video/")) return "video";
     }
-    const lowerName = fileObj.name.toLowerCase();
+    const lowerName = (
+      (fileObj && (fileObj.name || fileObj.link)) || ""
+    ).toLowerCase();
     if (/\.(jpg|jpeg|png|gif|bmp|webp)$/.test(lowerName)) return "image";
     if (/\.(mp3|wav|ogg)$/.test(lowerName)) return "audio";
     if (/\.(mp4|webm|ogg)$/.test(lowerName)) return "video";
