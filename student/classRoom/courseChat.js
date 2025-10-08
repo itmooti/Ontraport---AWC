@@ -321,8 +321,8 @@ var myHelpers = {
         normalized === "[]" ||
         normalized === "\"\"" ||
         normalized === "''" ||
-        lowered === "undefined" ||
-        lowered === "null"
+        lowered === "" ||
+        lowered === ""
       )
         return null;
       return { link: normalized, name: normalized };
@@ -332,7 +332,14 @@ var myHelpers = {
       if (!parsed.link && parsed.s3_id)
         parsed.link =
           "https://t.writerscentre.com.au/s/dl?token=" + parsed.s3_id;
-      if (parsed.link || parsed.name) return parsed;
+      if (parsed.link || parsed.name) {
+        // Ensure we have fallback values for undefined properties
+        return {
+          link: parsed.link || "",
+          name: parsed.name || "",
+          type: parsed.type || ""
+        };
+      }
     }
     const fallback = trimmed.trim();
     if (!fallback) return null;
@@ -367,8 +374,8 @@ var myHelpers = {
     const fileObj = myHelpers.getFileInfo(fileString);
     if (!fileObj) return "";
     const category = myHelpers.getFileCategory(fileObj);
-    const link = fileObj.link;
-    const name = fileObj.name;
+    const link = fileObj.link || "";
+    const name = fileObj.name || "Unknown File";
     if (category === "image")
       return (
         "<div class='mt-2 mb-4 w-full'><img src='" +
