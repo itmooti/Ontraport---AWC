@@ -313,8 +313,19 @@ var myHelpers = {
       }
     }
     if (typeof parsed === "string") {
-      if (parsed.trim() === "{}") return null;
-      return { link: parsed, name: parsed };
+      const normalized = parsed.trim();
+      if (!normalized) return null;
+      const lowered = normalized.toLowerCase();
+      if (
+        normalized === "{}" ||
+        normalized === "[]" ||
+        normalized === "\"\"" ||
+        normalized === "''" ||
+        lowered === "undefined" ||
+        lowered === "null"
+      )
+        return null;
+      return { link: normalized, name: normalized };
     }
     if (parsed && typeof parsed === "object") {
       if (Object.keys(parsed).length === 0) return null;
@@ -323,7 +334,19 @@ var myHelpers = {
           "https://t.writerscentre.com.au/s/dl?token=" + parsed.s3_id;
       if (parsed.link || parsed.name) return parsed;
     }
-    return { link: trimmed, name: trimmed };
+    const fallback = trimmed.trim();
+    if (!fallback) return null;
+    const fallbackLower = fallback.toLowerCase();
+    if (
+      fallback === "{}" ||
+      fallback === "[]" ||
+      fallback === "\"\"" ||
+      fallback === "''" ||
+      fallbackLower === "undefined" ||
+      fallbackLower === "null"
+    )
+      return null;
+    return { link: fallback, name: fallback };
   },
   getFileCategory: function (fileObj) {
     let mime = fileObj.type || "";
