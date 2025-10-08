@@ -333,12 +333,16 @@ var myHelpers = {
         parsed.link =
           "https://t.writerscentre.com.au/s/dl?token=" + parsed.s3_id;
       if (parsed.link || parsed.name) {
-        // Ensure we have fallback values for undefined properties
-        return {
-          link: parsed.link || "",
-          name: parsed.name || "",
-          type: parsed.type || ""
-        };
+        // Only return file object if we have both link and name
+        if (parsed.link && parsed.name) {
+          return {
+            link: parsed.link,
+            name: parsed.name,
+            type: parsed.type || ""
+          };
+        }
+        // If we don't have both essential properties, return null
+        return null;
       }
     }
     const fallback = trimmed.trim();
@@ -376,6 +380,10 @@ var myHelpers = {
     const category = myHelpers.getFileCategory(fileObj);
     const link = fileObj.link || "";
     const name = fileObj.name || "";
+    
+    // Don't render anything if essential file data is missing
+    if (!link || !name) return "";
+    
     if (category === "image")
       return (
         "<div class='mt-2 mb-4 w-full'><img src='" +
