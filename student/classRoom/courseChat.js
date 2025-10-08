@@ -349,7 +349,7 @@ var myHelpers = {
       fallback === "[]" ||
       fallback === "\"\"" ||
       fallback === "''" ||
-      fallbackLower === "undefined" ||
+      fallbackLower === "" ||
       fallbackLower === "null"
     )
       return null;
@@ -375,7 +375,7 @@ var myHelpers = {
     if (!fileObj) return "";
     const category = myHelpers.getFileCategory(fileObj);
     const link = fileObj.link || "";
-    const name = fileObj.name || "Unknown File";
+    const name = fileObj.name || "";
     if (category === "image")
       return (
         "<div class='mt-2 mb-4 w-full'><img src='" +
