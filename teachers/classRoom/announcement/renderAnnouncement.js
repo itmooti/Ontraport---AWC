@@ -373,7 +373,7 @@ async function createForumComment(
         author_id: currentPageUserID,
         Mentions: mentionedIds.map((id) => ({
             id: id,
-            has__new__notification: true,
+            has__new__notification: false,
         })),
     };
     const mutation = `
