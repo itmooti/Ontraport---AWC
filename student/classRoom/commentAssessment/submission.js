@@ -169,7 +169,7 @@ const SubmissionService = {
                 comment: commentContentHTML,
                 Mentions: mentionArrays.map(id => ({ 
                     unique_id: id,
-                    has__new__notification: true
+                    has__new__notification: false
                 })),
                 file: fileData,
             },
@@ -207,7 +207,7 @@ const CommentsService = {
                 comment: replyContentHTML,
                 Mentions: mentions.map(id => ({ 
                     unique_id: id,
-                    has__new__notification: true
+                    has__new__notification: false
                 })),
             },
         };
@@ -622,7 +622,7 @@ const handleComments = {
                         if (mentionContactIds.length) {
                             const updateMutation = `mutation updateContact($id: AwcContactID!, $payload: ContactUpdateInput!) { updateContact(query: [{ where: { id: $id } }], payload: $payload) { has__new__notification } }`;
                             for (const mid of mentionContactIds) {
-                                try { await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: updateMutation, variables: { id: Number(mid), payload: { has__new__notification: true } } }) }); } catch(_) {}
+                                try { await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: updateMutation, variables: { id: Number(mid), payload: { has__new__notification: false } } }) }); } catch(_) {}
                             }
                         }
                     } catch (e) {
@@ -870,7 +870,7 @@ const handleComments = {
                         if (mentionContactIds.length) {
                             const updateMutation = `mutation updateContact($id: AwcContactID!, $payload: ContactUpdateInput!) { updateContact(query: [{ where: { id: $id } }], payload: $payload) { has__new__notification } }`;
                             for (const mid of mentionContactIds) {
-                                try { await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: updateMutation, variables: { id: Number(mid), payload: { has__new__notification: true } } }) }); } catch(_) {}
+                                try { await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Api-Key': apiKey }, body: JSON.stringify({ query: updateMutation, variables: { id: Number(mid), payload: { has__new__notification: false } } }) }); } catch(_) {}
                             }
                         }
                     } catch (e) {
