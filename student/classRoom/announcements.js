@@ -31,7 +31,7 @@ function updateContact(id, payload) {
 async function updateMentionedContacts(mentionedIds) {
   for (const id of mentionedIds) {
     try {
-      await updateContact(id, { has__new__notification: true });
+      await updateContact(id, { has__new__notification: false });
     } catch (e) {
       console.error("Failed to update contact:", id, e);
     }
