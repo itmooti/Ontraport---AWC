@@ -1127,7 +1127,7 @@ $(document).ready(function () {
       author_id: visitorContactID,
       Mentions: mentionedIds.map((id) => ({
         id: id,
-        has__new__notification: true,
+        has__new__notification: false,
       })),
       post_status: "Published - Not flagged",
       class_id: classId,
@@ -1423,7 +1423,7 @@ $(document).ready(function () {
 
           return Promise.all(
             mentionIds.map((id) =>
-              ForumAPI.updateContact(id, { has__new__notification: true })
+              ForumAPI.updateContact(id, { has__new__notification: false })
             )
           ).then(() => created);
         })
@@ -1567,7 +1567,7 @@ $(document).on("submit", ".commentForm", function (event) {
     author_id: visitorContactID,
     Mentions: mentionedIds.map((id) => ({
       id: id,
-      has__new__notification: true,
+      has__new__notification: false,
     })),
   };
   if (parentType === "post") {
@@ -1981,7 +1981,7 @@ $(document).on("submit", ".commentForm", function (event) {
 
         return Promise.all(
           mentionIds.map((id) =>
-            ForumAPI.updateContact(id, { has__new__notification: true })
+            ForumAPI.updateContact(id, { has__new__notification: false })
           )
         ).then(() => created);
       })
