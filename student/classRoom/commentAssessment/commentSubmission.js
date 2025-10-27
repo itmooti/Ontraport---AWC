@@ -52,7 +52,7 @@ async function createForumCommentRequest(
       comment_file_name: fileName,
       Mentions: Mentions.map((id) => ({
         unique_id: id,
-        has__new__notification: true,
+        has__new__notification: false,
       })),
       Author: {
         display_name: currentUserDisplayName,
@@ -687,7 +687,7 @@ document.addEventListener("submit", async function (e) {
                   query: updateMutation,
                   variables: {
                     id: Number(mid),
-                    payload: { has__new__notification: true },
+                    payload: { has__new__notification: false },
                   },
                 }),
               });
