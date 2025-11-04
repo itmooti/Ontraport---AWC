@@ -892,77 +892,42 @@ async function renderUnifiedModules() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-  // Build a fast lookup map from lesson UID -> module (once).
-  // (Rebuild if unifiedNewModules can change dynamically.)
-  const uidToModule = new Map();
-  if (Array.isArray(unifiedNewModules)) {
-    unifiedNewModules.forEach(mod => {
-      if (Array.isArray(mod.lessons)) {
-        mod.lessons.forEach(lesson => {
-          // Prefer exact uniqueId if present
-          if (lesson && lesson.uniqueId) {
-            uidToModule.set(String(lesson.uniqueId), mod);
-          }
-          // Also index by the UID parsed from the lesson URL (fallback)
-          const u = (lesson && lesson.awcLessonContentPageUrl) ? getUidFromUrl(lesson.awcLessonContentPageUrl) : null;
-          if (u) uidToModule.set(u, mod);
-        });
-      }
-    });
-  }
-
   document.body.addEventListener("click", function (event) {
-    const anchor = event.target.closest("a.nextLessonUrl");
-    if (!anchor) return;
-
-    const href = anchor.getAttribute("href") || "";
-    const lessonUid = getUidFromUrl(href);
-
-    console.log(".nextLessonUrl clicked, href:", href);
-    console.log("extracted lessonUid:", lessonUid);
-
-    if (!lessonUid) return;
-
-    const module = uidToModule.get(lessonUid);
-    console.log("Found module for lessonUid:", module);
-
-    // ---- Choose ONE of the two behaviors below ----
-
-    // A) If module is UNLOCKED (availability === true), allow navigation; otherwise show modal:
-    // if (module && module.availability === true) {
-    //   window.location.href = href;
-    // } else {
-    //   document.querySelector(".unavailableLessonModal")?.classList.remove("hidden");
-    // }
-
-    // B) If module is LOCKED (availability === false), allow navigation; otherwise show modal:
+    var anchor = event.target.closest("a.nextLessonUrl");
+    if (!anchor) {
+      return;
+    }
+    console.log("  .nextLessonUrl clicked, href:", anchor.getAttribute("href"));
+    event.preventDefault();
+    var href = anchor.getAttribute("href");
+    var match = href.match(/content\/([^?\/]+)/);
+    console.log("match", match);
+    if (!match) return;
+    var lessonUid = match[1];
+    console.log("lessonUid",lessonUid);
+    var module = unifiedNewModules.find(function (mod) {
+      return (
+        Array.isArray(mod.lessons) &&
+        mod.lessons.some(function (lesson) {
+          return (
+            lesson.awcLessonContentPageUrl &&
+            lesson.awcLessonContentPageUrl.indexOf(lessonUid) !== -1
+          );
+        })
+      );
+    });
+    console.log("  Found module for lessonUid:", module);
     if (module && module.availability === false) {
-      // (matches your original comment)
+      console.log("  Module locked, navigating to href");
       window.location.href = href;
     } else {
-      document.querySelector(".unavailableLessonModal")?.classList.remove("hidden");
+      
+      document
+        .querySelector(".unavailableLessonModal")
+        .classList.remove("hidden");
     }
   });
-
-  function getUidFromUrl(url) {
-    try {
-      // Works for absolute or relative URLs
-      const u = new URL(url, window.location.origin);
-      const parts = u.pathname.split("/").filter(Boolean);
-      // Expect .../content/<UID>
-      const idx = parts.lastIndexOf("content");
-      if (idx !== -1 && parts[idx + 1]) return parts[idx + 1];
-      // Fallback to your regex in case path is unusual
-      const m = url.match(/content\/([^?\/]+)/);
-      return m ? m[1] : null;
-    } catch (e) {
-      // Not a valid URL? Try regex fallback anyway.
-      const m = String(url).match(/content\/([^?\/]+)/);
-      return m ? m[1] : null;
-    }
-  }
 });
-
 
 function addEventListenerIfExists(id, event, handler) {
   console.log(`addEventListenerIfExists called for #${id} event "${event}"`);
