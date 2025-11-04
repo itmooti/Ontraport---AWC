@@ -900,9 +900,12 @@ document.addEventListener("DOMContentLoaded", function () {
     console.log("  .nextLessonUrl clicked, href:", anchor.getAttribute("href"));
     event.preventDefault();
     var href = anchor.getAttribute("href");
+    console.log("href", href);
     var match = href.match(/content\/([^?\/]+)/);
+    console.log("match", match);
     if (!match) return;
     var lessonUid = match[1];
+    console.log("lessonuid", lessonUid);
     var module = unifiedNewModules.find(function (mod) {
       return (
         Array.isArray(mod.lessons) &&
