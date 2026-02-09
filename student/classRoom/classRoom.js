@@ -3,15 +3,16 @@ let currentUrl = window.location.href;
 let match = currentUrl.match(/[?&]selectedTab=([^?&#]*)/);
 
 function selectedTabChange(tabname) {
-  let url = window.location.href;
-  let match = url.match(/(\?|\&)eid=\d+/);
-  if (!match) {
-    return;
-  }
-  let eidIndex = url.indexOf(match[0]) + match[0].length;
-  let newUrl = url.substring(0, eidIndex) + `&selectedTab=${tabname}`;
-  window.history.replaceState(null, "", newUrl);
+  const url = new URL(window.location.href);
+
+  // Keep your original behavior: only change URL if eid exists
+  if (!url.searchParams.has("eid")) return;
+
+  url.searchParams.set("selectedTab", tabname);
+
+  window.history.replaceState(null, "", url.toString());
 }
+
 
 document.addEventListener("DOMContentLoaded", function () {
   let currentUrl = window.location.href;
