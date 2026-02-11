@@ -1,4 +1,4 @@
-console.log("Script start: initializing variables");
+
 let completedQuery;
 let inProgressQuery;
 let enrollmentCourseProgressQuery;
@@ -9,18 +9,7 @@ let showDripFed = false;
 let prevLesson = "";
 let nextLesson = "";
 let unifiedNewModules = [];
-console.log("Initial state:", {
-  completedQuery,
-  inProgressQuery,
-  enrollmentCourseProgressQuery,
-  lessonDateProgress,
-  getEnrollmentFormat,
-  globalClassId,
-  showDripFed,
-  prevLesson,
-  nextLesson,
-  unifiedNewModules,
-});
+
 
 function getSydneyMidnightTimestamp(msTime) {
   // 1) Build a Date for your input time
@@ -54,14 +43,12 @@ function getSydneyMidnightTimestamp(msTime) {
 
 
 async function fetchClassIdFromUrl() {
-  console.log("fetchClassIdFromUrl start, URL:", window.location.href);
 
   const url               = new URL(window.location.href);
   const eidforEnroll      = url.searchParams.get("eid");
   const fallbackClassId   = url.searchParams.get("currentClassID") || url.searchParams.get("classIdFromUrl");
 
   if (!eidforEnroll) {
-    console.log("  No eid found; using fallback class ID:", fallbackClassId);
     return fallbackClassId || null;
   }
 
@@ -79,7 +66,6 @@ async function fetchClassIdFromUrl() {
       }
     `,
   };
-  console.log("  GraphQL query:", query.query.trim());
 
   try {
     const response   = await fetch("https://awc.vitalstats.app/api/v1/graphql", {
@@ -90,36 +76,27 @@ async function fetchClassIdFromUrl() {
       },
       body: JSON.stringify(query),
     });
-    console.log("  fetch response:", response);
 
     const data        = await response.json();
     const enrolments  = data?.data?.calcEnrolments;
-    console.log("  enrolments array:", enrolments);
 
     if (Array.isArray(enrolments) && enrolments.length > 0) {
-      console.log("  Returning Class_ID:", enrolments[0].Class_ID);
       return enrolments[0].Class_ID;
     }
   } catch (err) {
-    console.error("  fetchClassIdFromUrl error:", err);
   }
 
-  console.log("  GraphQL returned no result; using fallback class ID:", fallbackClassId);
   return fallbackClassId || null;
 }
 
 
 function getSydneyUnixFromLocalNow() {
-  console.log("getSydneyUnixFromLocalNow called");
   const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  console.log("  Local timezone:", userTimeZone);
   if (userTimeZone === "Australia/Sydney") {
     const sydneyNow = Date.now();
-    console.log("  Already in Sydney TZ, timestamp (ms):", sydneyNow);
     return sydneyNow;
   }
   const now = new Date();
-  console.log("  Current local Date object:", now);
   const options = {
     timeZone: "Australia/Sydney",
     year: "numeric",
@@ -131,7 +108,6 @@ function getSydneyUnixFromLocalNow() {
     hour12: false,
   };
   const parts = new Intl.DateTimeFormat("en-CA", options).formatToParts(now);
-  console.log("  Intl parts for Sydney:", parts);
 
   const sydney = {
     year: parts.find((p) => p.type === "year").value,
@@ -141,11 +117,9 @@ function getSydneyUnixFromLocalNow() {
     minute: parts.find((p) => p.type === "minute").value,
     second: parts.find((p) => p.type === "second").value,
   };
-  console.log("  Parsed Sydney date/time components:", sydney);
 
   const utcDate = new Date(now.toISOString());
   const offsetMinutes = -utcDate.getTimezoneOffset();
-  console.log("  Local offset minutes:", offsetMinutes);
   const sydneyOffsetMinutes = new Date()
     .toLocaleTimeString("en-US", {
       timeZone: "Australia/Sydney",
@@ -154,26 +128,15 @@ function getSydneyUnixFromLocalNow() {
     .includes("AEDT")
     ? 660
     : 600;
-  console.log("  Sydney offset minutes (AEDT/AEST):", sydneyOffsetMinutes);
   const timezoneOffset = sydneyOffsetMinutes - offsetMinutes;
-  console.log("  Computed timezoneOffset:", timezoneOffset);
 
   const adjustedDate = new Date(now.getTime() + timezoneOffset * 60000);
-  console.log("  Adjusted Date for Sydney:", adjustedDate);
   const sydneyUnixMs = adjustedDate.getTime();
-  console.log("getSydneyUnixFromLocalNow returning:", sydneyUnixMs);
   return sydneyUnixMs;
 }
 
 function getRemainingTime(openDateUnixMs, todayUnixMs) {
-  console.log(
-    "getRemainingTime called with openDateUnixMs:",
-    openDateUnixMs,
-    "todayUnixMs:",
-    todayUnixMs
-  );
   if (todayUnixMs > openDateUnixMs) {
-    console.log("  Already unlocked");
     return;
   }
 
@@ -183,12 +146,10 @@ function getRemainingTime(openDateUnixMs, todayUnixMs) {
   const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
   const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   const formatted = `${days}d ${hours}h ${minutes}m ${seconds}s`;
-  console.log("Remaining to unlock:", formatted);
   return formatted;
 }
 
 function defineQuery() {
-  console.log("defineQuery called with eid:", eid);
   getEnrollmentFormat = `
     query calcEnrolments {
       calcEnrolments(query: [{ where: { id: ${eid} } }]) {
@@ -196,7 +157,6 @@ function defineQuery() {
       }
     }
   `;
-  console.log("  getEnrollmentFormat set to:", getEnrollmentFormat.trim());
 
   completedQuery = `
     query {
@@ -207,7 +167,6 @@ function defineQuery() {
       }
     }
   `;
-  console.log("  completedQuery set to:", completedQuery.trim());
 
   inProgressQuery = `
     query {
@@ -218,7 +177,6 @@ function defineQuery() {
       }
     }
   `;
-  console.log("  inProgressQuery set to:", inProgressQuery.trim());
 
   enrollmentCourseProgressQuery = `
     query calcEnrolments {
@@ -228,10 +186,6 @@ function defineQuery() {
       }
     }
   `;
-  console.log(
-    "  enrollmentCourseProgressQuery set to:",
-    enrollmentCourseProgressQuery.trim()
-  );
 
   lessonDateProgress = `
     query calcEnrolments {
@@ -241,31 +195,22 @@ function defineQuery() {
       }
     }
   `;
-  console.log("  lessonDateProgress set to:", lessonDateProgress.trim());
 }
 
 function getEnrolmentLessonCompletionID() {
-  console.log(
-    "getEnrolmentLessonCompletionID called, URL:",
-    window.location.href
-  );
   const urls = window.location.href;
   const matchs = urls.match(/[\?&]eid=(\d+)/);
   const result = matchs ? parseInt(matchs[1]) : null;
-  console.log("  Returning enrolmentLessonCompletionID:", result);
   return result;
 }
 
 let eid = null;
 
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("DOMContentLoaded #1: setting up eid and queries");
   const currentUrl = window.location.href;
   const match = currentUrl.match(/[\?&]eid=(\d+)/);
   eid = match ? parseInt(match[1]) : null;
-  console.log("  Parsed eid:", eid);
   if (!eid) {
-    console.log("  No eid, skipping defineQuery");
     return;
   }
   defineQuery();
@@ -273,20 +218,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
 $.views.helpers({
   formatNewLines: function (text) {
-    console.log("formatNewLines helper called with:", text);
     return text ? text.replace(/\n/g, "<br>") : "";
   },
 });
 
 $.views.helpers({
   countMatchingLessons: function (lessons) {
-    console.log("countMatchingLessons helper called, lessons:", lessons);
     return lessons.filter((lesson) => lesson.Status === "Completed").length;
   },
 });
 
 function checkLearningOutcomes() {
-  console.log("checkLearningOutcomes called");
   const outcomes = [
     { textId: "learningOutcome1", svgId: "svgOutcome1" },
     { textId: "learningOutcome2", svgId: "svgOutcome2" },
@@ -299,13 +241,10 @@ function checkLearningOutcomes() {
   ];
 
   outcomes.forEach((outcome) => {
-    console.log("  Checking outcome:", outcome);
     const textElement = document.getElementById(outcome.textId);
     const svgElement = document.getElementById(outcome.svgId);
-    console.log("    textElement:", textElement, "svgElement:", svgElement);
 
     if (!textElement || !textElement.textContent.trim()) {
-      console.log("    Hiding svg for", outcome.svgId);
       if (svgElement) {
         svgElement.style.display = "none";
       }
@@ -314,18 +253,14 @@ function checkLearningOutcomes() {
 }
 
 window.onload = function () {
-  console.log("window.onload: invoking checkLearningOutcomes");
   checkLearningOutcomes();
 };
 
 const courseContenturl = window.location.href;
-console.log("courseContenturl:", courseContenturl);
 const urlParams = new URLSearchParams(window.location.search);
 const studentseid = urlParams.get("eid");
-console.log("studentseid from URLSearchParams:", studentseid);
 
 async function fetchGraphQL(query) {
-  console.log("fetchGraphQL called with query:", query.trim());
   try {
     const response = await fetch("https://awc.vitalstats.app/api/v1/graphql", {
       method: "POST",
@@ -335,18 +270,14 @@ async function fetchGraphQL(query) {
       },
       body: JSON.stringify({ query }),
     });
-    console.log("  fetchGraphQL response:", response);
     const result = await response.json();
-    console.log("  fetchGraphQL parsed JSON:", result);
     return result?.data || {};
   } catch (error) {
-    console.error("  fetchGraphQL error:", error);
     return {};
   }
 }
 
 function formatDate(unixTimestamp) {
-  console.log("formatDate called with unixTimestamp (s):", unixTimestamp);
   if (!unixTimestamp) return "Invalid Date";
   const date = new Date(unixTimestamp * 1000);
   const formatted = date.toLocaleDateString("en-US", {
@@ -354,12 +285,10 @@ function formatDate(unixTimestamp) {
     month: "long",
     day: "numeric",
   });
-  console.log("  formatDate returning:", formatted);
   return formatted;
 }
 
 function formatDateNew(unixTimestamp) {
-  console.log("formatDateNew called with unixTimestamp (ms):", unixTimestamp);
   if (!unixTimestamp) return "Invalid Date";
   const date = new Date(unixTimestamp);
   const formatted = date.toLocaleDateString("en-US", {
@@ -368,28 +297,19 @@ function formatDateNew(unixTimestamp) {
     month: "long",
     day: "numeric",
   });
-  console.log("  formatDateNew returning:", formatted);
   return formatted;
 }
 
 
 
 function determineAvailability(startDateUnix, weekOpen, customisations = []) {
-  console.log("determineAvailability called with:", {
-    startDateUnix,
-    weekOpen,
-    customisations,
-  });
 
   const todayUnix = getSydneyUnixFromLocalNow();
-  console.log("  todayUnix:", todayUnix);
 
   if (!startDateUnix) {
-    console.log("  No startDateUnix, returning unavailable");
     return { isAvailable: false, openDateText: "No Start Date" };
   }
   if (weekOpen === null || weekOpen === 0) {
-    console.log("  weekOpen is null or 0, returning unavailable");
     return { isAvailable: false, openDateText: "Unavailable" };
   }
 
@@ -400,42 +320,30 @@ function determineAvailability(startDateUnix, weekOpen, customisations = []) {
   const sortedCustomisations = [...customisations].sort(
     (a, b) => new Date(b.created_at) - new Date(a.created_at)
   );
-  console.log("  sortedCustomisations:", sortedCustomisations);
 
   const latestWithDate = sortedCustomisations.find((c) => c.specific_date);
-  console.log("  latestWithDate:", latestWithDate);
 
   const latestWithOffset = sortedCustomisations.find(
     (c) => c.days_to_offset !== null && c.days_to_offset !== undefined
   );
-  console.log("  latestWithOffset:", latestWithOffset);
 
   if (latestWithDate) {
     openDateUnix =
       latestWithDate.specific_date > 9999999999
         ? latestWithDate.specific_date
         : latestWithDate.specific_date * 1000;
-    console.log("  Using specific_date, openDateUnix:", openDateUnix);
   } else {
     openDateUnix = (startDateUnix + (weekOpen - 1) * SECONDS_IN_WEEK) * 1000;
     openDateUnix = getSydneyMidnightTimestamp(openDateUnix);
-    console.log("  After weekOpen, raw openDateUnix:", openDateUnix);
 
     if (latestWithOffset) {
       openDateUnix += latestWithOffset.days_to_offset * SECONDS_IN_DAY * 1000;
-      console.log("  After offset, raw openDateUnix:", openDateUnix);
       openDateUnix = getSydneyMidnightTimestamp(openDateUnix);
-      console.log("  Snapped to Sydney midnight, openDateUnix:", openDateUnix);
     }
   }
 
   const isAvailable = todayUnix <= openDateUnix;
   const openDateText = `Unlocks on ${formatDateNew(openDateUnix)}`;
-  console.log("  determineAvailability returning:", {
-    isAvailable,
-    openDateText,
-    openDateUnix,
-  });
   return { isAvailable, openDateText, openDateUnix };
 }
 
@@ -445,36 +353,25 @@ function determineAssessmentDueDateUnified(
   moduleStartDateUnix,
   customisations = []
 ) {
-  console.log("determineAssessmentDueDateUnified called with:", {
-    lesson,
-    moduleStartDateUnix,
-    customisations,
-  });
   const dueWeek = lesson.assessmentDueEndOfWeek;
-  console.log("  dueWeek:", dueWeek);
   let dueDateUnix = null,
     dueDateText = null;
 
   if (dueWeek === 0 || dueWeek === null) {
-    console.log("  No dueWeek or dueWeek=0, returning no due date");
     return { dueDateUnix: null, dueDateText: null };
   }
 
   const baseDate = new Date(moduleStartDateUnix);
   baseDate.setUTCHours(0, 0, 0, 0);
   const normalizedStartUnix = baseDate.getTime();
-  console.log("  normalizedStartUnix:", normalizedStartUnix);
 
   const sorted = [...customisations].sort(
     (a, b) => new Date(b.created_at) - new Date(a.created_at)
   );
-  console.log("  sorted assessment customisations:", sorted);
   const latestWithDate = sorted.find((c) => c.specific_date);
-  console.log("  latestWithDate (assessment):", latestWithDate);
   const latestWithOffset = sorted.find(
     (c) => c.days_to_offset !== null && c.days_to_offset !== undefined
   );
-  console.log("  latestWithOffset (assessment):", latestWithOffset);
 
   if (latestWithDate) {
     dueDateUnix =
@@ -482,7 +379,6 @@ function determineAssessmentDueDateUnified(
         ? latestWithDate.specific_date
         : latestWithDate.specific_date * 1000;
     dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
-    console.log("  Specific-date due date:", { dueDateUnix, dueDateText });
     return { dueDateUnix, dueDateText };
   }
 
@@ -490,7 +386,6 @@ function determineAssessmentDueDateUnified(
     dueDateUnix =
       normalizedStartUnix + latestWithOffset.days_to_offset * 86400 * 1000;
     dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
-    console.log("  Offset-based due date:", { dueDateUnix, dueDateText });
     return { dueDateUnix, dueDateText };
   }
 
@@ -498,16 +393,10 @@ function determineAssessmentDueDateUnified(
   dueDateUnix =
     normalizedStartUnix + (dueWeek) * 86400 * 1000 + endOfDayOffsetMs;
   dueDateText = `Due on ${formatDateNew(dueDateUnix)}`;
-  console.log("  Default end-of-week due date:", { dueDateUnix, dueDateText });
   return { dueDateUnix, dueDateText };
 }
 
 function generateLmsQuery(classID, studentseid, courseID) {
-  console.log("generateLmsQuery called with:", {
-    classID,
-    studentseid,
-    courseID,
-  });
   const q = `
     query LMSQuery {
       LMSQuery: getCourses(query: [{ where: { id: ${COURSE_ID} } }]) {
@@ -609,45 +498,32 @@ function generateLmsQuery(classID, studentseid, courseID) {
       }
     }
   `;
-  console.log("generateLmsQuery returning query string");
   return q;
 }
 
 async function fetchLmsUnifiedData() {
-  console.log("fetchLmsUnifiedData start");
   try {
     const classID = await fetchClassIdFromUrl();
-    console.log("  fetchLmsUnifiedData got classID:", classID);
     if (!classID) {
-      console.log("  No classID, returning null");
       return null;
     }
     const lmsQuery = generateLmsQuery(classID, studentseid, COURSE_ID);
     const response = await fetchGraphQL(lmsQuery);
-    console.log("  fetchLmsUnifiedData GraphQL response:", response);
     if (!response?.LMSQuery?.length) {
-      console.log("  No LMSQuery data, returning null");
       return null;
     }
 
     const course = response.LMSQuery[0];
-    console.log("  Course object:", course);
     const classId = course.Enrolments_As_Course?.[0]?.Class?.id ?? null;
     const classUidForStudent =
       course.Enrolments_As_Course?.[0]?.Class?.unique_id ?? null;
     const classNameForStudent =
       course.Enrolments_As_Course?.[0]?.Class?.class_name ?? null;
     globalClassId = classId;
-    console.log("  Mapped classId, classUidForStudent, classNameForStudent:", {
-      classId,
-      classUidForStudent,
-      classNameForStudent,
-    });
 
     const dripFad =
       course.Enrolments_As_Course?.[0]?.Class?.show_modules_drop_fed ?? null;
     showDripFed = dripFad;
-    console.log("  showDripFed:", showDripFed);
 
     const mappedData = {
       courseName: course.course_name,
@@ -713,20 +589,15 @@ async function fetchLmsUnifiedData() {
         })),
       })),
     };
-    console.log("fetchLmsUnifiedData returning mappedData:", mappedData);
     return mappedData;
   } catch (error) {
-    console.error("fetchLmsUnifiedData error:", error);
     return null;
   }
 }
 
 async function combineUnifiedData() {
-  console.log("combineUnifiedData start");
   const data = await fetchLmsUnifiedData();
-  console.log("  Data from fetchLmsUnifiedData:", data);
   if (!data) {
-    console.log("  No data, returning null");
     return null;
   }
 
@@ -738,38 +609,31 @@ async function combineUnifiedData() {
     completedLessons: enr.completedLessons,
     classInfo: enr.classInfo,
   }));
-  console.log("  Mapped enrolments:", enrolments);
 
   const todayUnix = getSydneyUnixFromLocalNow();
-  console.log("  todayUnix for combineUnifiedData:", todayUnix);
 
   const defaultClassStartDate =
     enrolments.length && enrolments[0].classInfo?.startDate
       ? Number(enrolments[0].classInfo.startDate)
       : todayUnix;
-  console.log("  defaultClassStartDate:", defaultClassStartDate);
 
   const modules = await Promise.all(
     data.modules.map(async (module) => {
-      console.log("  Processing module:", module.id);
       const moduleCustomisations = module.customisations || [];
       const availability = determineAvailability(
         defaultClassStartDate,
         module.weekOpenFromStartDate,
         moduleCustomisations
       );
-      console.log("    availability for module:", availability);
 
       const lessons = await Promise.all(
         module.lessons.map(async (lesson) => {
-          console.log("    Processing lesson:", lesson.id);
           let status = "NotStarted";
           if (lesson.enrolmentLessonCompletions?.length > 0) {
             status = "Completed";
           } else if (lesson.lessonEnrolmentInProgresses?.length > 0) {
             status = "InProgress";
           }
-          console.log("      Determined status:", status);
 
           let dueDateInfo = { dueDateUnix: null, dueDateText: "No Due Date" };
           if (lesson.type === "Assessment") {
@@ -780,7 +644,6 @@ async function combineUnifiedData() {
               lessonCustomisations
             );
           }
-          console.log("      dueDateInfo:", dueDateInfo);
 
           return {
             ...lesson,
@@ -800,7 +663,6 @@ async function combineUnifiedData() {
           };
         })
       );
-      console.log("    Completed mapping lessons for module:", module.id);
 
       const lessonCompletedIDsFlat = module.lessons.flatMap((lesson) =>
         (lesson.enrolmentLessonCompletions || []).flatMap((elc) =>
@@ -811,7 +673,6 @@ async function combineUnifiedData() {
       const completedCount = module.lessons.filter((lesson) =>
         uniqueCompletedIDs.has(lesson.id)
       ).length;
-      console.log("    completedCount for module:", completedCount);
 
       return {
         ...module,
@@ -832,7 +693,6 @@ async function combineUnifiedData() {
       };
     })
   );
-  console.log("combineUnifiedData returning modules:", modules);
 
   return {
     courseName: data.courseName,
@@ -849,7 +709,6 @@ async function combineUnifiedData() {
 }
 
 async function renderUnifiedModules() {
-  console.log("renderUnifiedModules start");
   const skeletonHTML = `
     <div class="skeleton-container">
       <div class="skeleton-card skeleton-shimmer"></div>
@@ -859,36 +718,29 @@ async function renderUnifiedModules() {
       <div class="skeleton-card skeleton-shimmer"></div>
     </div>
   `;
-  console.log("  Injecting skeleton HTML");
   $("#modulesContainer").html(skeletonHTML);
 
   const unifiedData = await combineUnifiedData();
-  console.log("  unifiedData from combineUnifiedData:", unifiedData);
   if (!unifiedData || !Array.isArray(unifiedData.modules)) {
-    console.log("  No modules to render, exiting");
     return;
   }
 
   unifiedNewModules = unifiedData.modules;
-  console.log("  unifiedNewModules set:", unifiedNewModules);
 
   const template = $.templates("#modulesTemplate");
   const htmlOutput = template.render({
     modules: unifiedData.modules,
     courseName: unifiedData.courseName,
   });
-  console.log("  Rendered modulesTemplate");
 
   const progressTemplate = $.templates("#progressModulesTemplate");
   const progressOutput = progressTemplate.render({
     modules: unifiedData.modules,
     courseName: unifiedData.courseName,
   });
-  console.log("  Rendered progressModulesTemplate");
 
   $("#modulesContainer").html(htmlOutput);
   $("#progressModulesContainer").html(progressOutput);
-  console.log("renderUnifiedModules done");
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -897,14 +749,11 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!anchor) {
       return;
     }
-    console.log("  .nextLessonUrl clicked, href:", anchor.getAttribute("href"));
     event.preventDefault();
     var href = anchor.getAttribute("href");
     var match = href.match(/content\/([^?\/]+)/);
-    console.log("match", match);
     if (!match) return;
     var lessonUid = match[1];
-    console.log("lessonUid",lessonUid);
     var module = unifiedNewModules.find(function (mod) {
       return (
         Array.isArray(mod.lessons) &&
@@ -916,9 +765,7 @@ document.addEventListener("DOMContentLoaded", function () {
         })
       );
     });
-    console.log("  Found module for lessonUid:", module);
     if (module && module.availability === false) {
-      console.log("  Module locked, navigating to href");
       window.location.href = href;
     } else {
       
@@ -930,21 +777,16 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function addEventListenerIfExists(id, event, handler) {
-  console.log(`addEventListenerIfExists called for #${id} event "${event}"`);
   const element = document.getElementById(id);
   if (element) {
-    console.log(`  Element #${id} found, attaching handler`);
     element.addEventListener(event, async () => {
-      console.log(`  Event "${event}" on #${id} triggered`);
       await handler();
     });
   } else {
-    console.log(`  Element #${id} not found, skipping`);
   }
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("DOMContentLoaded #3: attaching fetch/progress button handlers");
   addEventListenerIfExists(
     "fetchModulesLessons",
     "click",
@@ -959,12 +801,9 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("DOMContentLoaded #4: checking basePath for auto-render");
   const basePath =
     "https://courses.writerscentre.com.au/course-details/content/";
-  console.log("  Current URL:", window.location.href, "basePath:", basePath);
   if (window.location.href.includes(basePath)) {
-    console.log("  URL includes basePath, calling renderUnifiedModules()");
     renderUnifiedModules();
   }
 });

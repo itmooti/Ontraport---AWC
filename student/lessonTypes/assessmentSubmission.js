@@ -230,7 +230,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 document.body.setAttribute(
   "x-data",
-  `{ isExpanded: true,deleteSubmissionModal: false, isOverlayVisible: false, currentUrl: '${window.location.href}', assessmentOpen: false, deleteSubmissionModal: false,deleteCommentReplyModal: false }`
+  `{ isExpanded: true,deleteSubmissionModal: false, openConformModal:false, isOverlayVisible: false, currentUrl: '${window.location.href}', assessmentOpen: false, deleteSubmissionModal: false,deleteCommentReplyModal: false }`
 );
 
 let assessmentVideoContainer = document.querySelectorAll(
