@@ -766,9 +766,19 @@ document.addEventListener("DOMContentLoaded", function () {
       );
     });
     if (module && module.availability === false) {
-      window.location.href = href;
+      var targetLesson = null;
+      module.lessons.some(function (lesson) {
+        if (lesson.awcLessonContentPageUrl && lesson.awcLessonContentPageUrl.indexOf(lessonUid) !== -1) {
+          targetLesson = lesson;
+          return true;
+        }
+      });
+      if (targetLesson && targetLesson.type === 'Download certificate' && (!targetLesson.dateCompletion || targetLesson.dateCompletion === '')) {
+        document.querySelector(".unavailableLessonModal").classList.remove("hidden");
+      } else {
+        window.location.href = href;
+      }
     } else {
-      
       document
         .querySelector(".unavailableLessonModal")
         .classList.remove("hidden");
